@@ -1,0 +1,691 @@
+import { create } from "zustand";
+import { generateKeyBetween } from "fractional-indexing";
+import { getDb } from "@/lib/db/instance";
+import { emit } from "@/lib/events";
+import type { ActivityRow, FlagRow, LocalDb, Stored, WriteOp } from "@/lib/db/types";
+import { newId } from "@/lib/ids";
+import {
+  deleteEmpty,
+  mergeDown,
+  mergeUp,
+  moveLine,
+  pasteText,
+  splitLine,
+  type EditResult,
+  type EditorLine,
+} from "@/services/editor";
+import { GHOST_LINE_ID, pageLines } from "@/services/editor/pageLines";
+import { missingDefaultFlags } from "@/services/flags/defaults";
+import { diffActivityFlags } from "@/services/lifecycle/activityFlags";
+import { deriveTextFields, newActivityDefaults } from "@/services/lifecycle/derive";
+import { applyStatusAction, reactivatedStatus, type StatusAction } from "@/services/lifecycle/status";
+import { tick as tickRule, type PanelSection } from "@/services/lifecycle/tick";
+import { commitLine, parseLine, type FlagLite, type ParseContext } from "@/services/marks";
+import { nowIso } from "@/services/sync/clock";
+import { journalClear, journalPut, rowsToReplay } from "./pendingJournal";
+
+/**
+ * The page: activities (and their ActivityFlag rows) read from and written to LocalDb, never
+ * the network.
+ * - Typing updates memory at once and is written after TEXT_DEBOUNCE_MS, on blur and when
+ *   the page is hidden (CLAUDE.md, rule 8).
+ * - Structural changes (split, merge, delete, paste, move, tick, panel edits) flush pending
+ *   text and are written immediately, in one transaction.
+ * - Every write of an activity also writes the ActivityFlag rows its `#flag` marks call for
+ *   (and soft-deletes the links and feedback of a deleted activity) in the same transaction.
+ * - Writes are serialized, so the database sees them in the order they happened.
+ * Components derive the ordered lines with `pageLines(activities)` inside useMemo.
+ */
+
+export const TEXT_DEBOUNCE_MS = 300;
+export const UNDO_MS = 5000;
+
+type Activity = Stored<"Activity">;
+type Link = Stored<"ActivityFlag">;
+
+export interface FocusRequest {
+  id: string;
+  offset: number;
+  nonce: number;
+}
+
+export interface UndoEntry {
+  kind: "merged" | "deleted";
+  rows: Activity[];
+  /** The `deletedAt` stamped on the removed rows (their feedback is revived by it). */
+  deletedAt: string;
+  nonce: number;
+}
+
+export interface PanelState {
+  id: string;
+  section: PanelSection | null;
+  nonce: number;
+}
+
+/**
+ * A short, non-blocking hint: the habit reached its target streak, or "how did it go?" after
+ * a tick (docs/05-line-mapping.md §4).
+ */
+export interface Notice {
+  kind: "habitFormed" | "feedbackPrompt" | "hidden";
+  id: string;
+  nonce: number;
+  /** "hidden": when the line comes back, and the row before the tick (for undo). */
+  until?: string;
+  before?: Activity;
+}
+
+interface PageState {
+  status: "idle" | "loading" | "ready" | "error";
+  activities: Record<string, Activity>;
+  activityFlags: Record<string, Link>;
+  /** Live flags (full rows: the priority view needs the weights). */
+  flags: FlagRow[];
+  focus: FocusRequest | null;
+  undo: UndoEntry | null;
+  panel: PanelState | null;
+  notice: Notice | null;
+
+  /** `ownerSub` seeds the user's default flags (missing ones only). */
+  load(ownerSub?: string | null): Promise<void>;
+  type(id: string, rawInput: string): void;
+  commit(id: string): Promise<void>;
+  enter(id: string, selStart: number, selEnd: number): Promise<void>;
+  backspaceAtStart(id: string): Promise<boolean>;
+  deleteAtEnd(id: string): Promise<boolean>;
+  paste(id: string, selStart: number, selEnd: number, text: string): Promise<void>;
+  move(id: string, delta: number): Promise<void>;
+  moveTo(id: string, toIndex: number): Promise<void>;
+  setFocus(id: string, offset: number): void;
+  undoLast(): Promise<void>;
+  dismissUndo(): void;
+  flushAll(): Promise<void>;
+
+  /** The tick / Ctrl+Enter (docs/05-line-mapping.md §4). */
+  tick(id: string): Promise<void>;
+  /** Panel: fields without a mark (description, targets…). Immediate write. */
+  updateFields(id: string, patch: Partial<ActivityRow>): Promise<void>;
+  /** Panel: a rewritten line (marks added / replaced / removed), plus optional fields. */
+  setRawInput(id: string, rawInput: string, patch?: Partial<ActivityRow>): Promise<void>;
+  statusAction(id: string, action: StatusAction): Promise<boolean>;
+  deleteLine(id: string): Promise<void>;
+  openPanel(id: string, section?: PanelSection | null): void;
+  closePanel(): void;
+  dismissNotice(): void;
+  /** Undo of "done for this time": the counter and the visibility go back as they were. */
+  undoHide(): Promise<void>;
+  /** A hidden line back on the page now (its next tick hides it again). */
+  showNow(id: string): Promise<void>;
+  hasFlags(id: string): boolean;
+  /** Archived view: back to the page (at the end), ACTIVE or DRAFT by the flag rule. */
+  restore(id: string): Promise<void>;
+  /** Archived view: soft-delete an archived line (its links and feedback too). */
+  deleteArchived(id: string): Promise<void>;
+  /** Re-reads IndexedDB after a sync or another tab's write, keeping lines still being typed. */
+  refresh(): Promise<void>;
+}
+
+// ─── module state (not rendered) ─────────────────────────────────────────────────
+
+const timers = new Map<string, ReturnType<typeof setTimeout>>();
+let writeChain: Promise<void> = Promise.resolve();
+let nonce = 0;
+
+function enqueue(write: () => Promise<void>): Promise<void> {
+  writeChain = writeChain.then(async () => {
+    await write();
+    emit({ type: "localWrite" }); // the sync engine pushes soon; other tabs reload
+  }).catch((e) => {
+    // A local write failing is a bug or a full disk; keep going so later edits still save.
+    console.error("[bacuyy] local write failed", e);
+  });
+  return writeChain;
+}
+
+/** Ticks that did something worth rating: an ACTION completed, a repetition, a habit day. */
+function wantsFeedbackPrompt(row: Activity, patch: Partial<ActivityRow>): boolean {
+  if (row.activityType === "ACTION") return patch.status === "COMPLETED";
+  return row.activityType === "REPETITIVE_ACTION" || row.activityType === "HABIT";
+}
+
+function parseContext(flags: FlagLite[]): ParseContext {
+  return { flags, today: new Date() };
+}
+
+function liveFlags(rows: FlagRow[]): FlagRow[] {
+  return rows.filter((f) => !f.deletedAt);
+}
+
+/** Feedback rows to soft-delete (activity deleted) or revive (deletion undone). */
+async function feedbackOps(db: LocalDb, rows: Activity[], reviveAt: string | null, now: string): Promise<WriteOp[]> {
+  const ops: WriteOp[] = [];
+  for (const row of rows) {
+    if (!row.deletedAt && !reviveAt) continue;
+    const feedbacks = await db.listByIndex("Feedback", "activityId", row.id);
+    for (const { dirty: _dirty, ...fb } of feedbacks) {
+      if (row.deletedAt && !fb.deletedAt) ops.push({ model: "Feedback", row: { ...fb, deletedAt: row.deletedAt, editedAt: now } });
+      else if (!row.deletedAt && reviveAt && fb.deletedAt === reviveAt) {
+        ops.push({ model: "Feedback", row: { ...fb, deletedAt: null, editedAt: now } });
+      }
+    }
+  }
+  return ops;
+}
+
+export const usePageStore = create<PageState>((set, get) => {
+  const lines = () => pageLines(get().activities);
+  const ctx = () => parseContext(get().flags);
+
+  /** Builds the stored row for a line after an edit (text-owned fields re-derived). */
+  function rowFor(line: EditorLine, now: string, patch: Partial<ActivityRow> = {}): Activity {
+    const existing = get().activities[line.id];
+    const base: Activity = {
+      ...(existing ?? { ...newActivityDefaults(), id: line.id, position: line.position, editedAt: now, dirty: 1 }),
+      ...patch,
+    };
+    const textChanged = !existing || (existing.rawInput ?? "") !== line.rawInput || Object.keys(patch).length > 0;
+    return {
+      ...base,
+      ...(textChanged ? deriveTextFields(base, line.rawInput, ctx()).fields : {}),
+      position: line.position,
+      editedAt: now,
+      dirty: 1,
+    };
+  }
+
+  /** ActivityFlag rows the given activities call for; memory is updated at once. */
+  function linkOps(rows: Activity[], now: string): WriteOp[] {
+    if (rows.length === 0) return [];
+    const byActivity = new Map<string, Link[]>();
+    for (const link of Object.values(get().activityFlags)) {
+      const list = byActivity.get(link.activityId);
+      if (list) list.push(link);
+      else byActivity.set(link.activityId, [link]);
+    }
+    const c = ctx();
+    const changed: Link[] = [];
+    for (const row of rows) {
+      const wanted = row.deletedAt ? [] : parseLine(row.rawInput ?? "", c).flagIds;
+      for (const link of diffActivityFlags(row.id, wanted, byActivity.get(row.id) ?? [], now)) {
+        changed.push({ ...link, dirty: 1 });
+      }
+    }
+    if (changed.length === 0) return [];
+    const next = { ...get().activityFlags };
+    for (const link of changed) next[link.id] = link;
+    set({ activityFlags: next });
+    return changed.map(({ dirty: _dirty, ...row }) => ({ model: "ActivityFlag", row }));
+  }
+
+  async function writeRows(rows: Activity[], reviveFeedbackAt: string | null = null) {
+    if (rows.length === 0) return;
+    const now = nowIso();
+    // putManyLocal sets `dirty` itself; the extra field on the row is ignored.
+    const ops: WriteOp[] = [...rows.map((row): WriteOp => ({ model: "Activity", row })), ...linkOps(rows, now)];
+    journalPut(rows); // survives a reload before the IndexedDB write commits (Safari)
+    const db = await getDb();
+    await enqueue(async () => {
+      const feedback = await feedbackOps(db, rows, reviveFeedbackAt, now);
+      await db.putManyLocal([...ops, ...feedback]);
+      journalClear(rows);
+    });
+  }
+
+  /** Stops the text timers and returns the rows still waiting for them (to write now). */
+  function takePending(except: Set<string>): Activity[] {
+    const ids = [...timers.keys()];
+    for (const id of ids) clearTimeout(timers.get(id));
+    timers.clear();
+    const all = get().activities;
+    return ids.filter((id) => !except.has(id)).map((id) => all[id]).filter((r): r is Activity => !!r);
+  }
+
+  /** Puts rows in memory now and writes them (with any pending text) in one transaction. */
+  function commitRows(rows: Activity[], reviveFeedbackAt: string | null = null): Promise<void> {
+    const pending = takePending(new Set(rows.map((r) => r.id)));
+    const next = { ...get().activities };
+    for (const row of rows) next[row.id] = row;
+    set({ activities: next });
+    return writeRows([...pending, ...rows], reviveFeedbackAt);
+  }
+
+  async function flushText(id: string) {
+    const timer = timers.get(id);
+    if (!timer) return;
+    clearTimeout(timer);
+    timers.delete(id);
+    const row = get().activities[id];
+    if (row) await writeRows([row]);
+  }
+
+  /**
+   * Applies a pure editor result. Memory is updated synchronously, before any await, so keys
+   * typed right after Enter / Backspace land in the right line; the write follows (one
+   * transaction, including any text still waiting for its debounce).
+   */
+  function apply(result: EditResult, undoKind: UndoEntry["kind"] | null = null): Promise<void> {
+    if (result.changed.length === 0 && result.deleted.length === 0) {
+      if (result.focus) get().setFocus(result.focus.id, result.focus.offset);
+      return Promise.resolve();
+    }
+    const now = nowIso();
+    const before = get().activities;
+    const rows: Activity[] = result.changed.map((line) => rowFor(line, now));
+    for (const id of result.deleted) {
+      const row = before[id];
+      if (row) rows.push({ ...row, deletedAt: now, editedAt: now, dirty: 1 });
+    }
+
+    const removedText = result.deleted.some((id) => (before[id]?.rawInput ?? "").length > 0);
+    // Undo = write back the rows as they were before (only when text actually disappeared).
+    const snapshot = [...result.changed.map((l) => before[l.id]), ...result.deleted.map((id) => before[id])].filter(
+      (row): row is Activity => row !== undefined,
+    );
+    const undo: UndoEntry | null =
+      undoKind && removedText ? { kind: undoKind, rows: snapshot, deletedAt: now, nonce: ++nonce } : get().undo;
+    const panel = get().panel;
+    set({
+      undo,
+      focus: result.focus ? { ...result.focus, nonce: ++nonce } : get().focus,
+      panel: panel && result.deleted.includes(panel.id) ? null : panel,
+    });
+    return commitRows(rows);
+  }
+
+  /** Typing into the ghost line creates the first real row. */
+  function materializeGhost(rawInput: string): string {
+    const id = newId();
+    const now = nowIso();
+    // After every row, hidden ones included, so it never shares a position with one.
+    let last: string | null = null;
+    for (const a of Object.values(get().activities)) if (!a.deletedAt && (last === null || a.position > last)) last = a.position;
+    const row = rowFor({ id, rawInput, position: generateKeyBetween(last, null) }, now);
+    set({ activities: { ...get().activities, [id]: row }, focus: { id, offset: rawInput.length, nonce: ++nonce } });
+    void writeRows([row]);
+    return id;
+  }
+
+  /**
+   * After load: re-derive every line against the current flags (a line typed before its flag
+   * existed, or a flag created on another device). Only real differences are written.
+   */
+  function reconcileAll(): Promise<void> {
+    const c = ctx();
+    const now = nowIso();
+    const rows: Activity[] = [];
+    for (const row of Object.values(get().activities)) {
+      if (row.deletedAt) continue;
+      const { fields } = deriveTextFields(row, row.rawInput ?? "", c);
+      const differs = (Object.keys(fields) as (keyof ActivityRow)[]).some((k) => (fields[k] ?? null) !== (row[k] ?? null));
+      if (differs) rows.push({ ...row, ...fields, editedAt: now, dirty: 1 });
+    }
+    const all = Object.values(get().activities).filter((r) => !r.deletedAt);
+    const changedIds = new Set(rows.map((r) => r.id));
+    const ops = linkOps(all.filter((r) => !changedIds.has(r.id)), now);
+    if (rows.length > 0) return commitRows(rows);
+    if (ops.length === 0) return Promise.resolve();
+    return getDb().then((db) => enqueue(() => db.putManyLocal(ops)));
+  }
+
+  async function seedFlags(ownerSub: string) {
+    const db = await getDb();
+    const seed = missingDefaultFlags(ownerSub, await db.getAll("Flag"));
+    if (seed.length === 0) return;
+    await enqueue(() => db.putManyLocal(seed.map((row): WriteOp => ({ model: "Flag", row }))));
+    set({ flags: liveFlags(await db.getAll("Flag")) });
+    await reconcileAll();
+  }
+
+  const indexOf = (id: string) => lines().findIndex((l) => l.id === id);
+  const hasFlags = (row: Pick<ActivityRow, "rawInput">) => parseLine(row.rawInput ?? "", ctx()).flagIds.length > 0;
+
+  return {
+    status: "idle",
+    activities: {},
+    activityFlags: {},
+    flags: [],
+    focus: null,
+    undo: null,
+    panel: null,
+    notice: null,
+
+    async load(ownerSub) {
+      const status = get().status;
+      if (status === "loading") return;
+      if (status === "ready") {
+        // Already on screen: never blank the page; only add flags the user is missing.
+        if (ownerSub) await seedFlags(ownerSub);
+        return;
+      }
+      set({ status: "loading" });
+      try {
+        const db = await getDb();
+        let flagRows = await db.getAll("Flag");
+        if (ownerSub) {
+          const seed = missingDefaultFlags(ownerSub, flagRows);
+          if (seed.length > 0) {
+            await enqueue(() => db.putManyLocal(seed.map((row): WriteOp => ({ model: "Flag", row }))));
+            flagRows = await db.getAll("Flag");
+          }
+        }
+        const [rows, links] = await Promise.all([db.getAll("Activity"), db.getAll("ActivityFlag")]);
+        const activities: Record<string, Activity> = {};
+        for (const row of rows) activities[row.id] = row;
+        // Edits the last session could not commit (closed or reloaded mid-write).
+        const replay = rowsToReplay(activities);
+        for (const row of replay) activities[row.id] = { ...row, dirty: 1 };
+        const activityFlags: Record<string, Link> = {};
+        for (const link of links) activityFlags[link.id] = link;
+        set({ activities, activityFlags, flags: liveFlags(flagRows), status: "ready" });
+        if (replay.length > 0) await writeRows(replay.map((row) => activities[row.id]!));
+        await reconcileAll();
+      } catch (e) {
+        console.error("[bacuyy] could not load the page", e);
+        set({ status: "error" });
+      }
+    },
+
+    type(id, rawInput) {
+      if (id === GHOST_LINE_ID) {
+        if (rawInput.length > 0) materializeGhost(rawInput.replace(/\r\n|\r|\n/g, " "));
+        return;
+      }
+      const existing = get().activities[id];
+      if (!existing) return;
+      const clean = rawInput.replace(/\r\n|\r|\n/g, " ");
+      const row = rowFor({ id, rawInput: clean, position: existing.position }, nowIso());
+      set({ activities: { ...get().activities, [id]: row } });
+      journalPut([row]); // the debounce may never fire if the page is closed now
+      const prev = timers.get(id);
+      if (prev) clearTimeout(prev);
+      timers.set(
+        id,
+        setTimeout(() => {
+          timers.delete(id);
+          const latest = get().activities[id];
+          if (latest) void writeRows([latest]);
+        }, TEXT_DEBOUNCE_MS),
+      );
+    },
+
+    async commit(id) {
+      const row = get().activities[id];
+      if (!row) return;
+      const raw = row.rawInput ?? "";
+      const committed = commitLine(raw, ctx());
+      if (committed !== raw) get().type(id, committed);
+      await flushText(id);
+    },
+
+    async enter(id, selStart, selEnd) {
+      if (id === GHOST_LINE_ID) return;
+      const all = lines();
+      const index = all.findIndex((l) => l.id === id);
+      if (index < 0) return;
+      let working = all;
+      if (selEnd > selStart) {
+        const line = all[index]!;
+        working = all.slice();
+        working[index] = { ...line, rawInput: line.rawInput.slice(0, selStart) + line.rawInput.slice(selEnd) };
+      }
+      const result = splitLine(working, index, selStart);
+      if (selEnd > selStart && !result.changed.some((l) => l.id === id)) {
+        result.changed.unshift(result.lines[index]!);
+      }
+      await apply(result);
+    },
+
+    async backspaceAtStart(id) {
+      const all = lines();
+      const index = all.findIndex((l) => l.id === id);
+      if (index < 0) return false;
+      if (all[index]!.rawInput.length === 0) {
+        if (all.length <= 1) return false;
+        await apply(deleteEmpty(all, index));
+        return true;
+      }
+      if (index === 0) return false;
+      await apply(mergeUp(all, index), "merged");
+      return true;
+    },
+
+    async deleteAtEnd(id) {
+      const all = lines();
+      const index = all.findIndex((l) => l.id === id);
+      if (index < 0 || index >= all.length - 1) return false;
+      await apply(mergeDown(all, index), "merged");
+      return true;
+    },
+
+    async paste(id, selStart, selEnd, text) {
+      if (id === GHOST_LINE_ID) {
+        const realId = materializeGhost("");
+        await get().paste(realId, 0, 0, text);
+        return;
+      }
+      const index = indexOf(id);
+      if (index < 0) return;
+      await apply(pasteText(lines(), index, selStart, selEnd, text));
+    },
+
+    async move(id, delta) {
+      const index = indexOf(id);
+      if (index < 0) return;
+      await get().moveTo(id, index + delta);
+    },
+
+    async moveTo(id, toIndex) {
+      const all = lines();
+      const index = all.findIndex((l) => l.id === id);
+      if (index < 0) return;
+      await apply(moveLine(all, index, toIndex));
+    },
+
+    setFocus(id, offset) {
+      set({ focus: { id, offset, nonce: ++nonce } });
+    },
+
+    async undoLast() {
+      const entry = get().undo;
+      if (!entry) return;
+      const now = nowIso();
+      const rows = entry.rows.map((row) => ({ ...row, deletedAt: null, editedAt: now, dirty: 1 as const }));
+      set({ undo: null });
+      await commitRows(rows, entry.deletedAt);
+    },
+
+    dismissUndo() {
+      set({ undo: null });
+    },
+
+    async flushAll() {
+      await Promise.all([...timers.keys()].map(flushText));
+      await writeChain;
+    },
+
+    // ─── lifecycle and panel ──────────────────────────────────────────────────────
+
+    async tick(id) {
+      const row = get().activities[id];
+      if (!row || row.deletedAt) return;
+      const result = tickRule(row, hasFlags(row));
+      if (result.kind === "panel") {
+        get().openPanel(id, result.section);
+        return;
+      }
+      if (result.kind === "none") return;
+      if (result.hidden) {
+        // The line leaves the page: the focus goes to the line taking its place (or the one above).
+        const all = lines();
+        const index = all.findIndex((l) => l.id === id);
+        const neighbour = index >= 0 ? all[index + 1] ?? all[index - 1] : undefined;
+        if (neighbour) get().setFocus(neighbour.id, index + 1 < all.length ? 0 : neighbour.rawInput.length);
+      }
+      await get().updateFields(id, result.patch);
+      if (result.formedHint) set({ notice: { kind: "habitFormed", id, nonce: ++nonce } });
+      else if (result.hidden) {
+        set({ notice: { kind: "hidden", id, until: result.patch.hiddenUntil ?? undefined, before: row, nonce: ++nonce } });
+      } else if (wantsFeedbackPrompt(row, result.patch)) set({ notice: { kind: "feedbackPrompt", id, nonce: ++nonce } });
+    },
+
+    async updateFields(id, patch) {
+      const row = get().activities[id];
+      if (!row) return;
+      // Text-owned fields are never patched directly: they would disagree with the marks.
+      const { rawInput: _r, title: _t, activityType: _a, ...rest } = patch;
+      await commitRows([{ ...row, ...rest, editedAt: nowIso(), dirty: 1 }]);
+    },
+
+    async setRawInput(id, rawInput, patch = {}) {
+      const row = get().activities[id];
+      if (!row) return;
+      const clean = rawInput.replace(/\r\n|\r|\n/g, " ");
+      await commitRows([rowFor({ id, rawInput: clean, position: row.position }, nowIso(), patch)]);
+    },
+
+    async statusAction(id, action) {
+      const row = get().activities[id];
+      if (!row) return false;
+      const patch = applyStatusAction(row, action, hasFlags(row));
+      if (!patch) return false;
+      await get().updateFields(id, patch);
+      if (patch.status === "ARCHIVED" && get().panel?.id === id) set({ panel: null });
+      return true;
+    },
+
+    async deleteLine(id) {
+      const all = lines();
+      const index = all.findIndex((l) => l.id === id);
+      if (index < 0) return;
+      const neighbour = all[index - 1] ?? all[index + 1];
+      await apply(
+        {
+          lines: all.filter((l) => l.id !== id),
+          changed: [],
+          created: [],
+          deleted: [id],
+          focus: neighbour ? { id: neighbour.id, offset: neighbour.rawInput.length } : null,
+        },
+        "deleted",
+      );
+    },
+
+    openPanel(id, section = null) {
+      if (!get().activities[id]) return;
+      set({ panel: { id, section, nonce: ++nonce } });
+    },
+
+    closePanel() {
+      const panel = get().panel;
+      if (!panel) return;
+      set({ panel: null });
+      const row = get().activities[panel.id];
+      if (row && !row.deletedAt && row.status !== "ARCHIVED") get().setFocus(panel.id, (row.rawInput ?? "").length);
+    },
+
+    dismissNotice() {
+      set({ notice: null });
+    },
+
+    async undoHide() {
+      const notice = get().notice;
+      if (notice?.kind !== "hidden" || !notice.before) return;
+      const current = get().activities[notice.id];
+      set({ notice: null });
+      if (!current || current.deletedAt) return;
+      const { completionCount, streak, hiddenUntil } = notice.before;
+      await get().updateFields(notice.id, { completionCount, streak, hiddenUntil: hiddenUntil ?? null });
+      get().setFocus(notice.id, (current.rawInput ?? "").length);
+    },
+
+    async showNow(id) {
+      const row = get().activities[id];
+      if (!row || !row.hiddenUntil) return;
+      await get().updateFields(id, { hiddenUntil: null });
+    },
+
+    hasFlags(id) {
+      const row = get().activities[id];
+      return row ? hasFlags(row) : false;
+    },
+
+    async restore(id) {
+      const row = get().activities[id];
+      if (!row || row.deletedAt || row.status !== "ARCHIVED") return;
+      const last = lines().at(-1);
+      const patch: Partial<ActivityRow> = {
+        status: reactivatedStatus(hasFlags(row)),
+        position: generateKeyBetween(last?.position ?? null, null),
+      };
+      // Archiving an expiration marked it renewed; back on the page it is pending again.
+      if (row.activityType === "EXPIRATION") patch.isRenewed = false;
+      await get().updateFields(id, patch);
+    },
+
+    async deleteArchived(id) {
+      const row = get().activities[id];
+      if (!row || row.deletedAt || row.status !== "ARCHIVED") return;
+      const now = nowIso();
+      await commitRows([{ ...row, deletedAt: now, editedAt: now, dirty: 1 }]);
+    },
+
+    async refresh() {
+      if (get().status !== "ready") return;
+      const db = await getDb();
+      await writeChain; // our own writes first, so we read what we wrote
+      const [rows, links, flagRows] = await Promise.all([db.getAll("Activity"), db.getAll("ActivityFlag"), db.getAll("Flag")]);
+      const before = get().activities;
+      const activities: Record<string, Activity> = {};
+      for (const row of rows) {
+        const mine = before[row.id];
+        // A line with text still waiting for its debounce keeps the memory version (newer).
+        if (mine && timers.has(row.id)) activities[row.id] = mine;
+        // Same edit: keep the same object, so unchanged lines do not re-render.
+        else activities[row.id] = mine && mine.editedAt === row.editedAt ? mine : row;
+      }
+      for (const id of timers.keys()) if (!activities[id] && before[id]) activities[id] = before[id]!;
+      const activityFlags: Record<string, Link> = {};
+      for (const link of links) activityFlags[link.id] = link;
+      const flags = liveFlags(flagRows);
+      const old = get().flags;
+      // Marks only care about names and the tree; the priority view also needs the weights.
+      const sameFlags = flags.length === old.length && flags.every((f, i) => {
+        const g = old[i];
+        return g && g.id === f.id && g.name === f.name && g.parentId === f.parentId;
+      });
+      const sameRows = sameFlags && flags.every((f, i) => f.editedAt === old[i]!.editedAt && f.weight === old[i]!.weight);
+      const panel = get().panel;
+      const panelRow = panel ? activities[panel.id] : undefined;
+      set({
+        activities,
+        activityFlags,
+        flags: sameRows ? old : flags,
+        panel: panel && panelRow && !panelRow.deletedAt && panelRow.status !== "ARCHIVED" ? panel : null,
+      });
+      // Marks resolve differently now: lines typed since the flag write re-derive too.
+      if (!sameFlags) await reconcileAll();
+    },
+  };
+});
+
+/** Forget everything in memory (sign out, another user). The database is handled separately. */
+export function resetPageStore() {
+  for (const t of timers.values()) clearTimeout(t);
+  timers.clear();
+  writeChain = Promise.resolve();
+  usePageStore.setState({
+    status: "idle",
+    activities: {},
+    activityFlags: {},
+    flags: [],
+    focus: null,
+    undo: null,
+    panel: null,
+    notice: null,
+  });
+}
+
+export const resetPageStoreForTests = resetPageStore;
+
+export type { ActivityRow };

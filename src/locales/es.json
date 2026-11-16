@@ -1,0 +1,346 @@
+{
+  "app": {
+    "name": "bacuy-y",
+    "comingSoon": "Disponible en una fase posterior."
+  },
+  "nav": {
+    "main": "Navegación principal",
+    "page": "Página",
+    "priority": "Prioridad",
+    "journal": "Diario",
+    "flags": "Banderas",
+    "archived": "Archivadas",
+    "settings": "Ajustes"
+  },
+  "page": {
+    "title": "Página",
+    "lineLabel": "Renglón {{n}}",
+    "dragHandle": "Mover el renglón {{n}}",
+    "placeholder": "Escribe aquí…",
+    "loadError": "No se pudieron cargar los renglones guardados en este navegador.",
+    "lineMerged": "Renglón unido al de arriba",
+    "undo": "Deshacer",
+    "dnd": {
+      "instructions": "Para mover un renglón, pulsa espacio o Intro, usa las flechas arriba y abajo y vuelve a pulsar espacio o Intro para soltarlo. Escape cancela.",
+      "pickedUp": "Renglón {{n}} tomado.",
+      "movedOver": "Sobre la posición {{n}}.",
+      "dropped": "Renglón soltado en la posición {{n}}.",
+      "cancelled": "Movimiento cancelado."
+    },
+    "lineDeleted": "Renglón borrado",
+    "hidden": {
+      "toast": "Hecho por ahora. Vuelve el {{date}}.",
+      "summary_one": "{{count}} renglón oculto hasta más tarde",
+      "summary_other": "{{count}} renglones ocultos hasta más tarde",
+      "returns": "vuelve el {{date}}",
+      "showNow": "Mostrar ahora",
+      "showNowLine": "Mostrar ahora «{{title}}»"
+    }
+  },
+  "priority": {
+    "title": "Por prioridad",
+    "intro": "Tus renglones activos, del más importante al menos: cuenta el peso de sus banderas, si su horario empieza en menos de una hora y cuánto falta para que venzan. Pulsa un renglón para ir a él en la página.",
+    "empty": "No hay renglones activos. Un renglón se activa cuando le pones una bandera, por ejemplo #salud.",
+    "goTo": "Ir al renglón en la página",
+    "now": "Ahora",
+    "untitled": "(sin texto)"
+  },
+  "journal": {
+    "title": "Diario de gratitud",
+    "entryTitle": "Gratitud — {{date}}",
+    "empty": "Aún no hay entradas completadas. Marca un renglón de gratitud y escribe tus notas para que aparezca aquí.",
+    "pending_one": "Tienes {{count}} entrada pendiente en la página.",
+    "pending_other": "Tienes {{count}} entradas pendientes en la página.",
+    "edit": "Editar"
+  },
+  "flags": {
+    "title": "Banderas",
+    "intro": "Las banderas ordenan tus renglones por importancia. Escribe #nombre en un renglón para asignarla. Los pesos de cada grupo de hermanas deben sumar 100.",
+    "loading": "Cargando banderas…",
+    "loadError": "No se pudieron leer las banderas guardadas en este navegador.",
+    "drift": "Los pesos de algunos grupos ya no suman 100 (por cambios hechos en otro dispositivo o por un borrado). La prioridad los reparte en proporción, pero conviene corregirlos.",
+    "driftGroup": "Este grupo no suma 100.",
+    "sum": "Suma: {{sum}} / {{total}}",
+    "mustSum": "Los pesos deben sumar {{total}} para guardar.",
+    "weightInvalid": "Cada peso debe ser un número entre 0 y 100.",
+    "saveWeights": "Guardar pesos",
+    "resetWeights": "Descartar",
+    "weightOf": "Peso de {{name}}",
+    "colorOf": "Color de {{name}}",
+    "name": "Nombre",
+    "system": "Bandera del sistema: su nombre no se puede cambiar.",
+    "newFlag": "Nueva bandera",
+    "newChild": "Nueva subbandera",
+    "add": "Añadir",
+    "addChildTo": "Añadir subbandera a {{name}}",
+    "delete": "Borrar {{name}}",
+    "confirmDelete": "¿Borrar «{{name}}»? Los renglones conservan la marca, pero dejará de reconocerse.",
+    "confirmDeleteTree": "¿Borrar «{{name}}» y todas sus subbanderas? Los renglones conservan las marcas, pero dejarán de reconocerse.",
+    "confirm": "Borrar",
+    "cancel": "Cancelar",
+    "nameProblem": {
+      "empty": "Escribe un nombre.",
+      "slash": "El nombre no puede contener «/».",
+      "taken": "Ya hay una bandera con ese nombre en este grupo."
+    }
+  },
+  "archived": {
+    "title": "Archivadas",
+    "intro": "Los renglones archivados salen de la página. Restaurar uno lo devuelve al final de la página.",
+    "empty": "No hay renglones archivados.",
+    "on": "archivado el {{date}}",
+    "restore": "Restaurar",
+    "restoreLine": "Restaurar «{{title}}»",
+    "delete": "Borrar",
+    "deleteLine": "Borrar «{{title}}»",
+    "confirm": "¿Borrar «{{title}}» para siempre?",
+    "confirmShort": "¿Borrar para siempre?",
+    "deleteYes": "Sí, borrar",
+    "cancel": "Cancelar",
+    "restored": "«{{title}}» ha vuelto a la página.",
+    "deleted": "«{{title}}» se ha borrado."
+  },
+  "auth": {
+    "title": "Iniciar sesión",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "newPassword": "Contraseña nueva",
+    "code": "Código de verificación",
+    "passwordHint": "Mínimo 8 caracteres, con mayúscula, minúscula, número y símbolo.",
+    "offlineFirstSignIn": "Sin conexión. La primera vez necesitas conexión para iniciar sesión; después la app funciona sin ella.",
+    "signIn": {
+      "title": "Iniciar sesión",
+      "submit": "Entrar",
+      "toSignUp": "¿No tienes cuenta? Crear una",
+      "forgot": "Olvidé mi contraseña"
+    },
+    "signUp": {
+      "title": "Crear cuenta",
+      "submit": "Crear cuenta",
+      "toSignIn": "Volver a iniciar sesión"
+    },
+    "confirm": {
+      "title": "Confirmar correo",
+      "help": "Te enviamos un código por correo. Escríbelo aquí para activar la cuenta.",
+      "submit": "Confirmar",
+      "resend": "Enviar el código otra vez",
+      "resent": "Código enviado de nuevo."
+    },
+    "forgot": {
+      "title": "Recuperar contraseña",
+      "sendCode": "Enviar código",
+      "codeSent": "Si el correo existe, te enviamos un código.",
+      "submit": "Cambiar contraseña"
+    },
+    "info": {
+      "confirmed": "Cuenta confirmada. Ya puedes iniciar sesión.",
+      "passwordChanged": "Contraseña cambiada. Inicia sesión con la nueva."
+    },
+    "errors": {
+      "wrongCredentials": "Correo o contraseña incorrectos.",
+      "userExists": "Ya existe una cuenta con ese correo.",
+      "notConfirmed": "La cuenta aún no está confirmada.",
+      "wrongCode": "El código no es correcto.",
+      "expiredCode": "El código caducó. Pide uno nuevo.",
+      "weakPassword": "La contraseña no cumple los requisitos.",
+      "invalidInput": "Revisa los datos del formulario.",
+      "tooManyAttempts": "Demasiados intentos. Espera un momento y vuelve a probar.",
+      "network": "Sin conexión. Inténtalo cuando vuelvas a estar en línea.",
+      "generic": "Algo salió mal. Inténtalo de nuevo."
+    }
+  },
+  "settings": {
+    "title": "Ajustes",
+    "language": "Idioma",
+    "languageSystem": "Como el navegador",
+    "theme": "Tema",
+    "account": "Cuenta",
+    "signedInAs": "Sesión iniciada como {{email}}",
+    "signOut": "Cerrar sesión",
+    "signOutPending_one": "Tienes {{count}} cambio sin subir a la nube. Si cierras sesión ahora, se perderá.",
+    "signOutPending_other": "Tienes {{count}} cambios sin subir a la nube. Si cierras sesión ahora, se perderán.",
+    "signOutOffline": "Estás sin conexión: conéctate y vuelve a intentarlo para subirlos antes de salir.",
+    "signOutRetry": "Sincronizar y reintentar",
+    "signOutAnyway": "Cerrar sesión y perderlos",
+    "cancel": "Cancelar",
+    "signingOut": "Cerrando sesión…",
+    "gratitude": "Diario de gratitud",
+    "gratitudeHint": "Crea un renglón de gratitud al principio de la página según este horario. Este ajuste es de este navegador.",
+    "gratitudeEnabled": "Crear entradas automáticamente",
+    "gratitudeCron": "Horario (expresión cron)",
+    "gratitudeNext": "Próxima entrada: {{date}}"
+  },
+  "locale": {
+    "es": "Español",
+    "en": "English"
+  },
+  "theme": {
+    "system": "Como el sistema",
+    "light": "Claro",
+    "dark": "Oscuro"
+  },
+  "activityType": {
+    "ACTION": "Acción",
+    "REPETITIVE_ACTION": "Acción repetitiva",
+    "HABIT": "Hábito",
+    "ATTITUDE": "Actitud",
+    "SKILL": "Habilidad",
+    "MOMENTO": "Momento",
+    "GRATITUDE": "Gratitud",
+    "EXPIRATION": "Vencimiento"
+  },
+  "status": {
+    "DRAFT": "Borrador",
+    "ACTIVE": "Activa",
+    "INACTIVE": "En pausa",
+    "COMPLETED": "Completada",
+    "ARCHIVED": "Archivada"
+  },
+  "frequency": {
+    "DAILY": "Diaria",
+    "WEEKLY": "Semanal",
+    "MONTHLY": "Mensual",
+    "CUSTOM": "Personalizada (cron)"
+  },
+  "proficiencyLevel": {
+    "BEGINNER": "Principiante",
+    "INTERMEDIATE": "Intermedio",
+    "ADVANCED": "Avanzado",
+    "EXPERT": "Experto"
+  },
+  "flag": {
+    "personal": "Personal",
+    "family": "Familia",
+    "income": "Ingresos",
+    "spiritual": "Espiritual",
+    "health": "Salud",
+    "errand": "Recados",
+    "fun": "Diversión",
+    "salary": "Salario",
+    "project": "Proyecto",
+    "rent": "Renta"
+  },
+  "line": {
+    "tick": {
+      "complete": "Marcar como hecha (renglón {{n}})",
+      "uncomplete": "Marcar como no hecha (renglón {{n}})",
+      "repeat": "Sumar una vez (renglón {{n}}): {{count}}",
+      "habit": "Sumar un día a la racha (renglón {{n}}): {{count}}",
+      "gratitude": "Escribir la gratitud (renglón {{n}})",
+      "expiration": "Renovar o archivar (renglón {{n}})"
+    },
+    "streak": "Racha: {{count}}",
+    "count": "Hecha {{count}} veces",
+    "countOf": "Hecha {{count}} de {{target}} veces",
+    "daysLeft": "Vence en {{count}} días",
+    "dueToday": "Vence hoy",
+    "overdue": "Venció hace {{count}} días",
+    "attitude": "Actitud",
+    "moment": "Momento",
+    "paused": "En pausa",
+    "more": "Detalles del renglón {{n}}"
+  },
+  "panel": {
+    "title": "Detalles del renglón",
+    "close": "Cerrar",
+    "text": "Texto",
+    "type": "Tipo",
+    "status": "Estado",
+    "actions": {
+      "pause": "Pausar",
+      "reactivate": "Reactivar",
+      "complete": "Completar",
+      "archive": "Archivar"
+    },
+    "flags": "Banderas",
+    "noFlags": "Sin banderas",
+    "addFlag": "Añadir bandera",
+    "createFlag": "Crear bandera «{{name}}»",
+    "removeFlag": "Quitar {{name}}",
+    "deadline": "Fecha límite",
+    "eventDate": "Fecha del momento",
+    "expirationDate": "Fecha de vencimiento",
+    "clearDate": "Quitar fecha",
+    "targetCount": "Veces objetivo",
+    "completionCount": "Veces hechas",
+    "streak": "Racha actual",
+    "targetStreak": "Racha objetivo",
+    "resetStreak": "Reiniciar racha",
+    "affirmation": "Afirmación",
+    "proficiencyLevel": "Nivel",
+    "noLevel": "Sin nivel",
+    "learningResources": "Recursos (uno por renglón)",
+    "recipient": "Para quién",
+    "renewalLeadDays": "Avisar con estos días de antelación",
+    "documentRef": "Referencia del documento",
+    "renewalUrl": "Enlace de renovación",
+    "renewDate": "Nueva fecha",
+    "renew": "Renovada",
+    "archiveExpired": "Archivar sin renovar",
+    "description": "Descripción",
+    "gratitudeNotes": "Notas de gratitud",
+    "saveComplete": "Guardar y completar",
+    "needsNotes": "Escribe algo antes de completar.",
+    "schedule": "Horario",
+    "cron": "Expresión cron",
+    "cronHint": "minuto hora día mes día-de-la-semana, por ejemplo 0 8 * * 1-5",
+    "cronNext": "Próxima vez: {{date}}",
+    "cronInvalid": "La expresión cron no es válida.",
+    "frequency": "Frecuencia",
+    "noFrequency": "Sin frecuencia",
+    "feedback": "Valoraciones",
+    "delete": "Borrar renglón",
+    "habitFormed": "Llegaste a la racha objetivo. ¿Marcar el hábito como formado?",
+    "markFormed": "Marcar como formado",
+    "dismiss": "Ahora no"
+  },
+  "sync": {
+    "SYNCED": "Sincronizado",
+    "SYNCING": "Sincronizando…",
+    "OFFLINE": "Sin conexión",
+    "ERROR": "Sin sincronizar",
+    "signInAgain": "Inicia sesión de nuevo para sincronizar",
+    "lastSynced": "Última sincronización: {{time}}",
+    "pending_one": "{{count}} cambio sin subir",
+    "pending_other": "{{count}} cambios sin subir",
+    "syncNow": "Pulsa para sincronizar ahora"
+  },
+  "feedback": {
+    "none": "Aún no hay valoraciones.",
+    "rating": "Valoración",
+    "ratingValue": "{{rating}} de 5",
+    "ratingRequired": "Elige de 1 a 5 estrellas.",
+    "valenceLabel": "Ánimo",
+    "arousalLabel": "Energía",
+    "valence": {
+      "negative": "Mal",
+      "neutral": "Neutro",
+      "positive": "Bien"
+    },
+    "arousal": {
+      "calm": "Tranquilo",
+      "medium": "Normal",
+      "high": "Con energía"
+    },
+    "notSet": "sin indicar",
+    "clear": "Quitar",
+    "notes": "Notas",
+    "save": "Guardar valoración",
+    "delete": "Borrar",
+    "prompt": "¿Cómo fue?",
+    "rate": "Valorar"
+  },
+  "pwa": {
+    "newVersion": "Hay una versión nueva de bacuy-y.",
+    "update": "Actualizar",
+    "later": "Más tarde",
+    "installTitle": "Instalar la app",
+    "install": "Instalar bacuy-y",
+    "installHint": "Instalada, bacuy-y se abre en su propia ventana, desde el escritorio o la pantalla de inicio, y funciona sin conexión.",
+    "installLater": "Puedes instalarla más tarde desde el menú del navegador:",
+    "installed": "bacuy-y ya está instalada en este dispositivo.",
+    "howDesktop": "Ordenador (Chrome o Edge): el icono de instalar en la barra de direcciones.",
+    "howAndroid": "Android (Chrome): menú ⋮ → «Instalar aplicación» o «Añadir a pantalla de inicio».",
+    "howIos": "iPhone o iPad (Safari): botón Compartir → «Añadir a pantalla de inicio»."
+  }
+}

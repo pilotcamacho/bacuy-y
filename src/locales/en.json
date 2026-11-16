@@ -1,0 +1,346 @@
+{
+  "app": {
+    "name": "bacuy-y",
+    "comingSoon": "Available in a later phase."
+  },
+  "nav": {
+    "main": "Main navigation",
+    "page": "Page",
+    "priority": "Priority",
+    "journal": "Journal",
+    "flags": "Flags",
+    "archived": "Archived",
+    "settings": "Settings"
+  },
+  "page": {
+    "title": "Page",
+    "lineLabel": "Line {{n}}",
+    "dragHandle": "Move line {{n}}",
+    "placeholder": "Type here…",
+    "loadError": "The lines saved in this browser could not be loaded.",
+    "lineMerged": "Line joined to the one above",
+    "undo": "Undo",
+    "dnd": {
+      "instructions": "To move a line, press space or Enter, use the up and down arrows, then press space or Enter again to drop it. Escape cancels.",
+      "pickedUp": "Line {{n}} picked up.",
+      "movedOver": "Over position {{n}}.",
+      "dropped": "Line dropped at position {{n}}.",
+      "cancelled": "Move cancelled."
+    },
+    "lineDeleted": "Line deleted",
+    "hidden": {
+      "toast": "Done for now. Back on {{date}}.",
+      "summary_one": "{{count}} line hidden until later",
+      "summary_other": "{{count}} lines hidden until later",
+      "returns": "back on {{date}}",
+      "showNow": "Show now",
+      "showNowLine": "Show “{{title}}” now"
+    }
+  },
+  "priority": {
+    "title": "By priority",
+    "intro": "Your active lines, most important first: it counts their flags' weights, whether their schedule starts within the hour and how soon they expire. Click a line to go to it on the page.",
+    "empty": "No active lines. A line becomes active when you give it a flag, for example #health.",
+    "goTo": "Go to the line on the page",
+    "now": "Now",
+    "untitled": "(no text)"
+  },
+  "journal": {
+    "title": "Gratitude journal",
+    "entryTitle": "Gratitude — {{date}}",
+    "empty": "No completed entries yet. Tick a gratitude line and write your notes to see it here.",
+    "pending_one": "You have {{count}} pending entry on the page.",
+    "pending_other": "You have {{count}} pending entries on the page.",
+    "edit": "Edit"
+  },
+  "flags": {
+    "title": "Flags",
+    "intro": "Flags rank your lines by importance. Type #name in a line to assign one. The weights of each group of siblings must add up to 100.",
+    "loading": "Loading flags…",
+    "loadError": "The flags saved in this browser could not be read.",
+    "drift": "The weights of some groups no longer add up to 100 (changes made on another device, or a deletion). Priority shares them out proportionally, but you should fix them.",
+    "driftGroup": "This group does not add up to 100.",
+    "sum": "Total: {{sum}} / {{total}}",
+    "mustSum": "The weights must add up to {{total}} to save.",
+    "weightInvalid": "Each weight must be a number from 0 to 100.",
+    "saveWeights": "Save weights",
+    "resetWeights": "Discard",
+    "weightOf": "Weight of {{name}}",
+    "colorOf": "Color of {{name}}",
+    "name": "Name",
+    "system": "System flag: its name cannot be changed.",
+    "newFlag": "New flag",
+    "newChild": "New subflag",
+    "add": "Add",
+    "addChildTo": "Add a subflag to {{name}}",
+    "delete": "Delete {{name}}",
+    "confirmDelete": "Delete “{{name}}”? Lines keep the mark, but it will no longer be recognized.",
+    "confirmDeleteTree": "Delete “{{name}}” and all its subflags? Lines keep the marks, but they will no longer be recognized.",
+    "confirm": "Delete",
+    "cancel": "Cancel",
+    "nameProblem": {
+      "empty": "Type a name.",
+      "slash": "The name cannot contain “/”.",
+      "taken": "There is already a flag with that name in this group."
+    }
+  },
+  "archived": {
+    "title": "Archived",
+    "intro": "Archived lines leave the page. Restoring one puts it back at the end of the page.",
+    "empty": "No archived lines.",
+    "on": "archived {{date}}",
+    "restore": "Restore",
+    "restoreLine": "Restore “{{title}}”",
+    "delete": "Delete",
+    "deleteLine": "Delete “{{title}}”",
+    "confirm": "Delete “{{title}}” for good?",
+    "confirmShort": "Delete for good?",
+    "deleteYes": "Yes, delete",
+    "cancel": "Cancel",
+    "restored": "“{{title}}” is back on the page.",
+    "deleted": "“{{title}}” was deleted."
+  },
+  "auth": {
+    "title": "Sign in",
+    "email": "Email",
+    "password": "Password",
+    "newPassword": "New password",
+    "code": "Verification code",
+    "passwordHint": "At least 8 characters, with upper and lower case, a number and a symbol.",
+    "offlineFirstSignIn": "You are offline. The first sign-in needs a connection; after that the app works without one.",
+    "signIn": {
+      "title": "Sign in",
+      "submit": "Sign in",
+      "toSignUp": "No account? Create one",
+      "forgot": "Forgot my password"
+    },
+    "signUp": {
+      "title": "Create account",
+      "submit": "Create account",
+      "toSignIn": "Back to sign in"
+    },
+    "confirm": {
+      "title": "Confirm your email",
+      "help": "We sent you a code by email. Enter it here to activate the account.",
+      "submit": "Confirm",
+      "resend": "Send the code again",
+      "resent": "Code sent again."
+    },
+    "forgot": {
+      "title": "Reset password",
+      "sendCode": "Send code",
+      "codeSent": "If the email exists, we sent you a code.",
+      "submit": "Change password"
+    },
+    "info": {
+      "confirmed": "Account confirmed. You can sign in now.",
+      "passwordChanged": "Password changed. Sign in with the new one."
+    },
+    "errors": {
+      "wrongCredentials": "Wrong email or password.",
+      "userExists": "An account with that email already exists.",
+      "notConfirmed": "The account is not confirmed yet.",
+      "wrongCode": "The code is not correct.",
+      "expiredCode": "The code expired. Ask for a new one.",
+      "weakPassword": "The password does not meet the requirements.",
+      "invalidInput": "Check the form fields.",
+      "tooManyAttempts": "Too many attempts. Wait a moment and try again.",
+      "network": "You are offline. Try again when you are back online.",
+      "generic": "Something went wrong. Please try again."
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "languageSystem": "Same as browser",
+    "theme": "Theme",
+    "account": "Account",
+    "signedInAs": "Signed in as {{email}}",
+    "signOut": "Sign out",
+    "signOutPending_one": "You have {{count}} change not uploaded to the cloud. If you sign out now, it will be lost.",
+    "signOutPending_other": "You have {{count}} changes not uploaded to the cloud. If you sign out now, they will be lost.",
+    "signOutOffline": "You are offline: connect and try again to upload them before signing out.",
+    "signOutRetry": "Sync and try again",
+    "signOutAnyway": "Sign out and lose them",
+    "cancel": "Cancel",
+    "signingOut": "Signing out…",
+    "gratitude": "Gratitude journal",
+    "gratitudeHint": "Adds a gratitude line at the top of the page on this schedule. This setting is for this browser.",
+    "gratitudeEnabled": "Create entries automatically",
+    "gratitudeCron": "Schedule (cron expression)",
+    "gratitudeNext": "Next entry: {{date}}"
+  },
+  "locale": {
+    "es": "Español",
+    "en": "English"
+  },
+  "theme": {
+    "system": "Same as system",
+    "light": "Light",
+    "dark": "Dark"
+  },
+  "activityType": {
+    "ACTION": "Action",
+    "REPETITIVE_ACTION": "Repeating action",
+    "HABIT": "Habit",
+    "ATTITUDE": "Attitude",
+    "SKILL": "Skill",
+    "MOMENTO": "Moment",
+    "GRATITUDE": "Gratitude",
+    "EXPIRATION": "Expiration"
+  },
+  "status": {
+    "DRAFT": "Draft",
+    "ACTIVE": "Active",
+    "INACTIVE": "Paused",
+    "COMPLETED": "Completed",
+    "ARCHIVED": "Archived"
+  },
+  "frequency": {
+    "DAILY": "Daily",
+    "WEEKLY": "Weekly",
+    "MONTHLY": "Monthly",
+    "CUSTOM": "Custom (cron)"
+  },
+  "proficiencyLevel": {
+    "BEGINNER": "Beginner",
+    "INTERMEDIATE": "Intermediate",
+    "ADVANCED": "Advanced",
+    "EXPERT": "Expert"
+  },
+  "flag": {
+    "personal": "Personal",
+    "family": "Family",
+    "income": "Income",
+    "spiritual": "Spiritual",
+    "health": "Health",
+    "errand": "Errands",
+    "fun": "Fun",
+    "salary": "Salary",
+    "project": "Project",
+    "rent": "Rent"
+  },
+  "line": {
+    "tick": {
+      "complete": "Mark as done (line {{n}})",
+      "uncomplete": "Mark as not done (line {{n}})",
+      "repeat": "Add one (line {{n}}): {{count}}",
+      "habit": "Add a day to the streak (line {{n}}): {{count}}",
+      "gratitude": "Write the gratitude (line {{n}})",
+      "expiration": "Renew or archive (line {{n}})"
+    },
+    "streak": "Streak: {{count}}",
+    "count": "Done {{count}} times",
+    "countOf": "Done {{count}} of {{target}} times",
+    "daysLeft": "Expires in {{count}} days",
+    "dueToday": "Expires today",
+    "overdue": "Expired {{count}} days ago",
+    "attitude": "Attitude",
+    "moment": "Moment",
+    "paused": "Paused",
+    "more": "Details of line {{n}}"
+  },
+  "panel": {
+    "title": "Line details",
+    "close": "Close",
+    "text": "Text",
+    "type": "Type",
+    "status": "Status",
+    "actions": {
+      "pause": "Pause",
+      "reactivate": "Reactivate",
+      "complete": "Complete",
+      "archive": "Archive"
+    },
+    "flags": "Flags",
+    "noFlags": "No flags",
+    "addFlag": "Add flag",
+    "createFlag": "Create flag “{{name}}”",
+    "removeFlag": "Remove {{name}}",
+    "deadline": "Deadline",
+    "eventDate": "Date of the moment",
+    "expirationDate": "Expiration date",
+    "clearDate": "Clear date",
+    "targetCount": "Target count",
+    "completionCount": "Times done",
+    "streak": "Current streak",
+    "targetStreak": "Target streak",
+    "resetStreak": "Reset streak",
+    "affirmation": "Affirmation",
+    "proficiencyLevel": "Level",
+    "noLevel": "No level",
+    "learningResources": "Resources (one per line)",
+    "recipient": "For whom",
+    "renewalLeadDays": "Remind this many days before",
+    "documentRef": "Document reference",
+    "renewalUrl": "Renewal link",
+    "renewDate": "New date",
+    "renew": "Renewed",
+    "archiveExpired": "Archive without renewing",
+    "description": "Description",
+    "gratitudeNotes": "Gratitude notes",
+    "saveComplete": "Save and complete",
+    "needsNotes": "Write something before completing.",
+    "schedule": "Schedule",
+    "cron": "Cron expression",
+    "cronHint": "minute hour day month weekday, for example 0 8 * * 1-5",
+    "cronNext": "Next time: {{date}}",
+    "cronInvalid": "The cron expression is not valid.",
+    "frequency": "Frequency",
+    "noFrequency": "No frequency",
+    "feedback": "Feedback",
+    "delete": "Delete line",
+    "habitFormed": "You reached the target streak. Mark the habit as formed?",
+    "markFormed": "Mark as formed",
+    "dismiss": "Not now"
+  },
+  "sync": {
+    "SYNCED": "Synced",
+    "SYNCING": "Syncing…",
+    "OFFLINE": "Offline",
+    "ERROR": "Not synced",
+    "signInAgain": "Sign in again to sync",
+    "lastSynced": "Last synced: {{time}}",
+    "pending_one": "{{count}} change not uploaded",
+    "pending_other": "{{count}} changes not uploaded",
+    "syncNow": "Click to sync now"
+  },
+  "feedback": {
+    "none": "No feedback yet.",
+    "rating": "Rating",
+    "ratingValue": "{{rating}} of 5",
+    "ratingRequired": "Pick 1 to 5 stars.",
+    "valenceLabel": "Mood",
+    "arousalLabel": "Energy",
+    "valence": {
+      "negative": "Bad",
+      "neutral": "Neutral",
+      "positive": "Good"
+    },
+    "arousal": {
+      "calm": "Calm",
+      "medium": "Normal",
+      "high": "Energized"
+    },
+    "notSet": "not set",
+    "clear": "Clear",
+    "notes": "Notes",
+    "save": "Save feedback",
+    "delete": "Delete",
+    "prompt": "How did it go?",
+    "rate": "Rate it"
+  },
+  "pwa": {
+    "newVersion": "A new version of bacuy-y is available.",
+    "update": "Update",
+    "later": "Later",
+    "installTitle": "Install the app",
+    "install": "Install bacuy-y",
+    "installHint": "Installed, bacuy-y opens in its own window, from the desktop or the home screen, and works offline.",
+    "installLater": "You can install it later from the browser menu:",
+    "installed": "bacuy-y is already installed on this device.",
+    "howDesktop": "Computer (Chrome or Edge): the install icon in the address bar.",
+    "howAndroid": "Android (Chrome): ⋮ menu → “Install app” or “Add to Home screen”.",
+    "howIos": "iPhone or iPad (Safari): Share button → “Add to Home Screen”."
+  }
+}

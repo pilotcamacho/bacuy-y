@@ -1,0 +1,28 @@
+# Amplify Hosting response headers. The service worker, the page and the manifest must never be
+# served from an HTTP cache, or a new deploy is not noticed ("new version" toast). Everything
+# else under assets/ has a content hash in its name and can be cached forever.
+customHeaders:
+  - pattern: "/sw.js"
+    headers:
+      - key: Cache-Control
+        value: no-cache
+  - pattern: "/index.html"
+    headers:
+      - key: Cache-Control
+        value: no-cache
+  - pattern: "/manifest.webmanifest"
+    headers:
+      - key: Cache-Control
+        value: no-cache
+  - pattern: "/assets/**"
+    headers:
+      - key: Cache-Control
+        value: public, max-age=31536000, immutable
+  - pattern: "**/*"
+    headers:
+      - key: X-Content-Type-Options
+        value: nosniff
+      - key: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      - key: X-Frame-Options
+        value: DENY
