@@ -11,6 +11,9 @@ const email = process.env.BACUYY_TEST_EMAIL;
 const password = process.env.BACUYY_TEST_PASSWORD;
 
 test.skip(!email || !password, "needs BACUYY_TEST_EMAIL / BACUYY_TEST_PASSWORD");
+// Requests that go through the service worker skip page.route (seen in WebKit): without it,
+// AppSync is reliably blocked and no test pulls another test's lines from the cloud.
+test.use({ serviceWorkers: "block" });
 
 async function signIn(page: Page) {
   await page.route("**/graphql", (route) => route.abort("internetdisconnected"));
@@ -225,11 +228,41 @@ test("a repetitive task ticked is hidden until next time, also after a reload; '
 
   await page.reload();
   await expect(lines(page)).toHaveCount(1);
-  const toggle = page.getByTestId("hidden-toggle");
-  await expect(toggle).toHaveText(/1 (renglón oculto|line hidden)/);
-  await toggle.click();
+  await expect(page.getByTestId("hidden-count")).toHaveText("1");
+  await page.getByTestId("line-tabs").getByRole("link", { name: /^ocultas|^hidden/i }).click();
+  await expect(page.getByTestId("hidden-item-0")).toContainText("regar plantas ~semanal");
   await page.getByTestId("hidden-show-0").click();
+  await expect(page.locator('[data-testid^="hidden-item-"]')).toHaveCount(0);
+  await page.getByTestId("line-tabs").getByRole("link", { name: /^pendientes$|^to do$/i }).click();
   await expect(lines(page)).toHaveCount(2);
   await expect(lines(page).first()).toHaveValue("regar plantas ~semanal");
   await expect(page.getByTestId("line-done-0")).toContainText("↻ 1");
+});
+
+test("hide a line from the panel until a date and time; it stays hidden after a reload; change it on the Hidden tab", async ({ page }) => {
+  await signIn(page);
+  await lines(page).first().click();
+  await page.keyboard.type("renovar seguro");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("otra cosa");
+  await page.waitForTimeout(500); // text debounce
+
+  await page.getByTestId("line-more-0").click();
+  const panel = page.getByTestId("line-panel");
+  await panel.getByTestId("panel-hide-custom").fill("2030-01-15T09:30");
+  await panel.getByTestId("panel-hide-custom-apply").click();
+  await expect(panel).toBeHidden();
+  await expect(page.getByTestId("hidden-toast")).toContainText(/oculta hasta|hidden until/i);
+  await expect(lines(page)).toHaveCount(1);
+
+  await page.reload();
+  await expect(lines(page)).toHaveCount(1);
+  await page.getByTestId("line-tabs").getByRole("link", { name: /^ocultas|^hidden/i }).click();
+  const item = page.getByTestId("hidden-item-0");
+  await expect(item).toContainText("renovar seguro");
+  await expect(item.locator("time")).toHaveAttribute("datetime", new Date(2030, 0, 15, 9, 30).toISOString());
+
+  await page.getByTestId("hidden-change-0").click();
+  await page.getByTestId("hidden-0-indefinite").click();
+  await expect(item).toContainText(/hasta que lo muestres|until you show it/);
 });

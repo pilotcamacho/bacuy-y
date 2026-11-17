@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import {
   DndContext,
@@ -13,10 +13,10 @@ import {
 } from "@dnd-kit/core";
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAuth } from "@/hooks/useAuth";
+import { usePageClock } from "@/hooks/usePageClock";
 import { subscribe } from "@/lib/events";
 import { restrictToVerticalAxis } from "@/lib/dndModifiers";
-import { GHOST_LINE, nextReveal, pageLines } from "@/services/editor/pageLines";
-import { HiddenLines } from "./HiddenLines";
+import { GHOST_LINE, pageLines } from "@/services/editor/pageLines";
 import { usePageStore } from "@/stores/pageStore";
 import { LineRow, type LineHandlers } from "./LineRow";
 import { LinePanel } from "./LinePanel";
@@ -61,21 +61,7 @@ export function LineEditor() {
   }, [store]);
 
   // The page's clock: lines hidden until later come back when their time arrives.
-  const [now, setNow] = useState(() => new Date());
-  useEffect(() => {
-    const at = nextReveal(activities, now);
-    if (!at) return;
-    const delay = Math.min(Math.max(at.getTime() - Date.now() + 50, 0), 2_147_483_647);
-    const timer = setTimeout(() => setNow(new Date()), delay);
-    return () => clearTimeout(timer);
-  }, [activities, now]);
-  useEffect(() => {
-    const onVisible = () => {
-      if (document.visibilityState === "visible") setNow(new Date());
-    };
-    document.addEventListener("visibilitychange", onVisible);
-    return () => document.removeEventListener("visibilitychange", onVisible);
-  }, []);
+  const now = usePageClock(activities);
 
   const lines = useMemo(() => pageLines(activities, now), [activities, now]);
   const shown = lines.length > 0 ? lines : [GHOST_LINE];
@@ -93,9 +79,11 @@ export function LineEditor() {
         void store()
           .move(id, delta)
           .then(() => {
-            // Put the focus back only if the move lost it; a key pressed meanwhile (↓ to the
-            // next line) already moved it on, and must win.
-            if (!(document.activeElement instanceof HTMLTextAreaElement)) store().setFocus(id, caret);
+            // Put the focus back only if the move lost it (nothing focused); a key pressed
+            // meanwhile (↓ to the next line, Ctrl+. into the panel) already moved it on, and
+            // must win.
+            const active = document.activeElement;
+            if (!active || active === document.body) store().setFocus(id, caret);
           });
       },
       onFocusNeighbour: (id, direction, caret) => {
@@ -170,7 +158,6 @@ export function LineEditor() {
           </div>
         </SortableContext>
       </DndContext>
-      <HiddenLines activities={activities} now={now} />
       <LinePanel />
       <UndoToast />
     </>

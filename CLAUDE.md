@@ -75,8 +75,9 @@ v1 has **one page per user**: all of the user's non-deleted, non-archived activi
 
 1. **One line = one `Activity` row.** The page is never stored as a text blob. Every visible line
    has an `Activity`, and every non-deleted, non-archived `Activity` is one visible line, except
-   a repetitive task or habit ticked "done for this time": it is hidden until `hiddenUntil` (its
-   next occurrence) and listed under "hidden until later" below the page.
+   a hidden line: a repetitive task or habit ticked "done for this time" (hidden until
+   `hiddenUntil`, its next occurrence), or a line hidden by hand from the panel (until a date
+   and time, or until shown again: `isHidden`). The **Hidden** tab lists them.
 2. **The device is the source of truth for the UI.** Screens read and write only IndexedDB,
    through the stores. They never wait for the network. No user action is ever blocked or rolled
    back because the device is offline.
@@ -356,7 +357,9 @@ These adapt the expo-amplify-kit conventions to a web-only app.
   (`line-row-<index>`, `line-done-<index>`, `line-handle-<index>`, `line-more-<index>`, `line-panel`,
   `sync-indicator`, `flag-weight-<id>`, `flags-save-<parentId|root>`, `flags-drift`, `feedback-prompt`, `feedback-form`,
   `feedback-list`, `journal-entry`, `priority-item-<rank>`, `priority-more-<rank>`, `archived-item-<index>`,
-  `archived-restore-<index>`, `archived-delete-<index>`, `hidden-toast`, `hidden-toggle`, `hidden-item-<index>`,
+  `archived-restore-<index>`, `archived-delete-<index>`, `hidden-toast`, `hidden-count`, `hidden-list`, `hidden-item-<index>`, `hidden-change-<index>`, `hidden-more-<index>`,
+  `panel-hidden`, `panel-hide-preset-<later|tomorrow|monday|nextMonth>`, `panel-hide-custom`, `panel-hide-custom-apply`,
+  `panel-hide-indefinite`,
   `hidden-show-<index>`, `update-prompt`, `install-section`, `line-tabs`, `completed-toast`, `completed-list`,
   `completed-item-<index>`, `completed-reopen-<index>`, `completed-more-<index>`, `completed-delete-<index>`,
   `completed-delete-confirm-<index>`, `completed-show-more`).

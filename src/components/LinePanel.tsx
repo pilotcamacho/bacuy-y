@@ -21,6 +21,8 @@ import {
 import { FeedbackSection } from "@/components/FeedbackForm";
 import { flagLabel } from "@/services/flags/label";
 import { canComplete, statusActions } from "@/services/lifecycle/status";
+import { isHiddenNow } from "@/services/lifecycle/nextShow";
+import { HideChooser } from "./HideChooser";
 import { useFlagStore } from "@/stores/flagStore";
 import { usePageStore } from "@/stores/pageStore";
 
@@ -245,6 +247,30 @@ function PanelBody({ row, section, nonce }: { row: ActivityRow; section: string 
             ))}
           </div>
         </Section>
+
+        {/* 2b. Hide until… (not for completed or archived lines: they are off the page already) */}
+        {status !== "COMPLETED" && status !== "ARCHIVED" && (
+          <Section title={t("hide.title")}>
+            {isHiddenNow(row, new Date()) ? (
+              <div className="flex flex-wrap items-center gap-2" data-testid="panel-hidden">
+                <p className="text-sm">
+                  {row.isHidden
+                    ? t("hidden.untilShown")
+                    : t("page.hidden.returns", {
+                        date: new Intl.DateTimeFormat(i18n.resolvedLanguage, { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(
+                          new Date(row.hiddenUntil!),
+                        ),
+                      })}
+                </p>
+                <button type="button" className={BUTTON} onClick={() => void store().showNow(row.id)}>
+                  {t("page.hidden.showNow")}
+                </button>
+              </div>
+            ) : (
+              <HideChooser testPrefix="panel-hide" onHide={(until) => void store().hide(row.id, until)} />
+            )}
+          </Section>
+        )}
 
         {/* 3. Flags */}
         <Section title={t("panel.flags")}>

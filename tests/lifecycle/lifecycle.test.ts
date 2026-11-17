@@ -5,7 +5,7 @@ import { DEFAULT_FLAGS, SEED_EDITED_AT, defaultFlagRows, missingDefaultFlags } f
 import { diffActivityFlags } from "@/services/lifecycle/activityFlags";
 import { deriveTextFields } from "@/services/lifecycle/derive";
 import { applyStatusAction, canComplete, statusActions, statusForFlags } from "@/services/lifecycle/status";
-import { isHiddenNow, nextShowAt } from "@/services/lifecycle/nextShow";
+import { hidePresetAt, isHiddenNow, nextShowAt } from "@/services/lifecycle/nextShow";
 import { daysUntil, tick, tickIsClickable, type TickRow } from "@/services/lifecycle/tick";
 
 const SUB = "14b83488-e001-703e-30a3-cefb7b703fd9";
@@ -210,3 +210,22 @@ describe("default flags", () => {
 function now() {
   return new Date().toISOString();
 }
+
+describe("hide until…", () => {
+  // NOW = Sun 15 Nov 2026, 18:30 local.
+  it("quick choices: 3 hours, tomorrow 8:00, next Monday 8:00, a month (clamped)", () => {
+    expect(hidePresetAt("later", NOW)).toEqual(new Date(2026, 10, 15, 21, 30));
+    expect(hidePresetAt("tomorrow", NOW)).toEqual(new Date(2026, 10, 16, 8));
+    expect(hidePresetAt("monday", NOW)).toEqual(new Date(2026, 10, 16, 8));
+    expect(hidePresetAt("monday", new Date(2026, 10, 16, 7))).toEqual(new Date(2026, 10, 23, 8)); // never today
+    expect(hidePresetAt("nextMonth", NOW)).toEqual(new Date(2026, 11, 15, 8));
+    expect(hidePresetAt("nextMonth", new Date(2027, 0, 31, 10))).toEqual(new Date(2027, 1, 28, 8));
+  });
+
+  it("isHidden hides with no time; hiddenUntil hides until it passes", () => {
+    expect(isHiddenNow({ isHidden: true, hiddenUntil: null }, NOW)).toBe(true);
+    expect(isHiddenNow({ isHidden: false, hiddenUntil: new Date(2026, 10, 16).toISOString() }, NOW)).toBe(true);
+    expect(isHiddenNow({ isHidden: false, hiddenUntil: new Date(2026, 10, 14).toISOString() }, NOW)).toBe(false);
+    expect(isHiddenNow({ isHidden: null, hiddenUntil: null }, NOW)).toBe(false);
+  });
+});

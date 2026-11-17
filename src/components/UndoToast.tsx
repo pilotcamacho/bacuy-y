@@ -52,10 +52,19 @@ export function UndoToast() {
       : "";
     return (
       <div role="status" className={TOAST} data-testid={notice.kind === "hidden" ? "hidden-toast" : "completed-toast"}>
-        <span>{notice.kind === "hidden" ? t("page.hidden.toast", { date }) : t("page.completed.toast")}</span>
+        <span>
+          {notice.kind === "completed"
+            ? t("page.completed.toast")
+            : !notice.manual
+              ? t("page.hidden.toast", { date })
+              : date
+                ? t("page.hidden.manualToast", { date })
+                : t("page.hidden.manualToastIndefinite")}
+        </span>
         <button type="button" className={ACTION} onClick={() => void store().undoHide()}>
           {t("page.undo")}
         </button>
+        {!notice.manual && (
         <button
           type="button"
           className={ACTION}
@@ -67,6 +76,7 @@ export function UndoToast() {
         >
           {t("feedback.rate")}
         </button>
+        )}
       </div>
     );
   }

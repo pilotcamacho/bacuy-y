@@ -29,11 +29,11 @@
     "lineDeleted": "Line deleted",
     "hidden": {
       "toast": "Done for now. Back on {{date}}.",
-      "summary_one": "{{count}} line hidden until later",
-      "summary_other": "{{count}} lines hidden until later",
       "returns": "back on {{date}}",
       "showNow": "Show now",
-      "showNowLine": "Show “{{title}}” now"
+      "showNowLine": "Show “{{title}}” now",
+      "manualToast": "Hidden until {{date}}.",
+      "manualToastIndefinite": "Hidden until you show it."
     },
     "completed": {
       "toast": "Completed."
@@ -350,7 +350,9 @@
       "page": "To do",
       "completed": "Completed",
       "hidden": "Hidden",
-      "archived": "Archived"
+      "archived": "Archived",
+      "hiddenCount_one": "{{count}} hidden",
+      "hiddenCount_other": "{{count}} hidden"
     }
   },
   "completed": {
@@ -365,5 +367,27 @@
     "moreLine": "More options for “{{title}}”",
     "showMore_one": "Show {{count}} more",
     "showMore_other": "Show {{count}} more"
+  },
+  "hide": {
+    "title": "Hide",
+    "presets": {
+      "later": "3 hours",
+      "tomorrow": "Tomorrow 8:00",
+      "monday": "Monday 8:00",
+      "nextMonth": "In a month"
+    },
+    "custom": "Until",
+    "apply": "Hide",
+    "indefinite": "Until I show it"
+  },
+  "hidden": {
+    "title": "Hidden",
+    "intro": "Lines off the page for now: the ones you hid and repetitive tasks done for this time. They come back to their place on their own.",
+    "empty": "No hidden lines.",
+    "untilShown": "hidden until you show it",
+    "change": "Change",
+    "changeLine": "Change until when “{{title}}” is hidden",
+    "changed": "“{{title}}”: new date saved.",
+    "shown": "“{{title}}” is back on the page."
   }
 }

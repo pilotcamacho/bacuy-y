@@ -208,9 +208,18 @@ square at the start of the line.
 The line leaves the page and the priority view until then, and comes back by itself at that
 time, in the same place (the page keeps a timer to the soonest one; offline too). A toast
 "Hecho por ahora. Vuelve el …" offers *Deshacer* (counter and visibility as before) and
-*Valorar* for 6 s. Below the page, "N renglones ocultos hasta más tarde" expands to list them
-with when each returns and *Mostrar ahora* (`hiddenUntil = null`). `hiddenUntil` syncs, so a
-line done on one device is hidden on the others. The focus moves to the line taking its place.
+*Valorar* for 6 s. The **Ocultas** tab lists them with when each returns, *Mostrar ahora*
+(`hiddenUntil = null`) and *Cambiar*. `hiddenUntil` syncs, so a line done on one device is
+hidden on the others. The focus moves to the line taking its place.
+
+**Hide by hand** (bacuy-x's snooze; confirmed 2026-11-17). Panel → *Ocultar*: quick choices
+(3 horas, mañana 8:00, lunes 8:00 — never today —, en un mes, same day clamped), a date and
+time (`datetime-local`, must be in the future), or *Hasta que la muestre*. A date sets
+`hiddenUntil` (and `isHidden = false`); "until shown" sets `isHidden = true` and clears
+`hiddenUntil`. A line is hidden when `isHidden` or `hiddenUntil` is in the future
+(`isHiddenNow`). The panel closes, the focus moves on, and a toast "Oculta hasta el …" /
+"Oculta hasta que la muestres." offers *Deshacer* (no *Valorar*: nothing was done). On a
+hidden line the panel shows when it returns and *Mostrar ahora* instead.
 
 Shared rules:
 
@@ -238,6 +247,7 @@ Right-hand drawer (≥ 768 px) or bottom sheet (phones). `data-testid="line-pane
 
 1. **Text**: the line (same input as the page) for convenience.
 2. **Type** (select) and **status** (pause / reactivate / complete / archive, per type rules).
+   **Ocultar** (not for completed or archived lines): see "Hide by hand" in §4.
 3. **Flags**: chips of the resolved flags; add from the tree; remove. Writes `#flag` marks.
 4. **Type fields**: only those for the current type (§1 list). Date fields with a mark write
    the mark; the others are plain inputs.
@@ -255,14 +265,15 @@ Every change in the panel is a structural write (immediate, no debounce).
 
 | View | Rows | Order | Editable |
 |---|---|---|---|
-| Page | not deleted, status ≠ `ARCHIVED` / `COMPLETED`, `hiddenUntil` not in the future | `position` | yes |
+| Page | not deleted, status ≠ `ARCHIVED` / `COMPLETED`, not hidden (`isHidden`, or `hiddenUntil` in the future) | `position` | yes |
+| Hidden | the page's rows that are hidden now | `hiddenUntil` asc, then "until shown" (`isHidden`) by `position` | show now, change (same choices as the panel), panel |
 | Priority | `status = ACTIVE`, not `isHidden`, `hiddenUntil` passed, expiration within `renewalLeadDays` | score desc (`services/priority/score.ts`) | tick and panel only; no text editing, no drag. Click → go to that line on the page. |
 | Journal | `GRATITUDE` + `COMPLETED` | `updatedAt`/`editedAt` desc | via panel |
 | Completed | `status = COMPLETED`, not `GRATITUDE` (the journal's) | `completedAt` desc (falls back to `editedAt` for lines completed before the field existed), grouped by day, 50 at a time | untick (back to its place), panel, delete |
 | Archived | `status = ARCHIVED` | `editedAt` desc | restore, delete |
 
-Page, Completed and Archived are tabs of the "Página" section (`components/LineTabs`); the
-main navigation keeps "Página" active on all three.
+Page, Hidden (with its count), Completed and Archived are tabs of the "Página" section
+(`components/LineTabs`); the main navigation keeps "Página" active on all of them.
 
 **Memory:** the page store loads every row except completed tasks (completed gratitude
 entries stay: the journal needs them). The Completed page reads completed rows from IndexedDB

@@ -12,6 +12,7 @@ import i18n from "@/lib/i18n";
 import { activityFlagId, flagId } from "@/lib/ids";
 import { Archived } from "@/routes/Archived";
 import { COMPLETED_PAGE_SIZE, Completed } from "@/routes/Completed";
+import { Hidden } from "@/routes/Hidden";
 import { PriorityView } from "@/routes/PriorityView";
 import { resetFeedbackStore } from "@/stores/feedbackStore";
 import { resetPageStoreForTests } from "@/stores/pageStore";
@@ -262,5 +263,53 @@ describe("Completed view", () => {
     await user.click(screen.getByTestId("completed-show-more"));
     await waitFor(() => expect(screen.getAllByTestId(/^completed-item-/)).toHaveLength(COMPLETED_PAGE_SIZE + 9));
     expect(screen.queryByTestId("completed-show-more")).toBeNull();
+  });
+});
+
+describe("Hidden view", () => {
+  const inDays = (days: number, hour = 9) => {
+    const d = new Date();
+    d.setDate(d.getDate() + days);
+    d.setHours(hour, 0, 0, 0);
+    return d.toISOString();
+  };
+
+  beforeEach(async () => {
+    await db.putLocal("Activity", line("page", "en la página", "", "a0"));
+    await db.putLocal("Activity", line("later", "más adelante", "", "a1", { hiddenUntil: inDays(5) }));
+    await db.putLocal("Activity", line("soon", "pronto", "", "a2", { hiddenUntil: inDays(1) }));
+    await db.putLocal("Activity", line("someday", "algún día", "", "a3", { isHidden: true }));
+    await db.putLocal("Activity", line("past", "ya volvió", "", "a4", { hiddenUntil: inDays(-1) }));
+  });
+
+  const items = () => screen.getAllByTestId(/^hidden-item-/).map((li) => li.querySelector("p")!.textContent);
+
+  it("lists hidden lines, the soonest back first, 'until shown' last; the tab shows the count", async () => {
+    renderAt("/hidden", <Hidden />);
+    await waitFor(() => expect(items()).toEqual(["pronto", "más adelante", "algún día"]));
+    expect(screen.getByTestId("hidden-item-2")).toHaveTextContent("oculto hasta que lo muestres");
+    expect(screen.getByTestId("hidden-count")).toHaveTextContent("3");
+    expect(within(screen.getByTestId("line-tabs")).getByRole("link", { name: /^Ocultas/ })).toHaveAttribute("aria-current", "page");
+  });
+
+  it("'show now' puts it back on the page; 'change' sets a new time or 'until shown'", async () => {
+    const user = userEvent.setup();
+    renderAt("/hidden", <Hidden />);
+    await user.click(await screen.findByRole("button", { name: "Mostrar ahora «pronto»" }));
+    await waitFor(() => expect(items()).toEqual(["más adelante", "algún día"]));
+    expect(await db.get("Activity", "soon")).toMatchObject({ hiddenUntil: null, isHidden: false });
+    expect(screen.getByRole("status")).toHaveTextContent("«pronto» ha vuelto a la página.");
+
+    // "más adelante" → until shown again: with "algún día", in page order.
+    await user.click(screen.getByRole("button", { name: "Cambiar hasta cuándo se oculta «más adelante»" }));
+    await user.click(screen.getByTestId("hidden-0-indefinite"));
+    await waitFor(async () => expect(await db.get("Activity", "later")).toMatchObject({ isHidden: true, hiddenUntil: null }));
+    await waitFor(() => expect(items()).toEqual(["más adelante", "algún día"]));
+
+    // "algún día" → tomorrow 8:00.
+    await user.click(screen.getByRole("button", { name: "Cambiar hasta cuándo se oculta «algún día»" }));
+    await user.click(screen.getByTestId("hidden-1-preset-tomorrow"));
+    await waitFor(async () => expect((await db.get("Activity", "someday"))!.isHidden).toBe(false));
+    expect(new Date((await db.get("Activity", "someday"))!.hiddenUntil!).getHours()).toBe(8);
   });
 });

@@ -236,3 +236,14 @@ Record here every model change copied from bacuy-x (date, bacuy-x change, what c
 - Running `npm install` on top of an existing `node_modules` rewrites the lock file into a form
   npm 11.19 rejects, with either npm version. Generate lock changes in an empty folder
   (`--package-lock-only`), verify with `ci --dry-run` there, then copy the lock back.
+
+## After release (Phase 14)
+
+- Playwright: requests that go through a service worker skip `page.route` (seen in WebKit).
+  Specs that block AppSync to test the editor alone use `test.use({ serviceWorkers: "block" })`;
+  without it, a test's lines reached the cloud test account and another test pulled them.
+- After Alt+↑/↓ the editor re-focuses the moved line when its write finishes only if nothing
+  has focus. Checking "not a textarea" was wrong: the panel's text field is an `<input>`, so
+  Ctrl+. right after a move lost the panel's focus on slow devices.
+- The test account in the sandbox may hold lines leaked by the old page specs (before the fix
+  above). Harmless: the page specs never sync; sync/offline specs clean up their own rows.

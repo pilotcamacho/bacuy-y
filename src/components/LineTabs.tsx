@@ -1,9 +1,17 @@
+import { useMemo } from "react";
 import { NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { usePageClock } from "@/hooks/usePageClock";
 import { LINE_TABS as TABS } from "@/lib/lineTabs";
+import { hiddenLines } from "@/services/editor/pageLines";
+import { usePageStore } from "@/stores/pageStore";
 
+/** The tabs of the "Page" section (lib/lineTabs): where lines are. "Hidden" shows its count. */
 export function LineTabs() {
   const { t } = useTranslation();
+  const activities = usePageStore((s) => s.activities);
+  const now = usePageClock(activities);
+  const hidden = useMemo(() => hiddenLines(activities, now).length, [activities, now]);
   return (
     <nav
       aria-label={t("lines.tabs.label")}
@@ -25,6 +33,15 @@ export function LineTabs() {
           }
         >
           {t(tab.key)}
+          {tab.to === "/hidden" && hidden > 0 && (
+            <span
+              className="ms-1.5 rounded-full bg-neutral-200 px-1.5 text-xs tabular-nums text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
+              aria-label={t("lines.tabs.hiddenCount", { count: hidden })}
+              data-testid="hidden-count"
+            >
+              {hidden}
+            </span>
+          )}
         </NavLink>
       ))}
     </nav>

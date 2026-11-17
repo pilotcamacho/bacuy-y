@@ -207,6 +207,38 @@ describe("LineEditor", () => {
     unmount();
   });
 
+  it("after Alt+↑, a slow save never pulls the focus back from where the user went (e.g. the panel)", async () => {
+    const user = userEvent.setup();
+    await mount();
+    await user.click(boxes()[0]!);
+    await user.keyboard("uno{Enter}dos");
+    await act(() => usePageStore.getState().flushAll());
+
+    // Hold the move's write until released.
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => (release = resolve));
+    const put = db.putManyLocal.bind(db);
+    db.putManyLocal = async (ops) => {
+      await held;
+      return put(ops);
+    };
+    const other = document.createElement("input");
+    try {
+      await user.keyboard("{Alt>}{ArrowUp}{/Alt}");
+      expect(values()).toEqual(["dos", "uno"]);
+      document.body.appendChild(other);
+      act(() => other.focus()); // like Ctrl+. focusing the panel's text field
+      await act(async () => {
+        release();
+        await usePageStore.getState().flushAll();
+      });
+      expect(document.activeElement).toBe(other);
+    } finally {
+      db.putManyLocal = put;
+      other.remove();
+    }
+  });
+
   it("↑ / ↓ move the focus between lines", async () => {
     const user = userEvent.setup();
     await mount();

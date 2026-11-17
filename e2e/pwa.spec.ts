@@ -31,6 +31,10 @@ test("installable: manifest, icons and service worker pass Chrome's check", asyn
 
 const lines = (page: Page) => page.locator('[data-testid^="line-row-"] textarea');
 
+test.describe(() => {
+  // No service worker here, so page.route reliably blocks AppSync (see page.spec.ts).
+  test.use({ serviceWorkers: "block" });
+
 test("keyboard only: type, split, tick, panel open and close, move a line, navigate", async ({ page, browserName }) => {
   test.skip(!email || !password, "needs BACUYY_TEST_EMAIL / BACUYY_TEST_PASSWORD");
   test.skip(browserName === "webkit", "Safari moves Tab focus only to text fields by default");
@@ -85,4 +89,5 @@ test("keyboard only: type, split, tick, panel open and close, move a line, navig
   await page.getByRole("link", { name: /^prioridad$|^priority$/i }).focus();
   await page.keyboard.press("Enter");
   await expect(page).toHaveURL(/\/priority$/);
+});
 });

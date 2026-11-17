@@ -199,9 +199,8 @@ describe("tick", () => {
     const back = new Date(row.hiddenUntil!);
     expect(back.getHours()).toBe(0);
     expect(Math.round((back.getTime() - Date.now()) / 86_400_000)).toBeGreaterThanOrEqual(6);
-    // Gone from the page (only the empty line to type in), listed below, and a toast to undo.
+    // Gone from the page (only the empty line to type in), and a toast to undo.
     expect(boxes().map((b) => b.value)).toEqual([""]);
-    expect(screen.getByTestId("hidden-toggle")).toHaveTextContent("1 renglón oculto hasta más tarde");
     const toast = screen.getByTestId("hidden-toast");
     expect(toast).toHaveTextContent(/^Hecho por ahora\. Vuelve el /);
 
@@ -209,16 +208,56 @@ describe("tick", () => {
     await flush();
     expect(await onlyActivity()).toMatchObject({ completionCount: 0, hiddenUntil: null });
     expect(boxes().map((b) => b.value)).toEqual(["regar ~semanal"]);
-    expect(screen.queryByTestId("hidden-toggle")).toBeNull();
 
-    // Ticked again, then brought back by hand: the count stays.
+    // Ticked again, then brought back by hand (the Hidden page's "show now"): the count stays.
     await user.click(screen.getByTestId("line-done-0"));
     await flush();
-    await user.click(screen.getByTestId("hidden-toggle"));
-    await user.click(screen.getByRole("button", { name: "Mostrar ahora «regar»" }));
+    await act(() => usePageStore.getState().showNow(row.id));
     await flush();
     expect(await onlyActivity()).toMatchObject({ completionCount: 1, hiddenUntil: null });
     expect(boxes().map((b) => b.value)).toEqual(["regar ~semanal"]);
+  });
+
+  it("hide from the panel: a quick choice hides it until then, undo brings it back", async () => {
+    const user = await typeLine("uno{Enter}dos");
+    await user.click(screen.getByTestId("line-more-0"));
+    await user.click(within(screen.getByTestId("line-panel")).getByRole("button", { name: "Mañana 8:00" }));
+    await flush();
+    expect(screen.queryByTestId("line-panel")).toBeNull();
+    expect(boxes().map((b) => b.value)).toEqual(["dos"]);
+    await waitFor(() => expect(boxes()[0]).toHaveFocus());
+    const uno = (await db.getAll("Activity")).find((r) => r.rawInput === "uno")!;
+    const back = new Date(uno.hiddenUntil!);
+    expect([back.getHours(), back.getMinutes()]).toEqual([8, 0]);
+    expect(back.getDate()).toBe(new Date(Date.now() + 86_400_000).getDate());
+    expect(uno.isHidden).toBe(false);
+
+    const toast = screen.getByTestId("hidden-toast");
+    expect(toast).toHaveTextContent(/^Oculta hasta el /);
+    expect(within(toast).queryByRole("button", { name: "Valorar" })).toBeNull(); // nothing to rate
+    await user.click(within(toast).getByRole("button", { name: "Deshacer" }));
+    await flush();
+    expect(boxes().map((b) => b.value)).toEqual(["uno", "dos"]);
+    expect(await db.get("Activity", uno.id)).toMatchObject({ hiddenUntil: null, isHidden: false });
+  });
+
+  it("hide until shown again: it stays hidden (no time), and the panel offers 'show now'", async () => {
+    const user = await typeLine("algún día");
+    await user.click(screen.getByTestId("line-more-0"));
+    await user.click(within(screen.getByTestId("line-panel")).getByRole("button", { name: "Hasta que la muestre" }));
+    await flush();
+    const row = await onlyActivity();
+    expect(row).toMatchObject({ isHidden: true, hiddenUntil: null });
+    expect(screen.getByTestId("hidden-toast")).toHaveTextContent("Oculta hasta que la muestres.");
+    expect(boxes().map((b) => b.value)).toEqual([""]);
+
+    act(() => usePageStore.getState().openPanel(row.id));
+    const panel = within(screen.getByTestId("line-panel"));
+    expect(panel.getByTestId("panel-hidden")).toHaveTextContent("oculto hasta que lo muestres");
+    await user.click(panel.getByRole("button", { name: "Mostrar ahora" }));
+    await flush();
+    expect(await onlyActivity()).toMatchObject({ isHidden: false, hiddenUntil: null });
+    expect(boxes().map((b) => b.value)).toEqual(["algún día"]);
   });
 
   it("a hidden line comes back by itself when its time arrives", async () => {

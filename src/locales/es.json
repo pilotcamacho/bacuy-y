@@ -29,11 +29,11 @@
     "lineDeleted": "Renglón borrado",
     "hidden": {
       "toast": "Hecho por ahora. Vuelve el {{date}}.",
-      "summary_one": "{{count}} renglón oculto hasta más tarde",
-      "summary_other": "{{count}} renglones ocultos hasta más tarde",
       "returns": "vuelve el {{date}}",
       "showNow": "Mostrar ahora",
-      "showNowLine": "Mostrar ahora «{{title}}»"
+      "showNowLine": "Mostrar ahora «{{title}}»",
+      "manualToast": "Oculta hasta el {{date}}.",
+      "manualToastIndefinite": "Oculta hasta que la muestres."
     },
     "completed": {
       "toast": "Completada."
@@ -350,7 +350,9 @@
       "page": "Pendientes",
       "completed": "Completadas",
       "hidden": "Ocultas",
-      "archived": "Archivadas"
+      "archived": "Archivadas",
+      "hiddenCount_one": "{{count}} oculto",
+      "hiddenCount_other": "{{count}} ocultos"
     }
   },
   "completed": {
@@ -365,5 +367,27 @@
     "moreLine": "Más opciones de «{{title}}»",
     "showMore_one": "Mostrar {{count}} más",
     "showMore_other": "Mostrar {{count}} más"
+  },
+  "hide": {
+    "title": "Ocultar",
+    "presets": {
+      "later": "3 horas",
+      "tomorrow": "Mañana 8:00",
+      "monday": "Lunes 8:00",
+      "nextMonth": "En un mes"
+    },
+    "custom": "Hasta",
+    "apply": "Ocultar",
+    "indefinite": "Hasta que la muestre"
+  },
+  "hidden": {
+    "title": "Ocultas",
+    "intro": "Renglones que no están en la página por ahora: los que ocultaste y las tareas repetitivas hechas por esta vez. Vuelven solos a su lugar.",
+    "empty": "No hay renglones ocultos.",
+    "untilShown": "oculto hasta que lo muestres",
+    "change": "Cambiar",
+    "changeLine": "Cambiar hasta cuándo se oculta «{{title}}»",
+    "changed": "«{{title}}»: nueva fecha guardada.",
+    "shown": "«{{title}}» ha vuelto a la página."
   }
 }

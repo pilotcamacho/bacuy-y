@@ -360,8 +360,13 @@ Requests from the first days of real use (2026-11-17).
   > Sync was already incremental (push dirty rows, pull `updatedAt ≥ lastPulledAt − 60 s`), so
   > old completed rows cost nothing per sync; only a new device's first pull grows (~5 MB a year
   > at 10 tasks a day). A device-side history window (fetch old ones online) only if needed.
-- [ ] Hide a line until a date and time (or until shown again); a **Hidden** tab lists every
+- [x] Hide a line until a date and time (or until shown again); a **Hidden** tab lists every
   hidden line (manual and "done for this time") with "show now" / change date
+  > Uses bacuy-x's `isHidden` (until shown again) and `hiddenUntil`; no schema change. Panel
+  > section "Ocultar" (quick choices, date and time, until shown). The list below the page is
+  > gone: the "Ocultas" tab shows the count instead. Found while testing: the e2e specs that
+  > block AppSync with `page.route` leaked lines through the service worker (WebKit), and
+  > Alt+↑ followed quickly by Ctrl+. could pull the focus out of the panel; both fixed.
 - [ ] Filter the page by flag (parent includes children; several = any of them; "no flag");
   a new line typed while filtered gets the filter's flag
 

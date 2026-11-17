@@ -73,8 +73,10 @@ export interface Notice {
   kind: "habitFormed" | "hidden" | "completed";
   id: string;
   nonce: number;
-  /** "hidden": when the line comes back. */
+  /** "hidden": when the line comes back (none: until shown again). */
   until?: string;
+  /** "hidden": hidden by hand from the panel (not a tick: nothing to rate). */
+  manual?: boolean;
   /** "hidden" / "completed": the row before the tick (for undo). */
   before?: Activity;
 }
@@ -120,6 +122,11 @@ interface PageState {
   undoHide(): Promise<void>;
   /** A hidden line back on the page now (its next tick hides it again). */
   showNow(id: string): Promise<void>;
+  /**
+   * Hide a line by hand until a time, or until shown again (`until` null). Off the page: the
+   * focus moves to the line taking its place; a toast offers undo.
+   */
+  hide(id: string, until: string | null): Promise<void>;
   hasFlags(id: string): boolean;
   /** Archived view: back to the page (at the end), ACTIVE or DRAFT by the flag rule. */
   restore(id: string): Promise<void>;
@@ -609,11 +616,12 @@ export const usePageStore = create<PageState>((set, get) => {
       const current = get().activities[notice.id];
       set({ notice: null });
       if (!current || current.deletedAt) return;
-      const { completionCount, streak, hiddenUntil, status, completedAt } = notice.before;
+      const { completionCount, streak, hiddenUntil, isHidden, status, completedAt } = notice.before;
       await get().updateFields(notice.id, {
         completionCount,
         streak,
         hiddenUntil: hiddenUntil ?? null,
+        isHidden: isHidden ?? false,
         status,
         completedAt: completedAt ?? null,
       });
@@ -622,8 +630,20 @@ export const usePageStore = create<PageState>((set, get) => {
 
     async showNow(id) {
       const row = get().activities[id];
-      if (!row || !row.hiddenUntil) return;
-      await get().updateFields(id, { hiddenUntil: null });
+      if (!row || (!row.hiddenUntil && !row.isHidden)) return;
+      await get().updateFields(id, { hiddenUntil: null, isHidden: false });
+    },
+
+    async hide(id, until) {
+      const row = get().activities[id];
+      if (!row || row.deletedAt) return;
+      const all = lines();
+      const index = all.findIndex((l) => l.id === id);
+      const neighbour = index >= 0 ? all[index + 1] ?? all[index - 1] : undefined;
+      if (neighbour) get().setFocus(neighbour.id, index + 1 < all.length ? 0 : neighbour.rawInput.length);
+      if (get().panel?.id === id) set({ panel: null });
+      await get().updateFields(id, until ? { hiddenUntil: until, isHidden: false } : { hiddenUntil: null, isHidden: true });
+      set({ notice: { kind: "hidden", id, until: until ?? undefined, manual: true, before: row, nonce: ++nonce } });
     },
 
     hasFlags(id) {
