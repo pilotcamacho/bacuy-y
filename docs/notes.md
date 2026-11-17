@@ -214,3 +214,7 @@ Record here every model change copied from bacuy-x (date, bacuy-x change, what c
   headers live in `customHttp.yml`.
 - The hosted branch has its own backend, separate from the sandbox: e2e and integration tests
   keep using the sandbox's `amplify_outputs.json`.
+- First Amplify build failed at `npm ci`: the build image's npm (11.19) found the lock file out
+  of sync (optional `@emnapi/*`, `@opentelemetry/core`, `semver`), while local npm 11.6 accepted
+  it. Fixed by regenerating it with `npx npm@11.19.1 install --package-lock-only`. Before pushing
+  dependency changes, check with `npx npm@latest ci --dry-run --ignore-scripts` in a copy.
