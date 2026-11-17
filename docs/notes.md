@@ -222,3 +222,11 @@ Record here every model change copied from bacuy-x (date, bacuy-x change, what c
   goes back to the rejected form. Until the local npm is updated (`npm install -g npm@11.19.1`),
   change dependencies with `npx npm@11.19.1 install <pkg>` and check with
   `npx npm@11.19.1 ci --dry-run --ignore-scripts` in a copy before pushing.
+- Second Amplify failure: `pipeline-deploy` → `spawnSync docker ENOENT`. The branch backend adds a
+  construct the sandbox does not (`branch_linker_construct`, a `NodejsFunction`), and CDK bundles
+  it with the project's top-level `esbuild`, falling back to Docker if missing (esbuild was only
+  nested under `tsx`). Fixed with `esbuild` as a dev dependency, pinned to 0.28.x (Vite 8's
+  optional peer range is `^0.27 || ^0.28`).
+- Running `npm install` on top of an existing `node_modules` rewrites the lock file into a form
+  npm 11.19 rejects, with either npm version. Generate lock changes in an empty folder
+  (`--package-lock-only`), verify with `ci --dry-run` there, then copy the lock back.
