@@ -34,6 +34,9 @@ on the hosted app.
    ]
    ```
 
+   Or from a terminal: `aws amplify update-app --app-id <appId> --custom-rules file://rules.json`
+   with that rule first and Amplify's default `/<*>` → `404-200` rule after it.
+
    Once installed, the service worker serves every route offline on its own
    (`navigateFallback`); this rule covers the first visit and deep links.
 6. Response headers come from `customHttp.yml` in the repo (no console step). Check under

@@ -207,11 +207,17 @@ Record here every model change copied from bacuy-x (date, bacuy-x change, what c
 ## Hosting (Phase 13)
 
 - Setup steps and release checks: `docs/06-hosting.md`.
-- Default URL: _(fill in after the first deploy)_
+- Default URL: https://main.d2s6xws9njiuy1.amplifyapp.com (Amplify app id `d2s6xws9njiuy1`,
+  us-east-1). First green deploy: build 5, 2026-11-16.
 - `amplify.yml` installs Node 24 (`nvm install 24`) to match local development; Vite 8 needs
   Node ≥ 20.19 and the Amplify image's default may be older.
-- The SPA rewrite lives in the Amplify console (it cannot be set from the repo);
-  headers live in `customHttp.yml`.
+- The SPA rewrite lives in the Amplify app settings, not the repo (applied with
+  `aws amplify update-app --custom-rules`, see `docs/06-hosting.md`); headers live in
+  `customHttp.yml`. Amplify's default rule alone (`/<*>` → 404-200) made deep links
+  redirect to `/priority/` and answer 404.
+- Third Amplify failure: `The service limit for number of GraphQL APIs has been reached`
+  (AppSync, 50 per region, quota `L-4DFA3D2F`). The account had 50 APIs in us-east-1, mostly old
+  sandboxes; fixed by deleting unused apps. Raise the quota if it happens again.
 - The hosted branch has its own backend, separate from the sandbox: e2e and integration tests
   keep using the sandbox's `amplify_outputs.json`.
 - First Amplify build failed at `npm ci`: the build image's npm (11.19) found the lock file out

@@ -332,11 +332,17 @@ Milestones:
 
 ## Phase 13 — Hosting and release · **M6**
 
-- [ ] Amplify Hosting app connected to the repo, `amplify.yml` (pipeline-deploy + build), SPA rewrite
+- [x] Amplify Hosting app connected to the repo, `amplify.yml` (pipeline-deploy + build), SPA rewrite
   > `amplify.yml` and `customHttp.yml` (cache headers) in the repo; console steps (connect the
   > repo, SPA rewrite) in `docs/06-hosting.md`. CI also runs lint and unit tests before the build.
-- [ ] Record the default URL in `notes.md`
+- [x] Record the default URL in `notes.md`
+  > https://main.d2s6xws9njiuy1.amplifyapp.com. Before the first green deploy: lock file rejected
+  > by the build image's npm, `esbuild` missing for the branch backend's Lambda, and the AppSync
+  > API quota full (details in `notes.md`).
 - [ ] Release checks (CLAUDE.md *Workflow* 5) on the hosted URL, desktop + phone install
+  > Done without an account: installable (no installability errors), deep links 200, offline
+  > reload and offline deep link load the app. Pending: sign-up and the signed-in checks in
+  > `docs/06-hosting.md`, desktop and phone install.
 
 ---
 
