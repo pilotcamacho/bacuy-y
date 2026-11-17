@@ -19,6 +19,7 @@ const NAV_ITEMS: { to: string; key: string; end?: boolean }[] = [
   { to: "/journal", key: "nav.journal" },
   { to: "/flags", key: "nav.flags" },
   { to: "/settings", key: "nav.settings" },
+  { to: "/help", key: "nav.help" },
 ];
 
 export function Layout() {

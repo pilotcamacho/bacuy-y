@@ -4,6 +4,7 @@ import { RedirectIfSignedIn, RequireAuth } from "@/components/RequireAuth";
 import { Archived } from "@/routes/Archived";
 import { Completed } from "@/routes/Completed";
 import { Flags } from "@/routes/Flags";
+import { Help } from "@/routes/Help";
 import { Hidden } from "@/routes/Hidden";
 import { Journal } from "@/routes/Journal";
 import { Page } from "@/routes/Page";
@@ -30,6 +31,7 @@ export const routes: RouteObject[] = [
       { path: "completed", element: <Completed /> },
       { path: "archived", element: <Archived /> },
       { path: "settings", element: <Settings /> },
+      { path: "help", element: <Help /> },
     ],
   },
   {

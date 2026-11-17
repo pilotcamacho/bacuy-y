@@ -291,6 +291,14 @@ Every change in the panel is a structural write (immediate, no debounce).
 | Completed | `status = COMPLETED`, not `GRATITUDE` (the journal's) | `completedAt` desc (falls back to `editedAt` for lines completed before the field existed), grouped by day, 50 at a time | untick (back to its place), panel, delete |
 | Archived | `status = ARCHIVED` | `editedAt` desc | restore, delete |
 
+**Manual** (`/help`, `routes/Help.tsx`; top menu "Manual" / "Guide"; confirmed 2026-11-17).
+A user-facing summary of this document, bundled with the app (works offline), all text in
+`help.*` locale keys: writing lines, marks, each type (what it is for, an example, its `!mark`,
+what the tick does, what `@date` fills, whether `~frequency` applies, its own panel fields),
+statuses, tabs and screens, keyboard. The panel's Type field links to `/help#type-<TYPE>`
+(closes the panel, scrolls to and focuses that type). **When a type's behaviour or fields
+change, update the `TYPES` table in `Help.tsx` and the `help.*` texts too.**
+
 Page, Hidden (with its count), Completed and Archived are tabs of the "Página" section
 (`components/LineTabs`); the main navigation keeps "Página" active on all of them.
 

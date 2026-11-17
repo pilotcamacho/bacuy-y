@@ -1,5 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { useTranslation } from "react-i18next";
+import { Link, useInRouterContext } from "react-router-dom";
 import { CronExpressionParser } from "cron-parser";
 import type { ActivityRow } from "@/lib/db/types";
 import {
@@ -94,6 +95,7 @@ export function LinePanel() {
 
 function PanelBody({ row, section, nonce }: { row: ActivityRow; section: string | null; nonce: number }) {
   const { t, i18n } = useTranslation();
+  const inRouter = useInRouterContext(); // the manual link needs the router (tests may render without)
   const flags = usePageStore((s) => s.flags);
   const store = usePageStore.getState;
   const locale = markLocale(i18n.resolvedLanguage);
@@ -230,6 +232,16 @@ function PanelBody({ row, section, nonce }: { row: ActivityRow; section: string 
               </select>
             )}
           </Field>
+          {inRouter && (
+            <Link
+              to={`/help#type-${type}`}
+              className="self-start text-sm text-indigo-700 underline-offset-2 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-indigo-300"
+              data-testid="panel-type-help"
+              onClick={() => store().closePanel()}
+            >
+              {t("help.typeLink")}
+            </Link>
+          )}
           <p className="text-sm">
             {t("panel.status")}: <span data-testid="panel-status">{t(`status.${status}`)}</span>
           </p>

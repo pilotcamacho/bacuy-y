@@ -9,7 +9,8 @@
     "priority": "Priority",
     "journal": "Journal",
     "flags": "Flags",
-    "settings": "Settings"
+    "settings": "Settings",
+    "help": "Guide"
   },
   "page": {
     "title": "Page",
@@ -404,5 +405,118 @@
   "suggest": {
     "label": "Suggestions",
     "completed": "completed"
+  },
+  "help": {
+    "title": "Guide",
+    "intro": "bacuy-y is a page of text: each line is a task. You type, and everything is saved on this device right away, online or not; when there is a connection, it syncs with your other devices.",
+    "contents": "Contents",
+    "toc": {
+      "start": "Typing lines",
+      "marks": "Marks",
+      "types": "Line types",
+      "status": "Statuses",
+      "views": "Tabs and screens",
+      "keys": "Keyboard"
+    },
+    "start": {
+      "p1": "Enter makes a new line below (or splits the line, if the cursor is in the middle). Enter at the start of a line adds an empty line above, and the line keeps everything it had. Backspace at the start joins it with the line above; on an empty line, it deletes it.",
+      "p2": "The box at the start of each line marks it as done; what happens depends on the type (see below). The ⋯ button opens the line's panel, with the rest of its details.",
+      "p3": "Suggestions appear as you type: marks, and lines you wrote before (completed ones too). Enter or Tab complete a mark; ↓ and Enter, or a tap, copy a line."
+    },
+    "marks": {
+      "intro": "Marks are short words inside the line that fill in its details. They are left out of the title and shown highlighted. They work in Spanish and English, with or without accents. An underlined mark was not recognized.",
+      "mark": "Mark",
+      "means": "What it does",
+      "example": "Example",
+      "flag": "A flag (category). You can add several. A subflag is written on its own or with its path. A line with a flag becomes active and counts in the priority.",
+      "type": "The line's type. Without a mark, it is an action.",
+      "date": "A date: today, tomorrow, a weekday, 31/12 or 2026-12-31. When you leave the line it is fixed to an exact date. What it means depends on the type.",
+      "frequency": "How often it repeats: daily, weekly or monthly. Only for repeating actions and habits; a line with a frequency and no type is a repeating action.",
+      "flagExample": "buy bread #errand",
+      "typeExample": "meditate !habit",
+      "dateExample": "report @friday",
+      "frequencyExample": "water the plants ~weekly"
+    },
+    "types": {
+      "intro": "Each type behaves differently when ticked and keeps its own details in the panel. All of them also have a description, flags, feedback and the option to hide them.",
+      "markLabel": "Mark",
+      "exampleLabel": "Example",
+      "tickLabel": "The box",
+      "dateLabel": "@date",
+      "noDate": "no date",
+      "frequencyLabel": "~frequency",
+      "frequencyYes": "yes (or a cron schedule in the panel)",
+      "frequencyNo": "no",
+      "fieldsLabel": "In the panel",
+      "noFields": "only the common fields",
+      "ACTION": {
+        "what": "Something to do once. It is the default type.",
+        "example": "call the bank #errand @tomorrow",
+        "tick": "Completes it: it leaves the page for Completed. Unticking it there puts it back in its place."
+      },
+      "REPETITIVE_ACTION": {
+        "what": "Something done again and again (watering, paying a fee). It can have a target number of times.",
+        "example": "water the plants ~weekly #personal",
+        "tick": "Counts one more time and hides it until next time (by its frequency or cron); then it comes back by itself. When it reaches the target, it is completed."
+      },
+      "HABIT": {
+        "what": "A habit you want to build. It keeps a streak.",
+        "example": "meditate 10 min !habit ~daily #spiritual",
+        "tick": "Adds one to the streak and hides it until next time. When it reaches the target streak, it offers to mark it as formed."
+      },
+      "ATTITUDE": {
+        "what": "A way of being or reacting you want to grow, with an affirmation that sums it up.",
+        "example": "listen before answering !attitude #family",
+        "tick": "Not ticked. Ctrl+Enter opens feedback to note how it went. Completed (internalized) or archived from the panel."
+      },
+      "SKILL": {
+        "what": "Something you are learning, with its level and the resources you use.",
+        "example": "German !skill #personal",
+        "tick": "Not ticked; it shows the level. The level is changed in the panel."
+      },
+      "MOMENTO": {
+        "what": "An event with a date: a birthday, a trip, an appointment.",
+        "example": "Ana's birthday !moment @15/03",
+        "tick": "Not ticked. Once it has passed, archive it from the panel."
+      },
+      "GRATITUDE": {
+        "what": "Something or someone you are grateful for. When completed it goes to the Journal.",
+        "example": "dinner with my parents !gratitude",
+        "tick": "Opens the panel to write the notes; “Save & complete” takes it to the Journal (notes required)."
+      },
+      "EXPIRATION": {
+        "what": "Something that expires and must be renewed: passport, insurance, licence.",
+        "example": "passport !expires @2027-03-01 #personal",
+        "tick": "Shows the days left (red when overdue) and opens the panel to renew it with a new date or archive it without renewing."
+      }
+    },
+    "statusItems": {
+      "DRAFT": "Just written, no flags. It can already be ticked.",
+      "ACTIVE": "Has at least one flag; counts in the priority view.",
+      "INACTIVE": "Paused (from the panel): stays on the page, in italics, without a box.",
+      "COMPLETED": "Done: it is in Completed (or in the Journal, for gratitude).",
+      "ARCHIVED": "Kept off the page, in Archived; it can be restored."
+    },
+    "views": {
+      "page": "To do: your page. It can be filtered by flag; a new line typed while filtered gets that flag.",
+      "hidden": "Hidden: what you hid from the panel (until a date and time, or until you show it) and repeating actions and habits done for now. Shows when each comes back.",
+      "completed": "Completed: what is done, newest first, grouped by day.",
+      "archived": "Archived: what you kept off the page.",
+      "priority": "Priority: active lines ordered by their flags' weight; lines whose cron time is within the hour and expirations coming up rise. Read only; tapping one takes you to it.",
+      "journal": "Journal: your completed gratitude entries.",
+      "flags": "Flags: create, arrange and weight your categories. Sibling weights add up to 100.",
+      "settings": "Settings: language, theme, install the app and your account (sign out)."
+    },
+    "keys": {
+      "enter": "New line, or split the line",
+      "backspace": "At the start: join with the line above",
+      "arrows": "Go to the line above or below",
+      "altArrows": "Move the line",
+      "ctrlEnter": "Mark as done",
+      "ctrlDot": "Open the line's panel",
+      "tab": "Accept the suggestion",
+      "escape": "Close suggestions or the panel"
+    },
+    "typeLink": "What is each type?"
   }
 }

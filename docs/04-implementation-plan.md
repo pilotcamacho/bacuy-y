@@ -378,6 +378,10 @@ Requests from the first days of real use (2026-11-17).
   > and Enter took it; a mark typed in full is now left alone and Enter makes a new line.
 - [x] Enter at the start of a line inserts an empty line above (the line keeps its row and
   fields); Backspace into an empty line removes the empty one
+- [x] In-app manual (`/help`): line types and their details, marks, statuses, screens, keys;
+  the panel's Type field links to its entry
+  > Built as a page inside the app rather than an external document: every user can reach it,
+  > it works offline and follows the UI language.
 
 ---
 

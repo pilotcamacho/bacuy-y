@@ -329,3 +329,23 @@ test("autocomplete: marks complete with Enter or a tap; earlier lines are sugges
   await expect(lines(page).nth(3)).toHaveValue("comprar pan");
   await expect(lines(page).nth(3)).toBeFocused();
 });
+
+test("the manual: from the panel's type, to that type's explanation; reachable from the menu", async ({ page }) => {
+  await signIn(page);
+  await lines(page).first().click();
+  await page.keyboard.type("meditar !hábito");
+  await page.keyboard.press("ControlOrMeta+.");
+  await page.getByTestId("panel-type-help").click();
+  await expect(page).toHaveURL(/\/help#type-HABIT$/);
+  await expect(page.getByTestId("help-type-HABIT")).toBeFocused();
+  await expect(page.getByTestId("help-type-HABIT")).toBeInViewport();
+  await expect(page.getByTestId("line-panel")).toHaveCount(0);
+
+  await page.getByRole("link", { name: /^(Página|Page)$/ }).click();
+  await expect(lines(page).first()).toHaveValue("meditar !hábito");
+  await page.getByRole("link", { name: /^(Manual|Guide)$/ }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/^(Manual|Guide)$/);
+  for (const type of ["ACTION", "REPETITIVE_ACTION", "HABIT", "ATTITUDE", "SKILL", "MOMENTO", "GRATITUDE", "EXPIRATION"]) {
+    await expect(page.getByTestId(`help-type-${type}`)).toBeVisible();
+  }
+});

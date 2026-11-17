@@ -9,7 +9,8 @@
     "priority": "Prioridad",
     "journal": "Diario",
     "flags": "Banderas",
-    "settings": "Ajustes"
+    "settings": "Ajustes",
+    "help": "Manual"
   },
   "page": {
     "title": "Página",
@@ -404,5 +405,118 @@
   "suggest": {
     "label": "Sugerencias",
     "completed": "completada"
+  },
+  "help": {
+    "title": "Manual",
+    "intro": "bacuy-y es una página de texto: cada renglón es una tarea. Escribes, y todo se guarda en este dispositivo al instante, con o sin conexión; cuando hay red, se sincroniza con tus otros dispositivos.",
+    "contents": "Contenido",
+    "toc": {
+      "start": "Escribir renglones",
+      "marks": "Marcas",
+      "types": "Tipos de renglón",
+      "status": "Estados",
+      "views": "Pestañas y pantallas",
+      "keys": "Teclado"
+    },
+    "start": {
+      "p1": "Enter crea un renglón nuevo debajo (o lo parte, si el cursor está en medio). Enter al principio de un renglón añade uno vacío encima, y el renglón conserva todo lo suyo. Retroceso al principio lo une con el de arriba; en un renglón vacío, lo borra.",
+      "p2": "El cuadro al principio de cada renglón lo marca como hecho; lo que pasa depende del tipo (ver abajo). El botón ⋯ abre el panel del renglón, con el resto de los datos.",
+      "p3": "Mientras escribes aparecen sugerencias: marcas y renglones que ya escribiste antes (también los completados). Enter o Tab completan una marca; ↓ y Enter, o tocar, copian un renglón."
+    },
+    "marks": {
+      "intro": "Las marcas son palabras cortas dentro del renglón que rellenan sus datos. Desaparecen del título y se ven resaltadas. Funcionan en español y en inglés, con o sin acentos. Si una marca sale subrayada, no se reconoció.",
+      "mark": "Marca",
+      "means": "Qué hace",
+      "example": "Ejemplo",
+      "flag": "Una bandera (categoría). Puedes poner varias. Una subbandera se escribe sola o con su ruta. Un renglón con bandera pasa a estar activo y cuenta en la prioridad.",
+      "type": "El tipo del renglón. Sin marca, es una acción.",
+      "date": "Una fecha: hoy, mañana, un día de la semana, 31/12 o 2026-12-31. Al salir del renglón se fija como fecha exacta. Qué significa depende del tipo.",
+      "frequency": "Cada cuánto se repite: diario, semanal o mensual. Solo para acciones repetitivas y hábitos; un renglón con frecuencia y sin tipo es una acción repetitiva.",
+      "flagExample": "comprar pan #recados",
+      "typeExample": "meditar !hábito",
+      "dateExample": "informe @viernes",
+      "frequencyExample": "regar plantas ~semanal"
+    },
+    "types": {
+      "intro": "Cada tipo se comporta distinto al marcarlo y guarda datos propios en el panel. Todos tienen además descripción, banderas, valoraciones y la opción de ocultarlo.",
+      "markLabel": "Marca",
+      "exampleLabel": "Ejemplo",
+      "tickLabel": "El cuadro",
+      "dateLabel": "@fecha",
+      "noDate": "no usa fecha",
+      "frequencyLabel": "~frecuencia",
+      "frequencyYes": "sí (o un horario cron en el panel)",
+      "frequencyNo": "no",
+      "fieldsLabel": "En el panel",
+      "noFields": "solo los campos comunes",
+      "ACTION": {
+        "what": "Algo que hay que hacer una vez. Es el tipo por defecto.",
+        "example": "llamar al banco #recados @mañana",
+        "tick": "La completa: sale de la página y pasa a Completadas. Desmarcarla allí la devuelve a su sitio."
+      },
+      "REPETITIVE_ACTION": {
+        "what": "Algo que se hace una y otra vez (regar, pagar una cuota). Puede tener un número de veces objetivo.",
+        "example": "regar plantas ~semanal #personal",
+        "tick": "Suma una vez y la oculta hasta la próxima (según la frecuencia o el cron); entonces vuelve sola. Al llegar a las veces objetivo, se completa."
+      },
+      "HABIT": {
+        "what": "Una costumbre que quieres formar. Lleva una racha.",
+        "example": "meditar 10 min !hábito ~diario #espiritual",
+        "tick": "Suma uno a la racha y lo oculta hasta la próxima vez. Al llegar a la racha objetivo, te propone marcarlo como formado."
+      },
+      "ATTITUDE": {
+        "what": "Una forma de ser o de reaccionar que quieres cultivar, con una afirmación que la resume.",
+        "example": "escuchar antes de responder !actitud #familia",
+        "tick": "No se marca. Ctrl+Enter abre las valoraciones para anotar cómo te fue. Se completa (interiorizada) o archiva desde el panel."
+      },
+      "SKILL": {
+        "what": "Algo que estás aprendiendo, con su nivel y los recursos que usas.",
+        "example": "alemán !habilidad #personal",
+        "tick": "No se marca; muestra el nivel. El nivel se cambia en el panel."
+      },
+      "MOMENTO": {
+        "what": "Un acontecimiento con fecha: un cumpleaños, un viaje, una cita.",
+        "example": "cumpleaños de Ana !momento @15/03",
+        "tick": "No se marca. Cuando pasa, se archiva desde el panel."
+      },
+      "GRATITUDE": {
+        "what": "Algo o alguien por lo que das las gracias. Al completarla pasa al Diario.",
+        "example": "la cena con mis padres !gratitud",
+        "tick": "Abre el panel para escribir las notas; «Guardar y completar» la lleva al Diario (pide notas)."
+      },
+      "EXPIRATION": {
+        "what": "Algo que vence y hay que renovar: pasaporte, seguro, carné.",
+        "example": "pasaporte !vence @2027-03-01 #personal",
+        "tick": "Muestra los días que faltan (en rojo si ya venció) y abre el panel para renovarlo con una fecha nueva o archivarlo sin renovar."
+      }
+    },
+    "statusItems": {
+      "DRAFT": "Recién escrito, sin banderas. Ya se puede marcar.",
+      "ACTIVE": "Tiene al menos una bandera; cuenta en la vista de prioridad.",
+      "INACTIVE": "En pausa (desde el panel): sigue en la página, en cursiva y sin cuadro.",
+      "COMPLETED": "Hecho: está en Completadas (o en el Diario, si es de gratitud).",
+      "ARCHIVED": "Guardado fuera de la página, en Archivadas; se puede restaurar."
+    },
+    "views": {
+      "page": "Pendientes: tu página. Se puede filtrar por bandera; un renglón nuevo con el filtro puesto recibe esa bandera.",
+      "hidden": "Ocultas: lo que ocultaste desde el panel (hasta una fecha y hora, o hasta que lo muestres) y las repetitivas y hábitos hechos por ahora. Muestra cuándo vuelve cada uno.",
+      "completed": "Completadas: lo hecho, lo más reciente primero, agrupado por día.",
+      "archived": "Archivadas: lo que guardaste fuera de la página.",
+      "priority": "Prioridad: los renglones activos ordenados por el peso de sus banderas; suben los que tienen su horario cron dentro de la próxima hora y los vencimientos cercanos. Solo lectura; al tocar uno vas a él.",
+      "journal": "Diario: tus entradas de gratitud completadas.",
+      "flags": "Banderas: crea, ordena y da peso a tus categorías. Los pesos de las hermanas suman 100.",
+      "settings": "Ajustes: idioma, tema, instalar la app y tu cuenta (cerrar sesión)."
+    },
+    "keys": {
+      "enter": "Renglón nuevo, o partir el renglón",
+      "backspace": "Al principio: unir con el de arriba",
+      "arrows": "Ir al renglón de arriba o de abajo",
+      "altArrows": "Mover el renglón",
+      "ctrlEnter": "Marcar como hecho",
+      "ctrlDot": "Abrir el panel del renglón",
+      "tab": "Completar la sugerencia",
+      "escape": "Cerrar las sugerencias o el panel"
+    },
+    "typeLink": "¿Qué es cada tipo?"
   }
 }
