@@ -65,10 +65,29 @@ describe("splitLine (Enter)", () => {
     expect(isSorted(r.lines)).toBe(true);
   });
 
-  it("at the start: the whole text moves down, the current row becomes empty", () => {
-    const r = splitLine(page(), 0, 0, counter());
-    expect(texts(r.lines)).toEqual(["", "uno", "dos", "tres"]);
-    expect(r.lines[0]!.id).toBe("a"); // the original row keeps its id
+  it("at the start: an empty row above; the line keeps its row and the caret", () => {
+    const r = splitLine(page(), 1, 0, counter());
+    expect(texts(r.lines)).toEqual(["uno", "", "dos", "tres"]);
+    expect(r.lines[2]!.id).toBe("b"); // the text keeps its row (type, panel fields, history)
+    expect(r.changed.map((l) => l.id)).toEqual(["new1"]); // and is not rewritten
+    expect(r.created).toEqual(["new1"]);
+    expect(r.focus).toEqual({ id: "b", offset: 0 });
+    expect(isSorted(r.lines)).toBe(true);
+    // At the top of the page too.
+    const top = splitLine(page(), 0, 0, counter());
+    expect(texts(top.lines)).toEqual(["", "uno", "dos", "tres"]);
+    expect(top.lines[1]!.id).toBe("a");
+    expect(isSorted(top.lines)).toBe(true);
+  });
+
+  it("Enter at the start then Backspace: the empty row goes, the line keeps its row", () => {
+    const split = splitLine(page(), 1, 0, counter());
+    const merged = mergeUp(split.lines, 2);
+    expect(texts(merged.lines)).toEqual(["uno", "dos", "tres"]);
+    expect(merged.lines[1]!.id).toBe("b");
+    expect(merged.deleted).toEqual(["new1"]);
+    expect(merged.changed).toEqual([]);
+    expect(merged.focus).toEqual({ id: "b", offset: 0 });
   });
 
   it("marks travel with the text they are in", () => {

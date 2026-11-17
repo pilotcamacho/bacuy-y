@@ -10,3 +10,4 @@ export {
   setFrequencyMark,
   setTypeMark,
 } from "./serialize";
+export * from "./suggest";

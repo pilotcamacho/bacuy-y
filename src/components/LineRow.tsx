@@ -2,10 +2,12 @@ import { memo, useEffect, useMemo, useRef, type ClipboardEvent, type KeyboardEve
 import { useTranslation } from "react-i18next";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useLineSuggestions } from "@/hooks/useLineSuggestions";
 import type { ActivityRow } from "@/lib/db/types";
 import type { EditorLine } from "@/services/editor";
 import { isRemovedFromTitle, parseLine, type FlagLite, type MarkSpan } from "@/services/marks";
 import type { FocusRequest } from "@/stores/pageStore";
+import { SuggestionList } from "./SuggestionList";
 import { TickCell } from "./TickCell";
 
 /**
@@ -100,6 +102,9 @@ export const LineRow = memo(function LineRow(props: Props) {
     disabled: !draggable,
   });
 
+  const suggestions = useLineSuggestions({ id: line.id, raw: line.rawInput, flags, inputRef: ref, onType: props.onType });
+  const listOpen = suggestions.items.length > 0;
+
   useEffect(() => {
     if (!focus || focus.id !== line.id || !ref.current) return;
     const el = ref.current;
@@ -110,6 +115,7 @@ export const LineRow = memo(function LineRow(props: Props) {
 
   function onKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
     if (e.nativeEvent.isComposing) return;
+    if (suggestions.onKeyDown(e)) return;
     const el = e.currentTarget;
     const { selectionStart: s, selectionEnd: end, value } = el;
     const plain = !e.altKey && !e.ctrlKey && !e.metaKey;
@@ -208,12 +214,34 @@ export const LineRow = memo(function LineRow(props: Props) {
           spellCheck
           placeholder={placeholder}
           aria-label={t("page.lineLabel", { n: index + 1 })}
-          onChange={(e) => props.onType(line.id, e.target.value)}
-          onBlur={() => props.onCommit(line.id)}
+          aria-autocomplete="list"
+          aria-expanded={listOpen}
+          aria-controls={listOpen ? suggestions.listId : undefined}
+          aria-activedescendant={listOpen && suggestions.active >= 0 ? suggestions.optionId(suggestions.active) : undefined}
+          onChange={(e) => {
+            suggestions.onChange(e.target);
+            props.onType(line.id, e.target.value);
+          }}
+          onSelect={(e) => suggestions.onSelect(e.currentTarget)}
+          onFocus={suggestions.onFocus}
+          onBlur={() => {
+            suggestions.onBlur();
+            props.onCommit(line.id);
+          }}
           onKeyDown={onKeyDown}
           onPaste={onPaste}
           className={`${TEXT_CLASS} absolute inset-0 h-full resize-none overflow-hidden rounded bg-transparent text-transparent caret-neutral-900 outline-none selection:bg-indigo-500/30 placeholder:text-neutral-400 dark:caret-neutral-100 dark:selection:bg-indigo-400/30`}
         />
+        {listOpen && (
+          <SuggestionList
+            id={suggestions.listId}
+            items={suggestions.items}
+            active={suggestions.active}
+            optionId={suggestions.optionId}
+            flags={flags}
+            onPick={suggestions.accept}
+          />
+        )}
       </div>
       <button
         type="button"

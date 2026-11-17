@@ -27,6 +27,7 @@ import { tick as tickRule, type PanelSection } from "@/services/lifecycle/tick";
 import { commitLine, parseLine, type FlagLite, type ParseContext } from "@/services/marks";
 import { nowIso } from "@/services/sync/clock";
 import { journalClear, journalPut, rowsToReplay } from "./pendingJournal";
+import { resetRowHistory } from "./rowHistory";
 
 /**
  * The page: activities (and their ActivityFlag rows) read from and written to LocalDb, never
@@ -831,6 +832,7 @@ export function resetPageStore() {
   for (const t of timers.values()) clearTimeout(t);
   timers.clear();
   filterKeep.clear();
+  resetRowHistory();
   writeChain = Promise.resolve();
   usePageStore.setState({
     status: "idle",

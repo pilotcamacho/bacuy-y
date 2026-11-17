@@ -400,5 +400,9 @@
     "hint": "Una bandera incluye sus subbanderas. Con varias, se muestran los renglones que tengan cualquiera.",
     "done": "Listo",
     "emptyPlaceholder": "Nada con este filtro. Escribe aquí para añadir."
+  },
+  "suggest": {
+    "label": "Sugerencias",
+    "completed": "completada"
   }
 }

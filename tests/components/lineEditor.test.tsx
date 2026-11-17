@@ -239,6 +239,33 @@ describe("LineEditor", () => {
     }
   });
 
+  it("Enter at the start of a line adds an empty line above; the line keeps its row and fields", async () => {
+    const user = userEvent.setup();
+    await mount();
+    await user.click(boxes()[0]!);
+    await user.keyboard("uno{Enter}dos");
+    await act(() => usePageStore.getState().flushAll());
+    const dos = (await db.getAll("Activity")).find((r) => r.rawInput === "dos")!;
+    await db.putLocal("Activity", { ...dos, description: "notas de dos", editedAt: new Date().toISOString() });
+    await act(() => usePageStore.getState().refresh());
+
+    caretAt(boxes()[1]!, 0);
+    await user.keyboard("{Enter}");
+    expect(values()).toEqual(["uno", "", "dos"]);
+    expect(document.activeElement).toBe(boxes()[2]);
+    expect(boxes()[2]!.selectionStart).toBe(0);
+    await act(() => usePageStore.getState().flushAll());
+    expect(await storedLines()).toEqual(["uno", "", "dos"]);
+    expect(await db.get("Activity", dos.id)).toMatchObject({ rawInput: "dos", description: "notas de dos" });
+
+    // Backspace takes the empty line away again; "dos" still keeps its row.
+    await user.keyboard("{Backspace}");
+    expect(values()).toEqual(["uno", "dos"]);
+    await act(() => usePageStore.getState().flushAll());
+    expect(await db.get("Activity", dos.id)).toMatchObject({ rawInput: "dos", description: "notas de dos" });
+    expect((await db.get("Activity", dos.id))!.deletedAt).toBeFalsy();
+  });
+
   it("↑ / ↓ move the focus between lines", async () => {
     const user = userEvent.setup();
     await mount();

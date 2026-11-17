@@ -70,10 +70,20 @@ function replaceAt(lines: EditorLine[], index: number, line: EditorLine): Editor
   return next;
 }
 
-/** Enter: split at the caret. The current row keeps the text before; a new row gets the rest. */
+/**
+ * Enter: split at the caret. The current row keeps the text before; a new row gets the rest.
+ * At the very start of a non-empty line, an empty row is inserted above instead: the line
+ * keeps its row (type, panel fields, history) and the caret, as in a text editor.
+ */
 export function splitLine(lines: EditorLine[], index: number, caret: number, ids: IdFactory = newId): EditResult {
   const line = lines[index];
   if (!line) return result(lines, [], null);
+  if (caret === 0 && line.rawInput.length > 0) {
+    const above: EditorLine = { id: ids(), rawInput: "", position: positionAfter(lines, index - 1) };
+    const next = lines.slice();
+    next.splice(index, 0, above);
+    return result(next, [above], { id: line.id, offset: 0 }, [above.id]);
+  }
   const before = line.rawInput.slice(0, caret);
   const after = line.rawInput.slice(caret);
   const created: EditorLine = { id: ids(), rawInput: after, position: positionAfter(lines, index) };
@@ -100,6 +110,13 @@ export function mergeUp(lines: EditorLine[], index: number): EditResult {
   const line = lines[index];
   const prev = lines[index - 1];
   if (!line || !prev) return result(lines, [], null);
+  // Into an empty line: that empty row goes, and this line keeps its row (type, panel fields,
+  // history), the mirror of Enter at the start of a line.
+  if (prev.rawInput.length === 0 && line.rawInput.length > 0) {
+    const next = lines.slice();
+    next.splice(index - 1, 1);
+    return result(next, [], { id: line.id, offset: 0 }, [], [prev.id]);
+  }
   // One space between two words; none when either side already has it, so Enter followed by
   // Backspace gives back exactly the original line.
   const joiner =

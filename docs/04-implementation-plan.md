@@ -372,6 +372,12 @@ Requests from the first days of real use (2026-11-17).
   > A collapsible "Filtrar por bandera" row under the tabs (chips when on), so the page keeps
   > its height when unused. Kept per device. New and moved lines are placed in the whole page
   > after their visible predecessor; lines shown under a filter stay until it changes.
+- [x] Autocomplete while typing: marks (`#flag`, `!type`, `@date`, `~frequency`, both languages)
+  and earlier lines (page + completed; accepting copies the text)
+  > Found while testing in English: a complete Spanish mark (`#salud`) was offered as `#health`
+  > and Enter took it; a mark typed in full is now left alone and Enter makes a new line.
+- [x] Enter at the start of a line inserts an empty line above (the line keeps its row and
+  fields); Backspace into an empty line removes the empty one
 
 ---
 

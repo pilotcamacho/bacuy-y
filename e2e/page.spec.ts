@@ -297,3 +297,35 @@ test("filter the page by flag: new lines get the flag, the filter survives a rel
   await expect(lines(page)).toHaveCount(4);
   await expect(lines(page).nth(1)).toHaveValue(/^nadar #(salud|health)$/); // typed right after "correr"
 });
+
+test("autocomplete: marks complete with Enter or a tap; earlier lines are suggested; Enter at the start adds a line above", async ({ page }) => {
+  await signIn(page);
+  await lines(page).first().click();
+  await page.keyboard.type("comprar pan");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("correr #sal");
+  await expect(page.getByTestId("suggestions")).toContainText(/#(salud|health)/);
+  await page.keyboard.press("Enter");
+  await expect(lines(page).nth(1)).toHaveValue(/^correr #(salud|health) $/);
+  await expect(page.getByTestId("suggestions")).toHaveCount(0);
+
+  await page.keyboard.type("~");
+  await page.getByTestId("suggestion-0").click(); // a tap keeps the focus in the line
+  await expect(lines(page).nth(1)).toHaveValue(/^correr #(salud|health) ~(diario|daily) $/);
+  await expect(lines(page).nth(1)).toBeFocused();
+
+  await page.keyboard.press("End");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("comp");
+  await expect(page.getByTestId("suggestion-0")).toHaveText(/comprar pan/);
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Enter");
+  await expect(lines(page).nth(2)).toHaveValue("comprar pan");
+
+  await page.keyboard.press("Home");
+  await page.keyboard.press("Enter");
+  await expect(lines(page)).toHaveCount(4);
+  await expect(lines(page).nth(2)).toHaveValue("");
+  await expect(lines(page).nth(3)).toHaveValue("comprar pan");
+  await expect(lines(page).nth(3)).toBeFocused();
+});

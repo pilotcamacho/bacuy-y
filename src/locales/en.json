@@ -400,5 +400,9 @@
     "hint": "A flag includes its subflags. With several, lines with any of them are shown.",
     "done": "Done",
     "emptyPlaceholder": "Nothing with this filter. Type here to add."
+  },
+  "suggest": {
+    "label": "Suggestions",
+    "completed": "completed"
   }
 }

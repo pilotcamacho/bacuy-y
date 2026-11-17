@@ -90,9 +90,13 @@ v1 has **one page per user**: all of the user's non-deleted, non-archived activi
 5. **Editing behavior:**
    - *Enter* in the middle of a line splits it: the current activity keeps the text before the
      cursor, and a new activity (type `ACTION`, status `DRAFT`) gets the text after it.
-   - *Enter* at the end of a line inserts an empty line below and focuses it.
+   - *Enter* at the end of a line inserts an empty line below and focuses it. *Enter* at the
+     start of a non-empty line inserts an empty line above; the line keeps its row and the caret.
    - *Backspace* at the start of a line merges it into the line above (the line above keeps its
-     id and fields; the current activity is soft-deleted).
+     id and fields; the current activity is soft-deleted), except into an empty line, which is
+     removed instead.
+   - While typing, an autocomplete list suggests marks (`#` `!` `@` `~`, both languages) and
+     earlier lines (page + completed) that start the same; accepting a line copies its text.
    - Pasting multi-line text creates one activity per line.
    - ↑/↓ moves focus between lines; Alt+↑/↓ moves the line; each line also has a **drag handle**
      (mouse drag, touch long-press, keyboard via @dnd-kit).
@@ -360,7 +364,7 @@ These adapt the expo-amplify-kit conventions to a web-only app.
   `archived-restore-<index>`, `archived-delete-<index>`, `hidden-toast`, `hidden-count`, `hidden-list`, `hidden-item-<index>`, `hidden-change-<index>`, `hidden-more-<index>`,
   `panel-hidden`, `panel-hide-preset-<later|tomorrow|monday|nextMonth>`, `panel-hide-custom`, `panel-hide-custom-apply`,
   `panel-hide-indefinite`, `flag-filter`, `flag-filter-toggle`, `flag-filter-option-<flagId|none>`,
-  `flag-filter-chip-<flagId|none>`, `flag-filter-clear`,
+  `flag-filter-chip-<flagId|none>`, `flag-filter-clear`, `suggestions`, `suggestion-<index>`,
   `hidden-show-<index>`, `update-prompt`, `install-section`, `line-tabs`, `completed-toast`, `completed-list`,
   `completed-item-<index>`, `completed-reopen-<index>`, `completed-more-<index>`, `completed-delete-<index>`,
   `completed-delete-confirm-<index>`, `completed-show-more`).

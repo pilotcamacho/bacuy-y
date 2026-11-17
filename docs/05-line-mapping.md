@@ -158,7 +158,8 @@ a DOM. The store applies the result to `LocalDb`.
 | Type | Update `rawInput` of that activity (debounced ≈300 ms, plus on blur / page hidden). |
 | Enter at end of line | New activity below (`ACTION`, `DRAFT`, empty), focused. |
 | Enter in the middle | Split: current keeps text before the cursor; new activity below gets the rest. Marks travel with the text they are in. |
-| Backspace at start of a non-empty line | Merge into the line above: its `rawInput` += a space (only when neither side already has whitespace at the joint, so Enter then Backspace restores the line) + current text; current is soft-deleted (its `ActivityFlag`s and feedback are soft-deleted too). The line above keeps its id and fields; its marks are re-parsed. |
+| Enter at start of a non-empty line | New empty activity **above**; the line keeps its row (type, panel fields, history) and the caret, as in a text editor (confirmed 2026-11-17). |
+| Backspace at start of a non-empty line | Merge into the line above: its `rawInput` += a space (only when neither side already has whitespace at the joint, so Enter then Backspace restores the line) + current text; current is soft-deleted (its `ActivityFlag`s and feedback are soft-deleted too). The line above keeps its id and fields; its marks are re-parsed. Exception: when the line above is empty, that empty row is soft-deleted instead and the current line keeps its row (undoes Enter at the start). |
 | Backspace on an empty line | Soft-delete it, focus the end of the line above. |
 | Delete at end of line | Merge the line below into this one (same rule). |
 | Paste with newlines | First pasted line goes into the current line at the cursor; each following line becomes a new activity below, in order. Empty pasted lines are skipped. |
@@ -174,6 +175,24 @@ a DOM. The store applies the result to `LocalDb`.
 - Undo (Ctrl+Z) inside a line is the browser's native undo for that input. Structural undo
   (restore a deleted or merged line) is out of scope for v1; a short "line deleted — undo" toast
   restores the last soft-deleted line within 5 s. (assumption)
+- **Autocomplete** (confirmed 2026-11-17; `services/marks/suggest.ts`, `hooks/useLineSuggestions`,
+  `components/SuggestionList`). A list under the line, only after typing in it (not on a click
+  into it); Esc or blur closes it.
+  - *Marks:* the word at the caret starting with `#`, `!`, `@` or `~` (the sigil alone lists
+    everything) → flags (system ones by either language's name, subflags by name or
+    `padre/hijo`, shown with their path), types, dates (hoy/mañana/weekdays, with the actual date)
+    and frequencies. Both languages match; the UI language's word is written, unless the typed
+    word only matches, or exactly is, the other language's. The first suggestion is preselected:
+    Enter or Tab replaces the word and adds a space; ↑/↓ choose. A mark already typed in full
+    (in either language) is left alone and nothing is preselected, so Enter still makes a new
+    line (longer ones, e.g. `#salud-mental`, stay listed).
+  - *Rows:* with the caret at the end and ≥ 2 characters typed, page lines and completed lines
+    (newest 500, read from IndexedDB) whose text starts the same, or has a word that does
+    (accents and case ignored), newest first, one per text, at most 5. Nothing is preselected,
+    so Enter still makes a new line; ↓ then Enter, Tab, or a tap copies the text (marks included)
+    into this line. The suggested row is not changed (a completed one stays completed).
+  - A tap or click on a suggestion keeps the focus in the line. The textarea carries
+    `aria-autocomplete="list"`, `aria-controls` and `aria-activedescendant`.
 - Rendering: each line is its own input, not one big `contenteditable`. Because an `<input>`
   cannot color marks, the line is a transparent auto-growing `<textarea>` (Enter intercepted, so
   it never holds a newline) layered over a mirror `<div>` that draws the mark highlights.
