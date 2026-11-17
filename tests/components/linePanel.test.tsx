@@ -135,18 +135,51 @@ describe("flags and status", () => {
 });
 
 describe("tick", () => {
-  it("ACTION: the tick completes it (muted, struck through) and unticking reactivates it", async () => {
+  it("ACTION: the tick completes it (stamped) and it leaves the page; undo brings it back", async () => {
     const user = await typeLine("llamar #familia");
+    const before = Date.now();
     await user.click(screen.getByTestId("line-done-0"));
     await flush();
-    expect((await onlyActivity()).status).toBe("COMPLETED");
-    expect(screen.getByTestId("line-done-0")).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByTestId("line-row-0").querySelector('[aria-hidden="true"].line-through')).not.toBeNull();
-    expect(boxes()[0]).not.toHaveAttribute("readonly"); // still editable
+    const done = await onlyActivity();
+    expect(done.status).toBe("COMPLETED");
+    expect(Date.parse(done.completedAt!)).toBeGreaterThanOrEqual(before - 1000);
+    expect(boxes().map((b) => b.value)).toEqual([""]); // only the ghost line is left
+    const toast = screen.getByTestId("completed-toast");
+    expect(toast).toHaveTextContent("Completada.");
 
-    await user.click(screen.getByTestId("line-done-0"));
+    await user.click(within(toast).getByRole("button", { name: "Deshacer" }));
     await flush();
-    expect((await onlyActivity()).status).toBe("ACTIVE");
+    expect(await onlyActivity()).toMatchObject({ status: "ACTIVE", completedAt: null });
+    expect(boxes().map((b) => b.value)).toEqual(["llamar #familia"]);
+  });
+
+  it("completed tasks are not loaded into memory with the page (the Completed page reads them)", async () => {
+    await db.putLocal("Activity", {
+      id: "done",
+      title: "hecha",
+      rawInput: "hecha",
+      activityType: "ACTION",
+      status: "COMPLETED",
+      completedAt: "2026-11-10T09:00:00.000Z",
+      position: "a0",
+      editedAt: "2026-11-10T09:00:00.000Z",
+    });
+    await mount();
+    await flush();
+    expect(usePageStore.getState().activities.done).toBeUndefined();
+
+    // Opened from the Completed page while the store was still loading: the load keeps it.
+    resetPageStoreForTests();
+    const loading = usePageStore.getState().load(SUB);
+    usePageStore.getState().adopt([(await db.get("Activity", "done"))!]);
+    await loading;
+    expect(usePageStore.getState().activities.done).toMatchObject({ status: "COMPLETED" });
+
+    // Reopening reads it from the device and puts it back at its old place.
+    await act(() => usePageStore.getState().reopen("done"));
+    await flush();
+    expect(await db.get("Activity", "done")).toMatchObject({ status: "DRAFT", completedAt: null, position: "a0" });
+    expect(boxes().map((b) => b.value)).toEqual(["hecha"]);
   });
 
   it("Ctrl+Enter ticks the focused line and does not split it", async () => {
@@ -251,10 +284,12 @@ describe("side panel", () => {
     expect(document.activeElement).toBe(boxes()[0]);
   });
 
-  it("after a tick the focus stays in the line; Ctrl+. also works from the tick itself", async () => {
-    const user = await typeLine("algo");
+  it("after a tick the focus goes to the line taking its place; Ctrl+. also works from the tick itself", async () => {
+    const user = await typeLine("uno{Enter}dos");
     await user.click(screen.getByTestId("line-done-0"));
-    expect(document.activeElement).toBe(boxes()[0]); // Safari never focuses a clicked button
+    await flush();
+    await waitFor(() => expect(document.activeElement).toBe(boxes()[0])); // Safari never focuses a clicked button
+    expect(boxes()[0]!.value).toBe("dos");
     act(() => screen.getByTestId("line-done-0").focus()); // reached with Tab
     await user.keyboard("{Control>}.{/Control}");
     expect(screen.getByTestId("line-panel")).toBeInTheDocument();
@@ -364,20 +399,16 @@ describe("unknown flag marks", () => {
 describe("feedback", () => {
   beforeEach(() => resetFeedbackStore());
 
-  it("after completing an ACTION, '¿Cómo fue?' opens the feedback form; unticking does not ask", async () => {
+  it("after completing an ACTION, 'Valorar' in the toast opens the feedback form of the completed line", async () => {
     const user = await typeLine("llamar #familia");
     await user.click(screen.getByTestId("line-done-0"));
     await flush();
     const prompt = await screen.findByTestId("feedback-prompt");
-    expect(prompt).toHaveTextContent("¿Cómo fue?");
-    await user.click(within(prompt).getByRole("button", { name: "Valorar" }));
+    expect(prompt).toHaveTextContent("Valorar");
+    await user.click(prompt);
     const panel = within(screen.getByTestId("line-panel"));
     await waitFor(() => expect(panel.getByRole("heading", { name: "Valoraciones" })).toHaveFocus());
-    expect(screen.queryByTestId("feedback-prompt")).toBeNull();
-
-    await user.click(screen.getByTestId("line-done-0")); // untick
-    await flush();
-    expect(screen.queryByTestId("feedback-prompt")).toBeNull();
+    expect(screen.queryByTestId("completed-toast")).toBeNull();
   });
 
   it("saves a rating with an optional emotion and notes, lists it, and deletes it", async () => {

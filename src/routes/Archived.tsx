@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
+import { LineTabs } from "@/components/LineTabs";
 import { subscribe } from "@/lib/events";
 import { archivedRows } from "@/services/lifecycle/archived";
 import { usePageStore } from "@/stores/pageStore";
@@ -58,6 +59,7 @@ export function Archived() {
 
   return (
     <section className="space-y-4">
+      <LineTabs />
       <header>
         <h1 ref={headingRef} tabIndex={-1} className="text-xl font-semibold outline-none">
           {t("archived.title")}

@@ -11,6 +11,7 @@ import { resetEventsForTests } from "@/lib/events";
 import i18n from "@/lib/i18n";
 import { activityFlagId, flagId } from "@/lib/ids";
 import { Archived } from "@/routes/Archived";
+import { COMPLETED_PAGE_SIZE, Completed } from "@/routes/Completed";
 import { PriorityView } from "@/routes/PriorityView";
 import { resetFeedbackStore } from "@/stores/feedbackStore";
 import { resetPageStoreForTests } from "@/stores/pageStore";
@@ -183,5 +184,83 @@ describe("Archived view", () => {
     const newPos = (await db.get("Activity", "new"))!.position;
     const expPos = (await db.get("Activity", "exp"))!.position;
     expect("a5" < newPos && newPos < expPos).toBe(true);
+  });
+});
+
+describe("Completed view", () => {
+  const noon = (daysAgo: number) => {
+    const d = new Date();
+    d.setDate(d.getDate() - daysAgo);
+    d.setHours(12, 0, 0, 0);
+    return d.toISOString();
+  };
+
+  beforeEach(async () => {
+    await db.putLocal("Activity", line("page", "en la página", "", "a5"));
+    await db.putLocal("Activity", line("t1", "hoy temprano", "#salud", "a1", { status: "COMPLETED", completedAt: noon(0) }));
+    await db.putLocal("Activity", line("t2", "hoy tarde", "", "a2", { status: "COMPLETED", completedAt: new Date(Date.parse(noon(0)) + 3_600_000).toISOString() }));
+    await db.putLocal("Activity", line("y1", "ayer", "", "a3", { status: "COMPLETED", completedAt: noon(1) }));
+    // Completed before completedAt existed: its last edit stands in.
+    await db.putLocal("Activity", line("old", "antigua", "", "a4", { status: "COMPLETED", editedAt: "2026-01-05T10:00:00.000Z" }));
+    // Not listed: a gratitude entry (the journal's), and a deleted task.
+    await db.putLocal("Activity", line("g", "gracias", "!gratitud", "a6", { status: "COMPLETED", activityType: "GRATITUDE", completedAt: noon(0) }));
+    await db.putLocal("Activity", line("del", "borrada", "", "a7", { status: "COMPLETED", completedAt: noon(0), deletedAt: noon(0) }));
+    await db.putLocal("Feedback", { id: "fb", activityId: "y1", rating: 4, editedAt: noon(1) });
+  });
+
+  const items = () => screen.getAllByTestId(/^completed-item-/).map((li) => li.querySelector("p")!.textContent);
+
+  it("lists completed tasks newest first, grouped by day", async () => {
+    renderAt("/completed", <Completed />);
+    await waitFor(() => expect(items()).toEqual(["hoy tarde", "hoy temprano #salud", "ayer", "antigua"]));
+    const days = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent);
+    expect(days.slice(0, 2)).toEqual(["Hoy", "Ayer"]);
+    expect(days[2]).toMatch(/2026/);
+    // The tabs: "Completadas" is the current one.
+    expect(within(screen.getByTestId("line-tabs")).getByRole("link", { name: "Completadas" })).toHaveAttribute("aria-current", "page");
+  });
+
+  it("unticking puts it back on the page at its old place", async () => {
+    const user = userEvent.setup();
+    renderAt("/completed", <Completed />);
+    await user.click(await screen.findByRole("checkbox", { name: "Desmarcar «hoy temprano» y devolverla a la página" }));
+    await waitFor(() => expect(items()).toEqual(["hoy tarde", "ayer", "antigua"]));
+    expect(await db.get("Activity", "t1")).toMatchObject({ status: "ACTIVE", completedAt: null, position: "a1" });
+    expect(screen.getByRole("status")).toHaveTextContent("«hoy temprano» ha vuelto a la página.");
+    await waitFor(() => expect(screen.getByRole("checkbox", { name: /«ayer»/ })).toHaveFocus()); // the row taking its place
+  });
+
+  it("delete asks first, then soft-deletes the task and its feedback", async () => {
+    const user = userEvent.setup();
+    renderAt("/completed", <Completed />);
+    await user.click(await screen.findByRole("button", { name: "Borrar «ayer»" }));
+    await user.click(screen.getByRole("button", { name: "Sí, borrar" }));
+    await waitFor(() => expect(items()).toEqual(["hoy tarde", "hoy temprano #salud", "antigua"]));
+    expect((await db.get("Activity", "y1"))!.deletedAt).toBeTruthy();
+    expect((await db.get("Feedback", "fb"))!.deletedAt).toBeTruthy();
+  });
+
+  it("⋯ opens the panel of a completed task; reactivating it there puts it back on the page", async () => {
+    const user = userEvent.setup();
+    renderAt("/completed", <Completed />);
+    await user.click(await screen.findByRole("button", { name: "Más opciones de «ayer»" }));
+    const panel = within(screen.getByTestId("line-panel"));
+    expect(panel.getByTestId("panel-status")).toHaveTextContent("Completada");
+    await user.click(panel.getByRole("button", { name: "Reactivar" }));
+    await waitFor(() => expect(items()).toEqual(["hoy tarde", "hoy temprano #salud", "antigua"]));
+    expect(await db.get("Activity", "y1")).toMatchObject({ status: "DRAFT", completedAt: null });
+  });
+
+  it("shows the newest first and more on request", async () => {
+    const many = Array.from({ length: COMPLETED_PAGE_SIZE + 5 }, (_, i) =>
+      line(`m${i}`, `tarea ${i}`, "", `b${i}`, { status: "COMPLETED", completedAt: new Date(Date.parse("2025-06-01T10:00:00.000Z") - i * 60_000).toISOString() }),
+    );
+    for (const row of many) await db.putLocal("Activity", row);
+    const user = userEvent.setup();
+    renderAt("/completed", <Completed />);
+    await waitFor(() => expect(screen.getAllByTestId(/^completed-item-/)).toHaveLength(COMPLETED_PAGE_SIZE));
+    await user.click(screen.getByTestId("completed-show-more"));
+    await waitFor(() => expect(screen.getAllByTestId(/^completed-item-/)).toHaveLength(COMPLETED_PAGE_SIZE + 9));
+    expect(screen.queryByTestId("completed-show-more")).toBeNull();
   });
 });

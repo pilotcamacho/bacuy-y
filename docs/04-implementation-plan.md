@@ -346,10 +346,30 @@ Milestones:
 
 ---
 
+## Phase 14 — After release: completed, hidden, filters (v1.1)
+
+Requests from the first days of real use (2026-11-17).
+
+- [x] Completed tasks leave the page; a **Completed** page lists them by completion time
+  > New field `Activity.completedAt` (schema, row type, docs). Old completed rows fall back to
+  > `editedAt`. Page / Completed / Archived are tabs of the "Página" section (the main nav
+  > lost "Archivadas", so it does not grow). Toast "Completada." with undo and rate replaces
+  > "¿Cómo fue?". Gratitude entries stay in the journal, not in Completed.
+- [x] Many completed tasks: the page store loads only live rows; the Completed page reads
+  completed rows from IndexedDB while open and renders 50 at a time
+  > Sync was already incremental (push dirty rows, pull `updatedAt ≥ lastPulledAt − 60 s`), so
+  > old completed rows cost nothing per sync; only a new device's first pull grows (~5 MB a year
+  > at 10 tasks a day). A device-side history window (fetch old ones online) only if needed.
+- [ ] Hide a line until a date and time (or until shown again); a **Hidden** tab lists every
+  hidden line (manual and "done for this time") with "show now" / change date
+- [ ] Filter the page by flag (parent includes children; several = any of them; "no flag");
+  a new line typed while filtered gets the filter's flag
+
+---
+
 ## Later (not v1)
 
 - Timer (`ActiveTime`, `FlagDailyStat`) and the neglect multiplier in the priority score.
-- Snooze / hide UI (`isHidden`, `hiddenUntil`).
 - Location and environment boost.
 - `suggestActivity` (AI) as an online-only action in the panel.
 - Real-time subscriptions; per-field merge for counters (`completionCount`, `streak`).

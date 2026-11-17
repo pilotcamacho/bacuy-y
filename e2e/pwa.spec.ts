@@ -54,11 +54,15 @@ test("keyboard only: type, split, tick, panel open and close, move a line, navig
   await page.keyboard.type("primera");
   await page.keyboard.press("Enter");
   await page.keyboard.type("segunda");
-  await expect(lines(page)).toHaveCount(2);
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("tercera");
+  await expect(lines(page)).toHaveCount(3);
 
-  // Ctrl+Enter ticks; Alt+↑ moves the line; ↑/↓ move the focus.
+  // Ctrl+Enter completes the line (it leaves the page; the focus goes to the line above);
+  // Alt+↑ moves a line; ↑/↓ move the focus.
   await page.keyboard.press("ControlOrMeta+Enter");
-  await expect(page.getByTestId("line-done-1")).toHaveAttribute("aria-pressed", "true");
+  await expect(lines(page)).toHaveCount(2);
+  await expect(lines(page).nth(1)).toBeFocused();
   await page.keyboard.press("Alt+ArrowUp");
   await expect(lines(page).first()).toHaveValue("segunda");
   await expect(lines(page).first()).toBeFocused();

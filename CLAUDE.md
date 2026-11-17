@@ -96,8 +96,9 @@ v1 has **one page per user**: all of the user's non-deleted, non-archived activi
    - ↑/↓ moves focus between lines; Alt+↑/↓ moves the line; each line also has a **drag handle**
      (mouse drag, touch long-press, keyboard via @dnd-kit).
    - A tick at the start of each line completes the activity, with type-specific behavior
-     (see `docs/05-line-mapping.md`). Ctrl/Cmd+Enter does the same. A completed `ACTION` stays in
-     place, muted with a strike-through, and stays editable; unticking reactivates it.
+     (see `docs/05-line-mapping.md`). Ctrl/Cmd+Enter does the same. A completed line leaves the
+     page for the **Completed** page (newest first, by `completedAt`); unticking it there puts it
+     back at its old place.
    - Ctrl/Cmd+. (or the ⋯ button on the line) opens the **side panel** for that line.
    - **Plain text only**, plus marks. Nothing is rendered as markdown or links. A line never
      contains a newline.
@@ -109,7 +110,8 @@ v1 has **one page per user**: all of the user's non-deleted, non-archived activi
 7. **Status:** a new line is `DRAFT`. It becomes `ACTIVE` when it gets its first flag (bacuy-x
    rule: an active activity has at least one flag). Removing all flags returns an `ACTIVE`,
    uncompleted activity to `DRAFT`. Ticking and the panel move it to `COMPLETED`, `INACTIVE` or
-   `ARCHIVED` as in bacuy-x. Archived activities leave the page (an "Archived" view lists them).
+   `ARCHIVED` as in bacuy-x. Completed and archived activities leave the page (the "Completed"
+   and "Archived" tabs list them).
 8. **Saving:** text changes are written to IndexedDB after a short debounce (≈300 ms) and on blur
    or when the page is hidden. Structural changes (insert, delete, merge, tick, drag, panel edits)
    are written immediately.
@@ -355,7 +357,9 @@ These adapt the expo-amplify-kit conventions to a web-only app.
   `sync-indicator`, `flag-weight-<id>`, `flags-save-<parentId|root>`, `flags-drift`, `feedback-prompt`, `feedback-form`,
   `feedback-list`, `journal-entry`, `priority-item-<rank>`, `priority-more-<rank>`, `archived-item-<index>`,
   `archived-restore-<index>`, `archived-delete-<index>`, `hidden-toast`, `hidden-toggle`, `hidden-item-<index>`,
-  `hidden-show-<index>`, `update-prompt`, `install-section`).
+  `hidden-show-<index>`, `update-prompt`, `install-section`, `line-tabs`, `completed-toast`, `completed-list`,
+  `completed-item-<index>`, `completed-reopen-<index>`, `completed-more-<index>`, `completed-delete-<index>`,
+  `completed-delete-confirm-<index>`, `completed-show-more`).
 - **Packages:** `npm install <pkg>`. Pin exact versions for `aws-amplify` and `@aws-amplify/backend`.
 
 ### Deviations from the kit and from bacuy-x
@@ -370,7 +374,9 @@ These adapt the expo-amplify-kit conventions to a web-only app.
 - bacuy-x's `createFlagValidated` / `updateFlagValidated` Lambda is **not** ported: weights are
   validated in the app (rule 11).
 - `rawInput` means "the line as currently typed", not "the text at creation".
-- Unticking a completed `ACTION` reactivates it (bacuy-x treats completion as one-way).
+- Unticking a completed `ACTION` (on the Completed page) reactivates it (bacuy-x treats
+  completion as one-way).
+- `Activity.completedAt` (not in bacuy-x): when it was completed, for the Completed page.
 
 ## Workflow
 

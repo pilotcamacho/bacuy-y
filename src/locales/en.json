@@ -9,7 +9,6 @@
     "priority": "Priority",
     "journal": "Journal",
     "flags": "Flags",
-    "archived": "Archived",
     "settings": "Settings"
   },
   "page": {
@@ -35,6 +34,9 @@
       "returns": "back on {{date}}",
       "showNow": "Show now",
       "showNowLine": "Show “{{title}}” now"
+    },
+    "completed": {
+      "toast": "Completed."
     }
   },
   "priority": {
@@ -327,7 +329,6 @@
     "notes": "Notes",
     "save": "Save feedback",
     "delete": "Delete",
-    "prompt": "How did it go?",
     "rate": "Rate it"
   },
   "pwa": {
@@ -342,5 +343,27 @@
     "howDesktop": "Computer (Chrome or Edge): the install icon in the address bar.",
     "howAndroid": "Android (Chrome): ⋮ menu → “Install app” or “Add to Home screen”.",
     "howIos": "iPhone or iPad (Safari): Share button → “Add to Home Screen”."
+  },
+  "lines": {
+    "tabs": {
+      "label": "Lines",
+      "page": "To do",
+      "completed": "Completed",
+      "hidden": "Hidden",
+      "archived": "Archived"
+    }
+  },
+  "completed": {
+    "title": "Completed",
+    "intro": "Completed tasks leave the page. Unticking one puts it back where it was.",
+    "empty": "No completed tasks yet.",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "reopen": "Untick and put back on the page",
+    "reopenLine": "Untick “{{title}}” and put it back on the page",
+    "reopened": "“{{title}}” is back on the page.",
+    "moreLine": "More options for “{{title}}”",
+    "showMore_one": "Show {{count}} more",
+    "showMore_other": "Show {{count}} more"
   }
 }

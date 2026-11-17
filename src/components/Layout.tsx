@@ -1,10 +1,11 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useGratitudeAutoCreate } from "@/hooks/useGratitude";
 import { useTheme } from "@/hooks/useTheme";
 import { subscribe } from "@/lib/events";
+import { LINE_PATHS } from "@/lib/lineTabs";
 import { prepareSession } from "@/services/session";
 import { startSync, stopSync } from "@/services/sync";
 import { resetFlagStore } from "@/stores/flagStore";
@@ -17,12 +18,12 @@ const NAV_ITEMS: { to: string; key: string; end?: boolean }[] = [
   { to: "/priority", key: "nav.priority" },
   { to: "/journal", key: "nav.journal" },
   { to: "/flags", key: "nav.flags" },
-  { to: "/archived", key: "nav.archived" },
   { to: "/settings", key: "nav.settings" },
 ];
 
 export function Layout() {
   const { t } = useTranslation();
+  const { pathname } = useLocation();
   useTheme(); // applies the stored theme and follows OS changes
   const auth = useAuth();
   const ownerSub = auth.status === "signedIn" ? auth.user.userId : null;
@@ -80,7 +81,7 @@ export function Layout() {
               className={({ isActive }) =>
                 [
                   "rounded px-1 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500",
-                  isActive
+                  isActive || (item.to === "/" && LINE_PATHS.includes(pathname))
                     ? "text-indigo-600 dark:text-indigo-400"
                     : "text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100",
                 ].join(" ")

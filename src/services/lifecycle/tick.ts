@@ -5,14 +5,15 @@ import { reactivatedStatus } from "./status";
 /**
  * The tick at the start of a line, per type (docs/05-line-mapping.md §4). Pure.
  * - `update`: write this patch. `hidden`: the patch hides the line until `hiddenUntil`
- *   (a repetitive task or habit day done for this time).
+ *   (a repetitive task or habit day done for this time). `completed`: the patch completes it
+ *   (it leaves the page for the Completed page).
  * - `panel`: open the side panel at this section instead (the type needs more input).
  * - `none`: the tick does nothing for this line.
  */
 export type PanelSection = "feedback" | "description" | "expiration";
 
 export type TickResult =
-  | { kind: "update"; patch: Partial<ActivityRow>; formedHint?: boolean; hidden?: boolean }
+  | { kind: "update"; patch: Partial<ActivityRow>; formedHint?: boolean; hidden?: boolean; completed?: boolean }
   | { kind: "panel"; section: PanelSection }
   | { kind: "none" };
 
@@ -29,17 +30,17 @@ export function tick(row: TickRow, hasFlags: boolean, now: Date = new Date()): T
   switch (row.activityType) {
     case "ACTION":
       return status === "COMPLETED"
-        ? { kind: "update", patch: { status: reactivatedStatus(hasFlags) } }
-        : { kind: "update", patch: { status: "COMPLETED" } };
+        ? { kind: "update", patch: { status: reactivatedStatus(hasFlags), completedAt: null } }
+        : { kind: "update", patch: { status: "COMPLETED", completedAt: now.toISOString() }, completed: true };
 
     case "REPETITIVE_ACTION": {
       if (status === "COMPLETED") return { kind: "none" }; // the series is over (panel reactivates)
       const count = (row.completionCount ?? 0) + 1;
       const done = row.targetCount != null && row.targetCount > 0 && count >= row.targetCount;
-      // Reaching the target ends the series (it stays, completed); otherwise it is done for
-      // this time and comes back at the next occurrence.
+      // Reaching the target ends the series (completed); otherwise it is done for this time
+      // and comes back at the next occurrence.
       return done
-        ? { kind: "update", patch: { completionCount: count, status: "COMPLETED" } }
+        ? { kind: "update", patch: { completionCount: count, status: "COMPLETED", completedAt: now.toISOString() }, completed: true }
         : { kind: "update", patch: { completionCount: count, hiddenUntil: hideUntil() }, hidden: true };
     }
 

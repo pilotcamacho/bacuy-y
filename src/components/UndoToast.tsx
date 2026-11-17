@@ -43,7 +43,7 @@ export function UndoToast() {
     );
   }
 
-  if (notice?.kind === "hidden") {
+  if (notice?.kind === "hidden" || notice?.kind === "completed") {
     const store = usePageStore.getState;
     const date = notice.until
       ? new Intl.DateTimeFormat(i18n.resolvedLanguage, { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(
@@ -51,8 +51,8 @@ export function UndoToast() {
         )
       : "";
     return (
-      <div role="status" className={TOAST} data-testid="hidden-toast">
-        <span>{t("page.hidden.toast", { date })}</span>
+      <div role="status" className={TOAST} data-testid={notice.kind === "hidden" ? "hidden-toast" : "completed-toast"}>
+        <span>{notice.kind === "hidden" ? t("page.hidden.toast", { date }) : t("page.completed.toast")}</span>
         <button type="button" className={ACTION} onClick={() => void store().undoHide()}>
           {t("page.undo")}
         </button>
@@ -60,25 +60,6 @@ export function UndoToast() {
           type="button"
           className={ACTION}
           data-testid="feedback-prompt"
-          onClick={() => {
-            store().dismissNotice();
-            store().openPanel(notice.id, "feedback");
-          }}
-        >
-          {t("feedback.rate")}
-        </button>
-      </div>
-    );
-  }
-
-  if (notice?.kind === "feedbackPrompt") {
-    const store = usePageStore.getState;
-    return (
-      <div role="status" className={TOAST} data-testid="feedback-prompt">
-        <span>{t("feedback.prompt")}</span>
-        <button
-          type="button"
-          className={ACTION}
           onClick={() => {
             store().dismissNotice();
             store().openPanel(notice.id, "feedback");

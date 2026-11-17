@@ -17,6 +17,7 @@ import {
 import { GHOST_LINE_ID, pageLines } from "@/services/editor/pageLines";
 import { missingDefaultFlags } from "@/services/flags/defaults";
 import { diffActivityFlags } from "@/services/lifecycle/activityFlags";
+import { keepInMemory } from "@/services/lifecycle/completed";
 import { deriveTextFields, newActivityDefaults } from "@/services/lifecycle/derive";
 import { applyStatusAction, reactivatedStatus, type StatusAction } from "@/services/lifecycle/status";
 import { tick as tickRule, type PanelSection } from "@/services/lifecycle/tick";
@@ -64,15 +65,17 @@ export interface PanelState {
 }
 
 /**
- * A short, non-blocking hint: the habit reached its target streak, or "how did it go?" after
- * a tick (docs/05-line-mapping.md §4).
+ * A short, non-blocking toast after a tick (docs/05-line-mapping.md §4): the habit reached its
+ * target streak, or the line left the page (hidden until its next time, or completed), with
+ * undo and "rate it".
  */
 export interface Notice {
-  kind: "habitFormed" | "feedbackPrompt" | "hidden";
+  kind: "habitFormed" | "hidden" | "completed";
   id: string;
   nonce: number;
-  /** "hidden": when the line comes back, and the row before the tick (for undo). */
+  /** "hidden": when the line comes back. */
   until?: string;
+  /** "hidden" / "completed": the row before the tick (for undo). */
   before?: Activity;
 }
 
@@ -113,7 +116,7 @@ interface PageState {
   openPanel(id: string, section?: PanelSection | null): void;
   closePanel(): void;
   dismissNotice(): void;
-  /** Undo of "done for this time": the counter and the visibility go back as they were. */
+  /** Undo of a tick that took the line off the page (done for this time, or completed). */
   undoHide(): Promise<void>;
   /** A hidden line back on the page now (its next tick hides it again). */
   showNow(id: string): Promise<void>;
@@ -122,6 +125,12 @@ interface PageState {
   restore(id: string): Promise<void>;
   /** Archived view: soft-delete an archived line (its links and feedback too). */
   deleteArchived(id: string): Promise<void>;
+  /** Completed page: back on the page at its old place (uncompleted). */
+  reopen(id: string): Promise<void>;
+  /** Completed page: soft-delete a completed line (its links and feedback too). */
+  deleteCompleted(id: string): Promise<void>;
+  /** Completed page: rows read from the device, put in memory (to open their panel). */
+  adopt(rows: Activity[]): void;
   /** Re-reads IndexedDB after a sync or another tab's write, keeping lines still being typed. */
   refresh(): Promise<void>;
 }
@@ -141,12 +150,6 @@ function enqueue(write: () => Promise<void>): Promise<void> {
     console.error("[bacuyy] local write failed", e);
   });
   return writeChain;
-}
-
-/** Ticks that did something worth rating: an ACTION completed, a repetition, a habit day. */
-function wantsFeedbackPrompt(row: Activity, patch: Partial<ActivityRow>): boolean {
-  if (row.activityType === "ACTION") return patch.status === "COMPLETED";
-  return row.activityType === "REPETITIVE_ACTION" || row.activityType === "HABIT";
 }
 
 function parseContext(flags: FlagLite[]): ParseContext {
@@ -371,7 +374,10 @@ export const usePageStore = create<PageState>((set, get) => {
         }
         const [rows, links] = await Promise.all([db.getAll("Activity"), db.getAll("ActivityFlag")]);
         const activities: Record<string, Activity> = {};
-        for (const row of rows) activities[row.id] = row;
+        // Completed tasks stay on the device; the Completed page reads them when it is open.
+        for (const row of rows) if (keepInMemory(row)) activities[row.id] = row;
+        // Rows adopted while loading (a completed task's panel opened meanwhile) stay.
+        for (const [id, row] of Object.entries(get().activities)) if (!activities[id]) activities[id] = row;
         // Edits the last session could not commit (closed or reloaded mid-write).
         const replay = rowsToReplay(activities);
         for (const row of replay) activities[row.id] = { ...row, dirty: 1 };
@@ -515,7 +521,7 @@ export const usePageStore = create<PageState>((set, get) => {
         return;
       }
       if (result.kind === "none") return;
-      if (result.hidden) {
+      if (result.hidden || result.completed) {
         // The line leaves the page: the focus goes to the line taking its place (or the one above).
         const all = lines();
         const index = all.findIndex((l) => l.id === id);
@@ -526,7 +532,7 @@ export const usePageStore = create<PageState>((set, get) => {
       if (result.formedHint) set({ notice: { kind: "habitFormed", id, nonce: ++nonce } });
       else if (result.hidden) {
         set({ notice: { kind: "hidden", id, until: result.patch.hiddenUntil ?? undefined, before: row, nonce: ++nonce } });
-      } else if (wantsFeedbackPrompt(row, result.patch)) set({ notice: { kind: "feedbackPrompt", id, nonce: ++nonce } });
+      } else if (result.completed) set({ notice: { kind: "completed", id, before: row, nonce: ++nonce } });
     },
 
     async updateFields(id, patch) {
@@ -557,7 +563,15 @@ export const usePageStore = create<PageState>((set, get) => {
     async deleteLine(id) {
       const all = lines();
       const index = all.findIndex((l) => l.id === id);
-      if (index < 0) return;
+      if (index < 0) {
+        // Not on the page (its panel was opened from the Completed page): delete it alone.
+        const row = get().activities[id];
+        if (!row || row.deletedAt) return;
+        const now = nowIso();
+        if (get().panel?.id === id) set({ panel: null });
+        await commitRows([{ ...row, deletedAt: now, editedAt: now, dirty: 1 }]);
+        return;
+      }
       const neighbour = all[index - 1] ?? all[index + 1];
       await apply(
         {
@@ -581,7 +595,8 @@ export const usePageStore = create<PageState>((set, get) => {
       if (!panel) return;
       set({ panel: null });
       const row = get().activities[panel.id];
-      if (row && !row.deletedAt && row.status !== "ARCHIVED") get().setFocus(panel.id, (row.rawInput ?? "").length);
+      const onPage = row && !row.deletedAt && row.status !== "ARCHIVED" && row.status !== "COMPLETED";
+      if (onPage) get().setFocus(panel.id, (row.rawInput ?? "").length);
     },
 
     dismissNotice() {
@@ -590,12 +605,18 @@ export const usePageStore = create<PageState>((set, get) => {
 
     async undoHide() {
       const notice = get().notice;
-      if (notice?.kind !== "hidden" || !notice.before) return;
+      if ((notice?.kind !== "hidden" && notice?.kind !== "completed") || !notice.before) return;
       const current = get().activities[notice.id];
       set({ notice: null });
       if (!current || current.deletedAt) return;
-      const { completionCount, streak, hiddenUntil } = notice.before;
-      await get().updateFields(notice.id, { completionCount, streak, hiddenUntil: hiddenUntil ?? null });
+      const { completionCount, streak, hiddenUntil, status, completedAt } = notice.before;
+      await get().updateFields(notice.id, {
+        completionCount,
+        streak,
+        hiddenUntil: hiddenUntil ?? null,
+        status,
+        completedAt: completedAt ?? null,
+      });
       get().setFocus(notice.id, (current.rawInput ?? "").length);
     },
 
@@ -630,6 +651,29 @@ export const usePageStore = create<PageState>((set, get) => {
       await commitRows([{ ...row, deletedAt: now, editedAt: now, dirty: 1 }]);
     },
 
+    async reopen(id) {
+      const row = get().activities[id] ?? (await (await getDb()).get("Activity", id));
+      if (!row || row.deletedAt || row.status !== "COMPLETED") return;
+      get().adopt([row]);
+      // Its position was kept: it goes back to where it was.
+      await get().updateFields(id, { status: reactivatedStatus(hasFlags(row)), completedAt: null });
+    },
+
+    async deleteCompleted(id) {
+      const row = get().activities[id] ?? (await (await getDb()).get("Activity", id));
+      if (!row || row.deletedAt || row.status !== "COMPLETED") return;
+      const now = nowIso();
+      await commitRows([{ ...row, deletedAt: now, editedAt: now, dirty: 1 }]);
+    },
+
+    adopt(rows) {
+      const missing = rows.filter((row) => !get().activities[row.id]);
+      if (missing.length === 0) return;
+      const next = { ...get().activities };
+      for (const row of missing) next[row.id] = row;
+      set({ activities: next });
+    },
+
     async refresh() {
       if (get().status !== "ready") return;
       const db = await getDb();
@@ -639,6 +683,9 @@ export const usePageStore = create<PageState>((set, get) => {
       const activities: Record<string, Activity> = {};
       for (const row of rows) {
         const mine = before[row.id];
+        // Completed tasks are not loaded, unless already in memory (completed here, or opened
+        // from the Completed page).
+        if (!mine && !keepInMemory(row)) continue;
         // A line with text still waiting for its debounce keeps the memory version (newer).
         if (mine && timers.has(row.id)) activities[row.id] = mine;
         // Same edit: keep the same object, so unchanged lines do not re-render.

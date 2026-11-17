@@ -9,7 +9,6 @@
     "priority": "Prioridad",
     "journal": "Diario",
     "flags": "Banderas",
-    "archived": "Archivadas",
     "settings": "Ajustes"
   },
   "page": {
@@ -35,6 +34,9 @@
       "returns": "vuelve el {{date}}",
       "showNow": "Mostrar ahora",
       "showNowLine": "Mostrar ahora «{{title}}»"
+    },
+    "completed": {
+      "toast": "Completada."
     }
   },
   "priority": {
@@ -327,7 +329,6 @@
     "notes": "Notas",
     "save": "Guardar valoración",
     "delete": "Borrar",
-    "prompt": "¿Cómo fue?",
     "rate": "Valorar"
   },
   "pwa": {
@@ -342,5 +343,27 @@
     "howDesktop": "Ordenador (Chrome o Edge): el icono de instalar en la barra de direcciones.",
     "howAndroid": "Android (Chrome): menú ⋮ → «Instalar aplicación» o «Añadir a pantalla de inicio».",
     "howIos": "iPhone o iPad (Safari): botón Compartir → «Añadir a pantalla de inicio»."
+  },
+  "lines": {
+    "tabs": {
+      "label": "Renglones",
+      "page": "Pendientes",
+      "completed": "Completadas",
+      "hidden": "Ocultas",
+      "archived": "Archivadas"
+    }
+  },
+  "completed": {
+    "title": "Completadas",
+    "intro": "Las tareas completadas salen de la página. Desmarcar una la devuelve a su lugar.",
+    "empty": "Aún no hay tareas completadas.",
+    "today": "Hoy",
+    "yesterday": "Ayer",
+    "reopen": "Desmarcar y devolver a la página",
+    "reopenLine": "Desmarcar «{{title}}» y devolverla a la página",
+    "reopened": "«{{title}}» ha vuelto a la página.",
+    "moreLine": "Más opciones de «{{title}}»",
+    "showMore_one": "Mostrar {{count}} más",
+    "showMore_other": "Mostrar {{count}} más"
   }
 }

@@ -188,8 +188,8 @@ square at the start of the line.
 
 | Type | Tick shows | Tick does | Completing / ending |
 |---|---|---|---|
-| `ACTION` | ☐ / ☑ | Status → `COMPLETED`; line muted + strike-through, stays in place. Untick → back to `ACTIVE` (or `DRAFT` if it has no flags). | — |
-| `REPETITIVE_ACTION` | ↻ + `count/target` | `completionCount += 1`, stays `ACTIVE`, and the line is **hidden until its next occurrence** (`hiddenUntil`, see below). If it reaches `targetCount` → `COMPLETED` instead (not hidden). | Panel: complete or archive the series. |
+| `ACTION` | ☐ | Status → `COMPLETED`, `completedAt` = now; the line **leaves the page** for the Completed page (toast: undo, rate). Unticking it there → back to `ACTIVE` (or `DRAFT` if it has no flags) at its old place, `completedAt` cleared. | — |
+| `REPETITIVE_ACTION` | ↻ + `count/target` | `completionCount += 1`, stays `ACTIVE`, and the line is **hidden until its next occurrence** (`hiddenUntil`, see below). If it reaches `targetCount` → `COMPLETED` instead (`completedAt` set; it moves to the Completed page). | Panel: complete or archive the series. |
 | `HABIT` | ↻ + streak 🔥n | `streak += 1`, stays `ACTIVE`, hidden until its next occurrence. Reaching `targetStreak` shows a hint "mark as formed?" (panel → `COMPLETED`). | Panel. |
 | `ATTITUDE` | ◇ (not clickable) | Nothing. Ctrl+Enter opens the feedback section of the panel. | Panel: completed (internalized) or archive. |
 | `SKILL` | level badge | Nothing; level changed in the panel. | Panel. |
@@ -215,9 +215,12 @@ line done on one device is hidden on the others. The focus moves to the line tak
 Shared rules:
 
 - A tick works on a `DRAFT` line too (it is a to-do page; it does not need flags first).
-- After ticking `ACTION`, `REPETITIVE_ACTION` or `HABIT`, a small non-blocking prompt
-  "¿Cómo fue?" offers the feedback form for 6 s; ignoring it does nothing. (assumption)
-  For `ACTION` only when it becomes `COMPLETED` (not when unticked).
+- A tick that takes the line off the page (completed, or done for this time) shows a toast
+  for 6 s: "Completada." / "Hecho por ahora. Vuelve el …", with **Deshacer** (restores the
+  status, `completedAt`, counters and `hiddenUntil`) and **Valorar** (the feedback form).
+  Ignoring it does nothing. The focus moves to the line taking its place.
+- `completedAt` is set whenever a line becomes `COMPLETED` (tick or panel) and cleared when it
+  leaves `COMPLETED` (untick, reactivate, pause).
 - `DRAFT ↔ ACTIVE` follows the flags: first resolved `#flag` → `ACTIVE`; last one removed →
   `DRAFT` (only if the status was `ACTIVE`).
 - `INACTIVE` (pause) is set in the panel. The line stays on the page in italics, without tick.
@@ -252,10 +255,19 @@ Every change in the panel is a structural write (immediate, no debounce).
 
 | View | Rows | Order | Editable |
 |---|---|---|---|
-| Page | not deleted, status ≠ `ARCHIVED`, `hiddenUntil` not in the future | `position` | yes |
+| Page | not deleted, status ≠ `ARCHIVED` / `COMPLETED`, `hiddenUntil` not in the future | `position` | yes |
 | Priority | `status = ACTIVE`, not `isHidden`, `hiddenUntil` passed, expiration within `renewalLeadDays` | score desc (`services/priority/score.ts`) | tick and panel only; no text editing, no drag. Click → go to that line on the page. |
 | Journal | `GRATITUDE` + `COMPLETED` | `updatedAt`/`editedAt` desc | via panel |
+| Completed | `status = COMPLETED`, not `GRATITUDE` (the journal's) | `completedAt` desc (falls back to `editedAt` for lines completed before the field existed), grouped by day, 50 at a time | untick (back to its place), panel, delete |
 | Archived | `status = ARCHIVED` | `editedAt` desc | restore, delete |
+
+Page, Completed and Archived are tabs of the "Página" section (`components/LineTabs`); the
+main navigation keeps "Página" active on all three.
+
+**Memory:** the page store loads every row except completed tasks (completed gratitude
+entries stay: the journal needs them). The Completed page reads completed rows from IndexedDB
+(`status` index) only while it is open, so a long history does not slow the page. A row
+opened from there (panel) is added to memory for that session.
 
 Priority score (ported from bacuy-x, adapted):
 

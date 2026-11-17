@@ -96,6 +96,9 @@ const schema = a.schema({
     renewalUrl:      a.string(),
     isRenewed:       a.boolean().default(false),
 
+    // bacuy-y: when it was completed (the Completed page's order); null when not completed
+    completedAt: a.datetime(),
+
     // bacuy-y page order + sync
     position:  a.string().required(),
     editedAt:  a.datetime().required(),
@@ -220,6 +223,7 @@ function activityFields() {
     documentRef:       a.string(),
     renewalUrl:        a.string(),
     isRenewed:         a.boolean(),
+    completedAt:       a.datetime(),
     position:          a.string().required(),
     editedAt:          a.datetime().required(),
     deletedAt:         a.datetime(),

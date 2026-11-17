@@ -52,10 +52,14 @@ describe("done for this time: when the line comes back", () => {
 });
 
 describe("tick per type", () => {
-  it("ACTION: completes, and unticking returns to ACTIVE with flags or DRAFT without", () => {
-    expect(tick(row(), false)).toEqual({ kind: "update", patch: { status: "COMPLETED" } });
-    expect(tick(row({ status: "COMPLETED" }), true)).toEqual({ kind: "update", patch: { status: "ACTIVE" } });
-    expect(tick(row({ status: "COMPLETED" }), false)).toEqual({ kind: "update", patch: { status: "DRAFT" } });
+  it("ACTION: completes (stamped, off the page), and unticking returns to ACTIVE with flags or DRAFT without", () => {
+    expect(tick(row(), false, NOW)).toEqual({
+      kind: "update",
+      patch: { status: "COMPLETED", completedAt: NOW.toISOString() },
+      completed: true,
+    });
+    expect(tick(row({ status: "COMPLETED" }), true)).toEqual({ kind: "update", patch: { status: "ACTIVE", completedAt: null } });
+    expect(tick(row({ status: "COMPLETED" }), false)).toEqual({ kind: "update", patch: { status: "DRAFT", completedAt: null } });
   });
 
   it("REPETITIVE_ACTION: counts up and is hidden until next time; completes (not hidden) at the target", () => {
@@ -65,7 +69,11 @@ describe("tick per type", () => {
       patch: { completionCount: 2, hiddenUntil: local(2026, 11, 22) },
       hidden: true,
     });
-    expect(tick({ ...r, targetCount: 2 }, true, NOW)).toEqual({ kind: "update", patch: { completionCount: 2, status: "COMPLETED" } });
+    expect(tick({ ...r, targetCount: 2 }, true, NOW)).toEqual({
+      kind: "update",
+      patch: { completionCount: 2, status: "COMPLETED", completedAt: NOW.toISOString() },
+      completed: true,
+    });
     expect(tick({ ...r, status: "COMPLETED" }, true, NOW)).toEqual({ kind: "none" });
   });
 
@@ -135,10 +143,18 @@ describe("status rules", () => {
   it("gratitude needs notes to complete; expiration archive marks it renewed", () => {
     expect(canComplete({ activityType: "GRATITUDE", status: "DRAFT", description: "  " })).toBe(false);
     expect(applyStatusAction({ activityType: "GRATITUDE", status: "DRAFT", description: "" }, "complete", false)).toBeNull();
-    expect(applyStatusAction({ activityType: "GRATITUDE", status: "DRAFT", description: "sol" }, "complete", false)).toEqual({ status: "COMPLETED" });
+    expect(applyStatusAction({ activityType: "GRATITUDE", status: "DRAFT", description: "sol" }, "complete", false, NOW)).toEqual({
+      status: "COMPLETED",
+      completedAt: NOW.toISOString(),
+    });
     expect(applyStatusAction({ activityType: "EXPIRATION", status: "ACTIVE" }, "archive", true)).toEqual({ status: "ARCHIVED", isRenewed: true });
     expect(applyStatusAction({ activityType: "MOMENTO", status: "ACTIVE" }, "complete", true)).toBeNull();
-    expect(applyStatusAction({ activityType: "ACTION", status: "INACTIVE" }, "reactivate", false)).toEqual({ status: "DRAFT" });
+  });
+
+  it("leaving COMPLETED (reactivate, pause) clears completedAt", () => {
+    expect(applyStatusAction({ activityType: "ACTION", status: "INACTIVE" }, "reactivate", false)).toEqual({ status: "DRAFT", completedAt: null });
+    expect(applyStatusAction({ activityType: "ACTION", status: "COMPLETED" }, "reactivate", true)).toEqual({ status: "ACTIVE", completedAt: null });
+    expect(applyStatusAction({ activityType: "ACTION", status: "ACTIVE" }, "pause", true)).toEqual({ status: "INACTIVE", completedAt: null });
   });
 });
 

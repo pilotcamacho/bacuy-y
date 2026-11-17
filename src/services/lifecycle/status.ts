@@ -43,15 +43,23 @@ export function statusActions(row: StatusRow): StatusAction[] {
   return out;
 }
 
-/** The patch for a panel status action, or null when it is not allowed. */
-export function applyStatusAction(row: StatusRow, action: StatusAction, hasFlags: boolean): Partial<ActivityRow> | null {
+/**
+ * The patch for a panel status action, or null when it is not allowed. Completing stamps
+ * `completedAt`; leaving COMPLETED (reactivate, pause) clears it.
+ */
+export function applyStatusAction(
+  row: StatusRow,
+  action: StatusAction,
+  hasFlags: boolean,
+  now: Date = new Date(),
+): Partial<ActivityRow> | null {
   switch (action) {
     case "pause":
-      return { status: "INACTIVE" };
+      return { status: "INACTIVE", completedAt: null };
     case "reactivate":
-      return { status: reactivatedStatus(hasFlags) };
+      return { status: reactivatedStatus(hasFlags), completedAt: null };
     case "complete":
-      return canComplete(row) ? { status: "COMPLETED" } : null;
+      return canComplete(row) ? { status: "COMPLETED", completedAt: now.toISOString() } : null;
     case "archive":
       return row.activityType === "EXPIRATION" ? { status: "ARCHIVED", isRenewed: true } : { status: "ARCHIVED" };
   }

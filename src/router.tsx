@@ -2,6 +2,7 @@ import { Navigate, type RouteObject } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { RedirectIfSignedIn, RequireAuth } from "@/components/RequireAuth";
 import { Archived } from "@/routes/Archived";
+import { Completed } from "@/routes/Completed";
 import { Flags } from "@/routes/Flags";
 import { Journal } from "@/routes/Journal";
 import { Page } from "@/routes/Page";
@@ -24,6 +25,7 @@ export const routes: RouteObject[] = [
       { path: "priority", element: <PriorityView /> },
       { path: "journal", element: <Journal /> },
       { path: "flags", element: <Flags /> },
+      { path: "completed", element: <Completed /> },
       { path: "archived", element: <Archived /> },
       { path: "settings", element: <Settings /> },
     ],

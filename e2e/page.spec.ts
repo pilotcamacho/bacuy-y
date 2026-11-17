@@ -94,12 +94,10 @@ test("drag a line with the handle", async ({ page }) => {
   await expect(lines(page).first()).toHaveValue("c");
 });
 
-test("tick an action and tag it from the side panel", async ({ page }) => {
+test("tag a line from the side panel, tick it: it moves to Completed; unticking there brings it back", async ({ page }) => {
   await signIn(page);
   await lines(page).first().click();
   await page.keyboard.type("llamar al banco");
-  await page.getByTestId("line-done-0").click();
-  await expect(page.getByTestId("line-done-0")).toHaveAttribute("aria-pressed", "true");
 
   await page.keyboard.press("ControlOrMeta+.");
   const panel = page.getByTestId("line-panel");
@@ -109,9 +107,21 @@ test("tick an action and tag it from the side panel", async ({ page }) => {
   await page.keyboard.press("Escape");
   await expect(panel).toBeHidden();
 
-  await page.waitForTimeout(500);
+  await page.getByTestId("line-done-0").click();
+  await expect(page.getByTestId("completed-toast")).toBeVisible();
+  await expect(lines(page)).toHaveCount(1);
+  await expect(lines(page).first()).toHaveValue(""); // only the empty line to type in
+
+  await page.getByTestId("line-tabs").getByRole("link", { name: /^completadas$|^completed$/i }).click();
+  await expect(page).toHaveURL(/\/completed$/);
+  await expect(page.getByTestId("completed-item-0")).toContainText(/llamar al banco #\S+/);
   await page.reload();
-  await expect(page.getByTestId("line-done-0")).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByTestId("completed-item-0")).toContainText("llamar al banco");
+
+  await page.getByTestId("completed-reopen-0").click();
+  await expect(page.locator('[data-testid^="completed-item-"]')).toHaveCount(0);
+  await page.getByTestId("line-tabs").getByRole("link", { name: /^pendientes$|^to do$/i }).click();
+  await expect(lines(page).first()).toHaveValue(/^llamar al banco #\S+$/);
 });
 
 test("a flag created on the Flags screen resolves the line's mark; weights must sum to 100", async ({ page }) => {
@@ -152,7 +162,7 @@ test("after a tick, '¿Cómo fue?' leads to the feedback form", async ({ page })
   await page.getByTestId("line-done-0").click();
   const prompt = page.getByTestId("feedback-prompt");
   await expect(prompt).toBeVisible();
-  await prompt.getByRole("button").click();
+  await prompt.click();
   const panel = page.getByTestId("line-panel");
   const form = panel.getByTestId("feedback-form");
   await form.getByLabel(/^5 (de|of) 5$/).locator("..").click(); // the star (the radio is visually hidden)
