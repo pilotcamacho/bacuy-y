@@ -216,5 +216,9 @@ Record here every model change copied from bacuy-x (date, bacuy-x change, what c
   keep using the sandbox's `amplify_outputs.json`.
 - First Amplify build failed at `npm ci`: the build image's npm (11.19) found the lock file out
   of sync (optional `@emnapi/*`, `@opentelemetry/core`, `semver`), while local npm 11.6 accepted
-  it. Fixed by regenerating it with `npx npm@11.19.1 install --package-lock-only`. Before pushing
-  dependency changes, check with `npx npm@latest ci --dry-run --ignore-scripts` in a copy.
+  it. Fixed by regenerating it with npm 11.19 **in a folder without `node_modules`**
+  (`npx npm@11.19.1 install --package-lock-only`), then `npx npm@11.19.1 ci` here. Generated on
+  top of an existing `node_modules`, or touched again by `npm install` with npm 11.6, the lock
+  goes back to the rejected form. Until the local npm is updated (`npm install -g npm@11.19.1`),
+  change dependencies with `npx npm@11.19.1 install <pkg>` and check with
+  `npx npm@11.19.1 ci --dry-run --ignore-scripts` in a copy before pushing.
