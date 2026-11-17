@@ -389,5 +389,16 @@
     "changeLine": "Cambiar hasta cuándo se oculta «{{title}}»",
     "changed": "«{{title}}»: nueva fecha guardada.",
     "shown": "«{{title}}» ha vuelto a la página."
+  },
+  "filter": {
+    "button": "Filtrar por bandera",
+    "filteredBy": "Filtrado por",
+    "active": "Filtro activo",
+    "remove": "Quitar {{name}} del filtro",
+    "clear": "Quitar filtro",
+    "noFlag": "Sin bandera",
+    "hint": "Una bandera incluye sus subbanderas. Con varias, se muestran los renglones que tengan cualquiera.",
+    "done": "Listo",
+    "emptyPlaceholder": "Nada con este filtro. Escribe aquí para añadir."
   }
 }

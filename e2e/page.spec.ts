@@ -266,3 +266,34 @@ test("hide a line from the panel until a date and time; it stays hidden after a 
   await page.getByTestId("hidden-0-indefinite").click();
   await expect(item).toContainText(/hasta que lo muestres|until you show it/);
 });
+
+test("filter the page by flag: new lines get the flag, the filter survives a reload, clear shows all", async ({ page }) => {
+  await signIn(page);
+  await lines(page).first().click();
+  await page.keyboard.type("correr #salud");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("pan #recados");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("idea suelta");
+  await expect(lines(page)).toHaveCount(3);
+
+  await page.getByTestId("flag-filter-toggle").click();
+  await page.getByRole("checkbox", { name: /^(Salud|Health)$/ }).check();
+  await expect(lines(page)).toHaveCount(1);
+  await expect(lines(page).first()).toHaveValue("correr #salud");
+
+  await lines(page).first().click();
+  await page.keyboard.press("End");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("nadar");
+  await expect(lines(page).nth(1)).toHaveValue(/^nadar #(salud|health)$/);
+  await page.waitForTimeout(500); // text debounce
+
+  await page.reload();
+  await expect(lines(page)).toHaveCount(2);
+  await expect(page.locator('[data-testid^="flag-filter-chip-"]')).toHaveText(/Salud|Health/);
+
+  await page.getByTestId("flag-filter-clear").click();
+  await expect(lines(page)).toHaveCount(4);
+  await expect(lines(page).nth(1)).toHaveValue(/^nadar #(salud|health)$/); // typed right after "correr"
+});

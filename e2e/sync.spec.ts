@@ -54,7 +54,7 @@ async function syncUntilClean(page: Page) {
     await indicator.click();
     await expect(indicator).toHaveAttribute("data-status", "synced", { timeout: 4_000 });
     await expect(indicator).toHaveAttribute("data-dirty", "0", { timeout: 1_000 });
-  }).toPass({ timeout: 30_000 });
+  }).toPass({ timeout: 60_000 }); // the first pull of the shared test account can be slow (WebKit)
 }
 
 async function indexOf(page: Page, text: string): Promise<number> {

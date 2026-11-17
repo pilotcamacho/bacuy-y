@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { LinePanel } from "@/components/LinePanel";
 import { LineTabs } from "@/components/LineTabs";
@@ -97,9 +98,11 @@ export function Completed() {
   };
 
   /** The row leaves the list: keep the keyboard user on the screen (next row, or the heading). */
-  function afterRemoval(index: number, message: string) {
+  function afterRemoval(id: string, index: number, message: string) {
     setConfirming(null);
     setAnnounce(message);
+    // Drop it now rather than waiting for the re-read, so the focus never lands on it.
+    flushSync(() => setRows((current) => current?.filter((r) => r.id !== id) ?? current));
     requestAnimationFrame(() => {
       const items = document.querySelectorAll<HTMLButtonElement>("[data-completed-reopen]");
       (items[Math.min(index, items.length - 1)] ?? headingRef.current)?.focus();
@@ -152,7 +155,7 @@ export function Completed() {
                       data-testid={`completed-reopen-${index}`}
                       aria-label={t("completed.reopenLine", { title })}
                       title={t("completed.reopen")}
-                      onClick={() => void store().reopen(row.id).then(() => afterRemoval(index, t("completed.reopened", { title })))}
+                      onClick={() => void store().reopen(row.id).then(() => afterRemoval(row.id, index, t("completed.reopened", { title })))}
                     >
                       ✓
                     </button>
@@ -170,7 +173,7 @@ export function Completed() {
                           onClick={() =>
                             void store()
                               .deleteCompleted(row.id)
-                              .then(() => afterRemoval(index, t("archived.deleted", { title })))
+                              .then(() => afterRemoval(row.id, index, t("archived.deleted", { title })))
                           }
                         >
                           {t("archived.deleteYes")}

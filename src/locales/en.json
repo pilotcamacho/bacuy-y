@@ -389,5 +389,16 @@
     "changeLine": "Change until when “{{title}}” is hidden",
     "changed": "“{{title}}”: new date saved.",
     "shown": "“{{title}}” is back on the page."
+  },
+  "filter": {
+    "button": "Filter by flag",
+    "filteredBy": "Filtered by",
+    "active": "Active filter",
+    "remove": "Remove {{name}} from the filter",
+    "clear": "Clear filter",
+    "noFlag": "No flag",
+    "hint": "A flag includes its subflags. With several, lines with any of them are shown.",
+    "done": "Done",
+    "emptyPlaceholder": "Nothing with this filter. Type here to add."
   }
 }

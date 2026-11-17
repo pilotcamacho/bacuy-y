@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { FlagFilter } from "@/components/FlagFilter";
 import { LineEditor } from "@/components/LineEditor";
 import { LineTabs } from "@/components/LineTabs";
 
@@ -8,6 +9,7 @@ export function Page() {
     <section>
       <h1 className="sr-only">{t("page.title")}</h1>
       <LineTabs />
+      <FlagFilter />
       <LineEditor />
     </section>
   );

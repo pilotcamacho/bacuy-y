@@ -3,7 +3,9 @@ import { generateKeyBetween } from "fractional-indexing";
 import { getDb } from "@/lib/db/instance";
 import { emit } from "@/lib/events";
 import type { ActivityRow, FlagRow, LocalDb, Stored, WriteOp } from "@/lib/db/types";
+import i18n from "@/lib/i18n";
 import { newId } from "@/lib/ids";
+import { kvGetJson, kvSetJson } from "@/lib/kv";
 import {
   deleteEmpty,
   mergeDown,
@@ -14,6 +16,7 @@ import {
   type EditResult,
   type EditorLine,
 } from "@/services/editor";
+import { activeFilter, filterLines, withFilterFlag } from "@/services/editor/flagFilter";
 import { GHOST_LINE_ID, pageLines } from "@/services/editor/pageLines";
 import { missingDefaultFlags } from "@/services/flags/defaults";
 import { diffActivityFlags } from "@/services/lifecycle/activityFlags";
@@ -128,6 +131,9 @@ interface PageState {
    */
   hide(id: string, until: string | null): Promise<void>;
   hasFlags(id: string): boolean;
+  /** Flag ids (and NO_FLAG) the page is filtered by; empty = every line. Kept on this device. */
+  filter: string[];
+  setFilter(filter: string[]): void;
   /** Archived view: back to the page (at the end), ACTIVE or DRAFT by the flag rule. */
   restore(id: string): Promise<void>;
   /** Archived view: soft-delete an archived line (its links and feedback too). */
@@ -145,6 +151,71 @@ interface PageState {
 // ─── module state (not rendered) ─────────────────────────────────────────────────
 
 const timers = new Map<string, ReturnType<typeof setTimeout>>();
+/**
+ * Lines shown on the filtered page since the filter was set: they stay in view even if an
+ * edit removes their mark (a split moving it to the new line, typing over it), so the line
+ * being edited never vanishes. Cleared when the filter changes.
+ */
+const filterKeep = new Set<string>();
+const FILTER_KEY = "pageFilter";
+
+function markLocale(): "es" | "en" {
+  return i18n.resolvedLanguage?.startsWith("en") ? "en" : "es";
+}
+
+/**
+ * On a filtered page the editor only sees the visible lines, so the positions it gives new or
+ * moved lines ignore the lines the filter hides (and could even equal one of theirs). Each
+ * such line is placed in the whole page instead: right after its visible predecessor, before
+ * whatever line follows that one (or, when it is first, right before its visible successor).
+ * Visible order is kept; no position is shared with any other row.
+ */
+function placeInWholePage(result: EditResult, before: Record<string, Activity>): EditResult {
+  const placed = new Set(
+    result.changed.filter((l) => !before[l.id] || before[l.id]!.position !== l.position).map((l) => l.id),
+  );
+  if (placed.size === 0) return result;
+  const deleted = new Set(result.deleted);
+  const taken = Object.values(before)
+    .filter((a) => !a.deletedAt && !placed.has(a.id) && !deleted.has(a.id))
+    .map((a) => a.position);
+  const lines = result.lines.slice();
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]!;
+    if (!placed.has(line.id)) continue;
+    const prev = i > 0 ? lines[i - 1]!.position : null;
+    const next = lines.slice(i + 1).find((l) => !placed.has(l.id))?.position ?? null;
+    let lo: string | null;
+    let hi: string | null;
+    if (prev !== null) {
+      lo = prev;
+      hi = taken.filter((p) => p > prev).sort()[0] ?? null;
+    } else {
+      hi = next;
+      const below = taken.filter((p) => hi === null || p < hi).sort();
+      lo = below.at(-1) ?? null;
+    }
+    const position = generateKeyBetween(lo, hi);
+    lines[i] = { ...line, position };
+    taken.push(position);
+  }
+  const byId = new Map(lines.map((l) => [l.id, l]));
+  return { ...result, lines, changed: result.changed.map((l) => byId.get(l.id) ?? l) };
+}
+
+/** The page as shown: every line, or with a filter, the matching ones (plus filterKeep). */
+export function visiblePageLines(
+  activities: Record<string, Activity>,
+  flags: FlagRow[],
+  filter: string[],
+  now: Date = new Date(),
+): EditorLine[] {
+  const all = pageLines(activities, now);
+  if (filter.length === 0 || activeFilter(filter, flags).length === 0) return all;
+  const shown = new Set(filterLines(all, filter, parseContext(flags)).map((l) => l.id));
+  for (const id of shown) filterKeep.add(id);
+  return all.filter((l) => shown.has(l.id) || filterKeep.has(l.id));
+}
 let writeChain: Promise<void> = Promise.resolve();
 let nonce = 0;
 
@@ -184,7 +255,8 @@ async function feedbackOps(db: LocalDb, rows: Activity[], reviveAt: string | nul
 }
 
 export const usePageStore = create<PageState>((set, get) => {
-  const lines = () => pageLines(get().activities);
+  // The lines the user sees (filtered); every editing operation works on these.
+  const lines = () => visiblePageLines(get().activities, get().flags, get().filter);
   const ctx = () => parseContext(get().flags);
 
   /** Builds the stored row for a line after an edit (text-owned fields re-derived). */
@@ -281,7 +353,15 @@ export const usePageStore = create<PageState>((set, get) => {
     }
     const now = nowIso();
     const before = get().activities;
-    const rows: Activity[] = result.changed.map((line) => rowFor(line, now));
+    // New lines typed while the page is filtered get the filter's flag (and stay in view).
+    const filtered = activeFilter(get().filter, get().flags).length > 0;
+    if (filtered) result = placeInWholePage(result, before);
+    const created = new Set(result.created);
+    const rows: Activity[] = result.changed.map((line) => {
+      if (!filtered || !created.has(line.id)) return rowFor(line, now);
+      filterKeep.add(line.id);
+      return rowFor({ ...line, rawInput: withFilterFlag(line.rawInput, get().filter, ctx(), markLocale()) }, now);
+    });
     for (const id of result.deleted) {
       const row = before[id];
       if (row) rows.push({ ...row, deletedAt: now, editedAt: now, dirty: 1 });
@@ -310,7 +390,10 @@ export const usePageStore = create<PageState>((set, get) => {
     // After every row, hidden ones included, so it never shares a position with one.
     let last: string | null = null;
     for (const a of Object.values(get().activities)) if (!a.deletedAt && (last === null || a.position > last)) last = a.position;
-    const row = rowFor({ id, rawInput, position: generateKeyBetween(last, null) }, now);
+    // On a filtered page the first line gets the filter's flag too (the caret stays in the text).
+    filterKeep.add(id);
+    const text = withFilterFlag(rawInput, get().filter, ctx(), markLocale());
+    const row = rowFor({ id, rawInput: text, position: generateKeyBetween(last, null) }, now);
     set({ activities: { ...get().activities, [id]: row }, focus: { id, offset: rawInput.length, nonce: ++nonce } });
     void writeRows([row]);
     return id;
@@ -359,6 +442,13 @@ export const usePageStore = create<PageState>((set, get) => {
     undo: null,
     panel: null,
     notice: null,
+    filter: kvGetJson<string[]>(FILTER_KEY, []),
+
+    setFilter(filter) {
+      filterKeep.clear();
+      kvSetJson(FILTER_KEY, filter);
+      set({ filter });
+    },
 
     async load(ownerSub) {
       const status = get().status;
@@ -654,7 +744,7 @@ export const usePageStore = create<PageState>((set, get) => {
     async restore(id) {
       const row = get().activities[id];
       if (!row || row.deletedAt || row.status !== "ARCHIVED") return;
-      const last = lines().at(-1);
+      const last = pageLines(get().activities).at(-1); // the end of the whole page, filter or not
       const patch: Partial<ActivityRow> = {
         status: reactivatedStatus(hasFlags(row)),
         position: generateKeyBetween(last?.position ?? null, null),
@@ -740,6 +830,7 @@ export const usePageStore = create<PageState>((set, get) => {
 export function resetPageStore() {
   for (const t of timers.values()) clearTimeout(t);
   timers.clear();
+  filterKeep.clear();
   writeChain = Promise.resolve();
   usePageStore.setState({
     status: "idle",
@@ -750,6 +841,7 @@ export function resetPageStore() {
     undo: null,
     panel: null,
     notice: null,
+    filter: kvGetJson<string[]>(FILTER_KEY, []),
   });
 }
 

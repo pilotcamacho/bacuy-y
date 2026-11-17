@@ -359,7 +359,8 @@ These adapt the expo-amplify-kit conventions to a web-only app.
   `feedback-list`, `journal-entry`, `priority-item-<rank>`, `priority-more-<rank>`, `archived-item-<index>`,
   `archived-restore-<index>`, `archived-delete-<index>`, `hidden-toast`, `hidden-count`, `hidden-list`, `hidden-item-<index>`, `hidden-change-<index>`, `hidden-more-<index>`,
   `panel-hidden`, `panel-hide-preset-<later|tomorrow|monday|nextMonth>`, `panel-hide-custom`, `panel-hide-custom-apply`,
-  `panel-hide-indefinite`,
+  `panel-hide-indefinite`, `flag-filter`, `flag-filter-toggle`, `flag-filter-option-<flagId|none>`,
+  `flag-filter-chip-<flagId|none>`, `flag-filter-clear`,
   `hidden-show-<index>`, `update-prompt`, `install-section`, `line-tabs`, `completed-toast`, `completed-list`,
   `completed-item-<index>`, `completed-reopen-<index>`, `completed-more-<index>`, `completed-delete-<index>`,
   `completed-delete-confirm-<index>`, `completed-show-more`).

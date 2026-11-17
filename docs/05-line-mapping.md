@@ -275,6 +275,23 @@ Every change in the panel is a structural write (immediate, no debounce).
 Page, Hidden (with its count), Completed and Archived are tabs of the "Página" section
 (`components/LineTabs`); the main navigation keeps "Página" active on all of them.
 
+**Filter by flag** (Pendientes tab; confirmed 2026-11-17; `services/editor/flagFilter.ts`,
+`components/FlagFilter`). "Filtrar por bandera" opens the flag tree as checkboxes plus
+"Sin bandera". A line is shown when any of its `#flag` marks is a chosen flag **or a
+descendant** of one (a parent includes its children), or it has no flag and "Sin bandera" is
+chosen. While a filter is on, chips under the tabs name it (× removes one, "Quitar filtro"
+clears all). The choice is kept on this device (`bacuyy_pageFilter`); deleted flags drop out of
+it. Editing works on the visible lines:
+
+- A new line (Enter, split, paste, typing on an empty filtered page) gets the filter's first
+  flag mark (` #salud`), unless it already matches; a filter of only "Sin bandera" adds nothing.
+- New and moved lines are placed in the **whole** page right after their visible predecessor
+  (before whatever hidden-by-filter line follows it), so turning the filter off shows them where
+  they were typed.
+- A line shown under the current filter stays in view until the filter changes, even if an edit
+  removes its mark, so the line being edited never vanishes.
+- Undo restore and lines from other tabs go back to the end of the whole page as before.
+
 **Memory:** the page store loads every row except completed tasks (completed gratitude
 entries stay: the journal needs them). The Completed page reads completed rows from IndexedDB
 (`status` index) only while it is open, so a long history does not slow the page. A row

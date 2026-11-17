@@ -367,8 +367,11 @@ Requests from the first days of real use (2026-11-17).
   > gone: the "Ocultas" tab shows the count instead. Found while testing: the e2e specs that
   > block AppSync with `page.route` leaked lines through the service worker (WebKit), and
   > Alt+↑ followed quickly by Ctrl+. could pull the focus out of the panel; both fixed.
-- [ ] Filter the page by flag (parent includes children; several = any of them; "no flag");
+- [x] Filter the page by flag (parent includes children; several = any of them; "no flag");
   a new line typed while filtered gets the filter's flag
+  > A collapsible "Filtrar por bandera" row under the tabs (chips when on), so the page keeps
+  > its height when unused. Kept per device. New and moved lines are placed in the whole page
+  > after their visible predecessor; lines shown under a filter stay until it changes.
 
 ---
 

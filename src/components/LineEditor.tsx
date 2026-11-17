@@ -16,8 +16,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePageClock } from "@/hooks/usePageClock";
 import { subscribe } from "@/lib/events";
 import { restrictToVerticalAxis } from "@/lib/dndModifiers";
-import { GHOST_LINE, pageLines } from "@/services/editor/pageLines";
-import { usePageStore } from "@/stores/pageStore";
+import { GHOST_LINE } from "@/services/editor/pageLines";
+import { usePageStore, visiblePageLines } from "@/stores/pageStore";
 import { LineRow, type LineHandlers } from "./LineRow";
 import { LinePanel } from "./LinePanel";
 import { UndoToast } from "./UndoToast";
@@ -28,6 +28,7 @@ export function LineEditor() {
   const status = usePageStore((s) => s.status);
   const activities = usePageStore((s) => s.activities);
   const flags = usePageStore((s) => s.flags);
+  const filter = usePageStore((s) => s.filter);
   const focus = usePageStore((s) => s.focus);
   const store = usePageStore.getState;
   const auth = useAuth();
@@ -63,7 +64,9 @@ export function LineEditor() {
   // The page's clock: lines hidden until later come back when their time arrives.
   const now = usePageClock(activities);
 
-  const lines = useMemo(() => pageLines(activities, now), [activities, now]);
+  // The page as shown: with a flag filter, only the matching lines (FlagFilter).
+  const lines = useMemo(() => visiblePageLines(activities, flags, filter, now), [activities, flags, filter, now]);
+  const filtered = filter.length > 0;
   const shown = lines.length > 0 ? lines : [GHOST_LINE];
 
   const handlers: LineHandlers = useMemo(
@@ -87,7 +90,8 @@ export function LineEditor() {
           });
       },
       onFocusNeighbour: (id, direction, caret) => {
-        const current = pageLines(store().activities);
+        const s = store();
+        const current = visiblePageLines(s.activities, s.flags, s.filter);
         const index = current.findIndex((l) => l.id === id);
         const target = current[index + direction];
         if (target) store().setFocus(target.id, caret);
@@ -108,7 +112,8 @@ export function LineEditor() {
     (event: DragEndEvent) => {
       const { active, over } = event;
       if (!over || active.id === over.id) return;
-      const to = pageLines(store().activities).findIndex((l) => l.id === over.id);
+      const s = store();
+      const to = visiblePageLines(s.activities, s.flags, s.filter).findIndex((l) => l.id === over.id);
       if (to >= 0) void store().moveTo(String(active.id), to);
     },
     [store],
@@ -151,7 +156,7 @@ export function LineEditor() {
                 flags={flags}
                 focus={focus}
                 draggable={lines.length > 1}
-                placeholder={lines.length === 0 ? t("page.placeholder") : undefined}
+                placeholder={lines.length === 0 ? t(filtered ? "filter.emptyPlaceholder" : "page.placeholder") : undefined}
                 {...handlers}
               />
             ))}
