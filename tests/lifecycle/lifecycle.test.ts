@@ -88,12 +88,15 @@ describe("tick per type", () => {
     expect(tick({ ...r, targetStreak: 30 }, true, NOW)).toMatchObject({ patch: { streak: 5 }, formedHint: false, hidden: true });
   });
 
-  it("ATTITUDE, GRATITUDE and EXPIRATION open the panel; SKILL and MOMENTO do nothing", () => {
-    expect(tick(row({ activityType: "ATTITUDE" }), true)).toEqual({ kind: "panel", section: "feedback" });
+  it("ATTITUDE and SKILL ask for a review; GRATITUDE and EXPIRATION open the panel; MOMENTO does nothing", () => {
+    expect(tick(row({ activityType: "ATTITUDE" }), true)).toEqual({ kind: "review" });
+    expect(tick(row({ activityType: "SKILL" }), true)).toEqual({ kind: "review" });
+    expect(tick(row({ activityType: "ATTITUDE", status: "COMPLETED" }), true)).toEqual({ kind: "none" });
+    expect(tickIsClickable(row({ activityType: "SKILL" }))).toBe(true);
+    expect(tickIsClickable(row({ activityType: "ATTITUDE", status: "COMPLETED" }))).toBe(false);
     expect(tick(row({ activityType: "GRATITUDE" }), true)).toEqual({ kind: "panel", section: "description" });
     expect(tick(row({ activityType: "GRATITUDE", status: "COMPLETED" }), true)).toEqual({ kind: "none" });
     expect(tick(row({ activityType: "EXPIRATION" }), true)).toEqual({ kind: "panel", section: "expiration" });
-    expect(tick(row({ activityType: "SKILL" }), true)).toEqual({ kind: "none" });
     expect(tick(row({ activityType: "MOMENTO" }), true)).toEqual({ kind: "none" });
   });
 

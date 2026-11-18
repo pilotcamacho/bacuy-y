@@ -16,8 +16,8 @@ const TYPES: { type: ActivityType; symbol: string; date: DateField | null; frequ
   { type: "ACTION", symbol: "☐", date: "deadline", frequency: false, fields: [] },
   { type: "REPETITIVE_ACTION", symbol: "↻", date: "deadline", frequency: true, fields: ["targetCount", "completionCount", "cron"] },
   { type: "HABIT", symbol: "🔥", date: null, frequency: true, fields: ["streak", "targetStreak", "cron"] },
-  { type: "ATTITUDE", symbol: "◇", date: null, frequency: false, fields: ["affirmation"] },
-  { type: "SKILL", symbol: "▲", date: null, frequency: false, fields: ["proficiencyLevel", "learningResources"] },
+  { type: "ATTITUDE", symbol: "◇", date: null, frequency: false, fields: ["affirmation", "reviewStep"] },
+  { type: "SKILL", symbol: "▲", date: null, frequency: false, fields: ["reviewStep", "proficiencyLevel", "learningResources"] },
   { type: "MOMENTO", symbol: "★", date: "eventDate", frequency: false, fields: [] },
   { type: "GRATITUDE", symbol: "♡", date: null, frequency: false, fields: ["recipient", "gratitudeNotes"] },
   {

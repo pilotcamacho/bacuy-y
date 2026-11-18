@@ -110,13 +110,16 @@ export function TickCell({ row, index, onTick }: Props) {
       return button(<span aria-hidden="true">{days}d</span>, `${label} · ${t("line.tick.expiration", { n })}`, undefined, color);
     }
 
+    // Spaced review: the tick asks "how did it go?" (services/lifecycle/review.ts).
     case "SKILL": {
       const level = row.proficiencyLevel;
       const label = level ? t(`proficiencyLevel.${level}`) : t("activityType.SKILL");
-      return badge(level ? label.slice(0, 3) : "◆", label);
+      if (completed) return badge("✓", `${label} · ${t("status.COMPLETED")}`);
+      return button(<span aria-hidden="true">{level ? label.slice(0, 3) : "◆"}</span>, `${label} · ${t("line.tick.review", { n })}`, undefined, BADGE);
     }
     case "ATTITUDE":
-      return badge("◇", t("line.attitude"));
+      if (completed) return badge("✓", `${t("line.attitude")} · ${t("status.COMPLETED")}`);
+      return button(<span aria-hidden="true">◇</span>, `${t("line.attitude")} · ${t("line.tick.review", { n })}`, undefined, BADGE);
     case "MOMENTO":
       return badge("★", t("line.moment"));
   }

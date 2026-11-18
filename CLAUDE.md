@@ -368,7 +368,8 @@ These adapt the expo-amplify-kit conventions to a web-only app.
   `panel-hidden`, `panel-hide-preset-<later|tomorrow|monday|nextMonth>`, `panel-hide-custom`, `panel-hide-custom-apply`,
   `panel-hide-indefinite`, `flag-filter`, `flag-filter-toggle`, `flag-filter-option-<flagId|none>`,
   `flag-filter-chip-<flagId|none>`, `flag-filter-clear`, `line-add`, `suggestions`, `suggestion-<index>`, `help`, `help-type-<TYPE>`, `panel-type-help`, `schedule-picker`, `schedule-day-<0-6>`,
-  `schedule-monthday`, `schedule-time`,
+  `schedule-monthday`, `schedule-time`, `review-prompt`, `review-good`, `review-bad`, `spacing-override`,
+  `panel-review`, `panel-review-next`,
   `hidden-show-<index>`, `update-prompt`, `install-section`, `line-tabs`, `completed-toast`, `completed-list`,
   `completed-item-<index>`, `completed-reopen-<index>`, `completed-more-<index>`, `completed-delete-<index>`,
   `completed-delete-confirm-<index>`, `completed-show-more`).
@@ -389,6 +390,9 @@ These adapt the expo-amplify-kit conventions to a web-only app.
 - Unticking a completed `ACTION` (on the Completed page) reactivates it (bacuy-x treats
   completion as one-way).
 - `Activity.completedAt` (not in bacuy-x): when it was completed, for the Completed page.
+- `Activity.reviewStep` (not in bacuy-x): attitudes and skills use **spaced review** (tick →
+  Bien / Mal → hidden 1 day … 6 months, adapting; Bien on the last step completes it) instead of
+  a frequency. See `docs/05-line-mapping.md` §4.
 
 ## Workflow
 

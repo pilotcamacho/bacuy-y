@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { UNDO_MS, usePageStore } from "@/stores/pageStore";
 
@@ -18,6 +18,8 @@ export function UndoToast() {
   const { t, i18n } = useTranslation();
   const undo = usePageStore((s) => s.undo);
   const notice = usePageStore((s) => s.notice);
+  const reviewTitle = usePageStore((s) => (s.notice?.kind === "review" ? s.activities[s.notice.id]?.title : undefined));
+  const goodRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!undo) return;
@@ -25,8 +27,13 @@ export function UndoToast() {
     return () => clearTimeout(timer);
   }, [undo]);
 
+  // The review question takes the focus (it was asked by a tick or Ctrl+Enter) and waits.
   useEffect(() => {
-    if (!notice) return;
+    if (notice?.kind === "review") goodRef.current?.focus();
+  }, [notice]);
+
+  useEffect(() => {
+    if (!notice || notice.kind === "review") return;
     const ms = notice.kind === "habitFormed" ? UNDO_MS * 2 : FEEDBACK_PROMPT_MS;
     const timer = setTimeout(() => usePageStore.getState().dismissNotice(), ms);
     return () => clearTimeout(timer);
@@ -43,6 +50,61 @@ export function UndoToast() {
     );
   }
 
+  if (notice?.kind === "review") {
+    const store = usePageStore.getState;
+    const answer = (good: boolean) => {
+      store().dismissNotice();
+      void store().review(notice.id, good);
+    };
+    return (
+      <div
+        role="dialog"
+        aria-label={t("review.question")}
+        className={TOAST}
+        data-testid="review-prompt"
+        onKeyDown={(e) => {
+          if (e.key === "Escape") {
+            e.preventDefault();
+            store().dismissNotice();
+            store().setFocus(notice.id, 0);
+          }
+        }}
+      >
+        <span>
+          {t("review.question")}
+          {reviewTitle ? <span className="ms-1 font-semibold">«{reviewTitle}»</span> : null}
+        </span>
+        <button ref={goodRef} type="button" className={ACTION} data-testid="review-good" onClick={() => answer(true)}>
+          {t("review.good")}
+        </button>
+        <button type="button" className={ACTION} data-testid="review-bad" onClick={() => answer(false)}>
+          {t("review.bad")}
+        </button>
+        <button
+          type="button"
+          className={ACTION}
+          onClick={() => {
+            store().dismissNotice();
+            store().setFocus(notice.id, 0);
+          }}
+        >
+          {t("panel.dismiss")}
+        </button>
+      </div>
+    );
+  }
+
+  if (notice?.kind === "spacingOverride") {
+    return (
+      <div role="status" className={TOAST} data-testid="spacing-override">
+        <span>{t("review.overridesFrequency")}</span>
+        <button type="button" className={ACTION} onClick={() => usePageStore.getState().dismissNotice()}>
+          {t("panel.dismiss")}
+        </button>
+      </div>
+    );
+  }
+
   if (notice?.kind === "hidden" || notice?.kind === "completed") {
     const store = usePageStore.getState;
     const date = notice.until
@@ -53,7 +115,11 @@ export function UndoToast() {
     return (
       <div role="status" className={TOAST} data-testid={notice.kind === "hidden" ? "hidden-toast" : "completed-toast"}>
         <span>
-          {notice.kind === "completed"
+          {notice.review
+            ? notice.kind === "completed"
+              ? t("review.internalized")
+              : t(notice.review.good ? "review.backGood" : "review.backBad", { date })
+            : notice.kind === "completed"
             ? t("page.completed.toast")
             : !notice.manual
               ? t("page.hidden.toast", { date })
@@ -64,7 +130,7 @@ export function UndoToast() {
         <button type="button" className={ACTION} onClick={() => void store().undoHide()}>
           {t("page.undo")}
         </button>
-        {!notice.manual && (
+        {!notice.manual && !notice.review && (
         <button
           type="button"
           className={ACTION}

@@ -8,6 +8,7 @@ import { reactivatedStatus } from "./status";
  *   (a repetitive task or habit day done for this time). `completed`: the patch completes it
  *   (it leaves the page for the Completed page).
  * - `panel`: open the side panel at this section instead (the type needs more input).
+ * - `review`: ask "how did it go?" (attitudes and skills: spaced review, ./review.ts).
  * - `none`: the tick does nothing for this line.
  */
 export type PanelSection = "feedback" | "description" | "expiration";
@@ -15,6 +16,7 @@ export type PanelSection = "feedback" | "description" | "expiration";
 export type TickResult =
   | { kind: "update"; patch: Partial<ActivityRow>; formedHint?: boolean; hidden?: boolean; completed?: boolean }
   | { kind: "panel"; section: PanelSection }
+  | { kind: "review" }
   | { kind: "none" };
 
 export type TickRow = Pick<
@@ -52,12 +54,12 @@ export function tick(row: TickRow, hasFlags: boolean, now: Date = new Date()): T
     }
 
     case "ATTITUDE":
-      return { kind: "panel", section: "feedback" };
+    case "SKILL":
+      return status === "COMPLETED" ? { kind: "none" } : { kind: "review" };
     case "GRATITUDE":
       return status === "COMPLETED" ? { kind: "none" } : { kind: "panel", section: "description" };
     case "EXPIRATION":
       return { kind: "panel", section: "expiration" };
-    case "SKILL":
     case "MOMENTO":
       return { kind: "none" };
   }
@@ -67,7 +69,7 @@ export function tick(row: TickRow, hasFlags: boolean, now: Date = new Date()): T
 export function tickIsClickable(row: TickRow): boolean {
   const status = row.status ?? "DRAFT";
   if (status === "INACTIVE" || status === "ARCHIVED") return false;
-  if (row.activityType === "SKILL" || row.activityType === "MOMENTO" || row.activityType === "ATTITUDE") return false;
+  if (row.activityType === "MOMENTO") return false;
   if (status === "COMPLETED" && row.activityType !== "ACTION") return false;
   return true;
 }

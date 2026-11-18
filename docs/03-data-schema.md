@@ -14,7 +14,7 @@ from bacuy-x) a note in `docs/notes.md`.
 |---|---|---|---|
 | `ActivityType`, `ActivityStatus`, `Frequency`, `ProficiencyLevel` | yes | yes | identical to bacuy-x |
 | `UserState`, `PlaceType` | yes | no | kept so the enums match; unused |
-| `Activity` | yes, **+ `position`, `completedAt`, `editedAt`, `deletedAt`** | yes | every bacuy-x field kept |
+| `Activity` | yes, **+ `position`, `completedAt`, `reviewStep`, `editedAt`, `deletedAt`** | yes | every bacuy-x field kept |
 | `Flag` | yes, **+ `editedAt`, `deletedAt`** | yes | |
 | `ActivityFlag` | yes, **+ `editedAt`, `deletedAt`** | yes (through `#flag` marks) | deterministic id |
 | `Feedback` | yes, **+ `editedAt`, `deletedAt`** | yes | |
@@ -91,6 +91,7 @@ Activity: a.model({
 
   // bacuy-y
   completedAt: a.datetime(),             // set when it becomes COMPLETED, cleared when it leaves it
+  reviewStep: a.integer(),               // ATTITUDE / SKILL spaced review: step on the ladder (null = never reviewed)
   position:  a.string().required(),      // fractional index (page order)
   editedAt:  a.datetime().required(),
   deletedAt: a.datetime(),

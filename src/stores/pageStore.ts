@@ -24,6 +24,8 @@ import { keepInMemory } from "@/services/lifecycle/completed";
 import { deriveTextFields, newActivityDefaults } from "@/services/lifecycle/derive";
 import { applyStatusAction, reactivatedStatus, type StatusAction } from "@/services/lifecycle/status";
 import { tick as tickRule, type PanelSection } from "@/services/lifecycle/tick";
+import { isSpaced, reviewDueAt, reviewOutcome } from "@/services/lifecycle/review";
+import { useFeedbackStore } from "./feedbackStore";
 import { commitLine, parseLine, type FlagLite, type ParseContext } from "@/services/marks";
 import { nowIso } from "@/services/sync/clock";
 import { journalClear, journalPut, rowsToReplay } from "./pendingJournal";
@@ -74,7 +76,11 @@ export interface PanelState {
  * undo and "rate it".
  */
 export interface Notice {
-  kind: "habitFormed" | "hidden" | "completed";
+  /**
+   * "review": the "how did it go?" question of an attitude or skill. "spacingOverride": a
+   * `~frequency` was typed on one (spacing replaces it).
+   */
+  kind: "habitFormed" | "hidden" | "completed" | "review" | "spacingOverride";
   id: string;
   nonce: number;
   /** "hidden": when the line comes back (none: until shown again). */
@@ -83,6 +89,8 @@ export interface Notice {
   manual?: boolean;
   /** "hidden" / "completed": the row before the tick (for undo). */
   before?: Activity;
+  /** "hidden" / "completed" after a review: its answer, and the feedback row it saved (undo removes it). */
+  review?: { good: boolean; feedbackId: string };
 }
 
 interface PageState {
@@ -101,6 +109,8 @@ interface PageState {
   type(id: string, rawInput: string): void;
   commit(id: string): Promise<void>;
   enter(id: string, selStart: number, selEnd: number): Promise<void>;
+  /** The answer to an attitude's / skill's "how did it go?" (spaced review). */
+  review(id: string, good: boolean): Promise<void>;
   /** The "add line" button under the page: a new empty line at the end, focused. */
   addLineAtEnd(): Promise<void>;
   backspaceAtStart(id: string): Promise<boolean>;
@@ -365,6 +375,7 @@ export const usePageStore = create<PageState>((set, get) => {
       filterKeep.add(line.id);
       return rowFor({ ...line, rawInput: withFilterFlag(line.rawInput, get().filter, ctx(), markLocale()) }, now);
     });
+    for (const row of rows) noteSpacingOverride(before[row.id], row);
     for (const id of result.deleted) {
       const row = before[id];
       if (row) rows.push({ ...row, deletedAt: now, editedAt: now, dirty: 1 });
@@ -384,6 +395,20 @@ export const usePageStore = create<PageState>((set, get) => {
       panel: panel && result.deleted.includes(panel.id) ? null : panel,
     });
     return commitRows(rows);
+  }
+
+  /**
+   * Spacing replaces the frequency of attitudes and skills: say so when a line becomes one with
+   * a `~frequency` (typed, pasted or changed in the panel). The mark stays; it is just ignored.
+   */
+  function noteSpacingOverride(before: Activity | undefined, after: Activity) {
+    // The parser marks a `~frequency` on these types "not applicable" (it never reaches `frequency`).
+    const ignored = (row: Activity | undefined) =>
+      !!row &&
+      isSpaced(row) &&
+      parseLine(row.rawInput ?? "", ctx()).marks.some((m) => m.kind === "frequency" && m.status === "notApplicable");
+    if (!ignored(after) || ignored(before)) return; // only when it starts (already said otherwise)
+    set({ notice: { kind: "spacingOverride", id: after.id, nonce: ++nonce } });
   }
 
   /** Typing into the ghost line creates the first real row. */
@@ -502,6 +527,7 @@ export const usePageStore = create<PageState>((set, get) => {
       const clean = rawInput.replace(/\r\n|\r|\n/g, " ");
       const row = rowFor({ id, rawInput: clean, position: existing.position }, nowIso());
       set({ activities: { ...get().activities, [id]: row } });
+      noteSpacingOverride(existing, row);
       journalPut([row]); // the debounce may never fire if the page is closed now
       const prev = timers.get(id);
       if (prev) clearTimeout(prev);
@@ -556,6 +582,29 @@ export const usePageStore = create<PageState>((set, get) => {
       for (const a of Object.values(get().activities)) if (!a.deletedAt && a.position > max) max = a.position;
       const created = { id: newId(), rawInput: "", position: generateKeyBetween(max, null) };
       await apply({ lines: [...all, created], changed: [created], created: [created.id], deleted: [], focus: { id: created.id, offset: 0 } });
+    },
+
+    async review(id, good) {
+      const row = get().activities[id];
+      if (!row || row.deletedAt || !isSpaced(row) || row.status === "COMPLETED") return;
+      const now = new Date();
+      const outcome = reviewOutcome(row.reviewStep, good);
+      // The answer is kept as feedback too (the line's history): Bien 5, Mal 1.
+      const feedbackId = await useFeedbackStore.getState().add(id, { rating: good ? 5 : 1 });
+      // The line leaves the page: the focus goes to the line taking its place (or the one above).
+      const all = lines();
+      const index = all.findIndex((l) => l.id === id);
+      const neighbour = index >= 0 ? all[index + 1] ?? all[index - 1] : undefined;
+      if (neighbour) get().setFocus(neighbour.id, index + 1 < all.length ? 0 : neighbour.rawInput.length);
+      const review = { good, feedbackId };
+      if (outcome.done) {
+        await get().updateFields(id, { reviewStep: outcome.step, status: "COMPLETED", completedAt: now.toISOString() });
+        set({ notice: { kind: "completed", id, before: row, review, nonce: ++nonce } });
+        return;
+      }
+      const until = reviewDueAt(outcome.step, now).toISOString();
+      await get().updateFields(id, { reviewStep: outcome.step, hiddenUntil: until });
+      set({ notice: { kind: "hidden", id, until, before: row, review, nonce: ++nonce } });
     },
 
     async backspaceAtStart(id) {
@@ -637,6 +686,10 @@ export const usePageStore = create<PageState>((set, get) => {
         return;
       }
       if (result.kind === "none") return;
+      if (result.kind === "review") {
+        set({ notice: { kind: "review", id, nonce: ++nonce } });
+        return;
+      }
       if (result.hidden || result.completed) {
         // The line leaves the page: the focus goes to the line taking its place (or the one above).
         const all = lines();
@@ -663,7 +716,9 @@ export const usePageStore = create<PageState>((set, get) => {
       const row = get().activities[id];
       if (!row) return;
       const clean = rawInput.replace(/\r\n|\r|\n/g, " ");
-      await commitRows([rowFor({ id, rawInput: clean, position: row.position }, nowIso(), patch)]);
+      const next = rowFor({ id, rawInput: clean, position: row.position }, nowIso(), patch);
+      noteSpacingOverride(row, next);
+      await commitRows([next]);
     },
 
     async statusAction(id, action) {
@@ -725,10 +780,12 @@ export const usePageStore = create<PageState>((set, get) => {
       const current = get().activities[notice.id];
       set({ notice: null });
       if (!current || current.deletedAt) return;
-      const { completionCount, streak, hiddenUntil, isHidden, status, completedAt } = notice.before;
+      const { completionCount, streak, hiddenUntil, isHidden, status, completedAt, reviewStep } = notice.before;
+      if (notice.review) void useFeedbackStore.getState().remove(notice.review.feedbackId);
       await get().updateFields(notice.id, {
         completionCount,
         streak,
+        reviewStep: reviewStep ?? null,
         hiddenUntil: hiddenUntil ?? null,
         isHidden: isHidden ?? false,
         status,

@@ -231,7 +231,8 @@
       "repeat": "Sumar una vez (renglón {{n}}): {{count}}",
       "habit": "Sumar un día a la racha (renglón {{n}}): {{count}}",
       "gratitude": "Escribir la gratitud (renglón {{n}})",
-      "expiration": "Renovar o archivar (renglón {{n}})"
+      "expiration": "Renovar o archivar (renglón {{n}})",
+      "review": "Repasar: ¿cómo te fue? (renglón {{n}})"
     },
     "streak": "Racha: {{count}}",
     "count": "Hecha {{count}} veces",
@@ -309,7 +310,8 @@
       "custom": "Tiene un horario personalizado (ver Avanzado); elegir aquí lo reemplaza.",
       "advanced": "Avanzado: expresión cron"
     },
-    "typeAndStatus": "Tipo y estado"
+    "typeAndStatus": "Tipo y estado",
+    "reviewStep": "Repaso (paso e intervalo)"
   },
   "sync": {
     "SYNCED": "Sincronizado",
@@ -453,7 +455,7 @@
       "frequencyExample": "regar plantas ~semanal"
     },
     "types": {
-      "intro": "Cada tipo se comporta distinto al marcarlo y su panel muestra solo lo que le sirve: sus datos propios, el horario si se repite, descripción, banderas, ocultar y valoraciones (estas no en gratitud ni vencimientos).",
+      "intro": "Cada tipo se comporta distinto al marcarlo y su panel muestra solo lo que le sirve: sus datos propios, el horario si se repite (o el repaso, en actitudes y habilidades), descripción, banderas, ocultar y valoraciones (estas no en gratitud ni vencimientos).",
       "markLabel": "Marca",
       "exampleLabel": "Ejemplo",
       "dateLabel": "@fecha",
@@ -491,17 +493,17 @@
         "what": "Una forma de ser o de reaccionar que quieres cultivar, con una afirmación que la resume.",
         "example": "escuchar antes de responder !actitud #familia",
         "start": "Al escribirla con !actitud. En el panel puedes poner una afirmación.",
-        "use": "Siempre está en la página: no se marca ni se oculta. Ctrl+Enter abre las valoraciones para anotar cómo te fue.",
-        "repeat": "No tiene ciclo: es un recordatorio permanente.",
-        "end": "Cuando la sientes interiorizada, complétala en el panel; o archívala."
+        "use": "Márcala cuando la tengas presente: te pregunta «¿Cómo te fue?» Bien o Mal, y se oculta hasta su próximo repaso.",
+        "repeat": "Vuelve a las 03:00 del día que toca: 1 día, 3 días, 1 semana, 2 semanas, 1, 2, 3 y 6 meses. «Bien» sube un paso (más tiempo), «Mal» baja uno (vuelve antes). Si no la repasas, te espera. Una ~frecuencia no se usa.",
+        "end": "«Bien» en el último paso (6 meses) la marca como interiorizada y pasa a Completadas. También puedes completarla o archivarla en el panel."
       },
       "SKILL": {
         "what": "Algo que estás aprendiendo, con su nivel y los recursos que usas.",
         "example": "alemán !habilidad #personal",
         "start": "Al escribirla con !habilidad. En el panel, su nivel y los recursos que usas.",
-        "use": "Siempre está en la página, con su nivel en lugar del cuadro. Subes el nivel en el panel.",
-        "repeat": "No tiene ciclo ni frecuencia: aparece siempre, en la página y (con bandera) en Prioridad.",
-        "end": "Complétala en el panel cuando la domines, o archívala."
+        "use": "Márcala al practicarla: te pregunta «¿Cómo te fue?» Bien o Mal, y se oculta hasta su próximo repaso. El nivel lo subes en el panel.",
+        "repeat": "Como una actitud: vuelve a las 03:00 tras 1 día, 3 días, 1 semana… hasta 6 meses, subiendo con «Bien» y bajando con «Mal». Si no la repasas, te espera.",
+        "end": "«Bien» en el último paso (6 meses) la da por dominada y pasa a Completadas. También desde el panel, o archívala."
       },
       "MOMENTO": {
         "what": "Un acontecimiento con fecha: un cumpleaños, un viaje, una cita.",
@@ -542,7 +544,7 @@
     },
     "views": {
       "page": "Pendientes: tu página. Se puede filtrar por bandera; un renglón nuevo con el filtro puesto recibe esa bandera.",
-      "hidden": "Ocultas: lo que ocultaste desde el panel (hasta una fecha y hora, o hasta que lo muestres) y las repetitivas y hábitos hechos por ahora. Muestra cuándo vuelve cada uno.",
+      "hidden": "Ocultas: lo que ocultaste desde el panel (hasta una fecha y hora, o hasta que lo muestres), las repetitivas y hábitos hechos por ahora, y las actitudes y habilidades que esperan su próximo repaso. Muestra cuándo vuelve cada uno.",
       "completed": "Completadas: lo hecho, lo más reciente primero, agrupado por día.",
       "archived": "Archivadas: lo que guardaste fuera de la página.",
       "priority": "Prioridad: los renglones activos ordenados por el peso de sus banderas; suben los que tienen su horario cron dentro de la próxima hora y los vencimientos cercanos. Solo lectura; al tocar uno vas a él.",
@@ -572,6 +574,26 @@
         "Archivar lo guarda fuera de la página, en Archivadas, sin completarlo. Restaurarlo lo pone al final de la página.",
         "Borrarlo (en el panel, o con retroceso en un renglón vacío) lo elimina en todos tus dispositivos. Si tenía texto, un aviso te deja deshacerlo unos segundos."
       ]
+    }
+  },
+  "review": {
+    "question": "¿Cómo te fue?",
+    "good": "Bien",
+    "bad": "Mal",
+    "backGood": "¡Bien! Vuelve el {{date}}",
+    "backBad": "Vuelve antes: el {{date}}",
+    "internalized": "¡Interiorizada! Pasó a Completadas",
+    "overridesFrequency": "Las actitudes y habilidades se repasan con intervalos que se ajustan a cómo te va: la ~frecuencia no se usa.",
+    "step": "Repaso",
+    "notYet": "Sin repasar aún",
+    "stepOf": "Paso {{n}} de {{total}}: cada {{interval}}",
+    "nextOn": "Vuelve el {{date}}",
+    "dueNow": "Toca repasarla: márcala y di cómo te fue.",
+    "interval": {
+      "days_one": "{{count}} día",
+      "days_other": "{{count}} días",
+      "months_one": "{{count}} mes",
+      "months_other": "{{count}} meses"
     }
   }
 }

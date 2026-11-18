@@ -211,11 +211,31 @@ square at the start of the line.
 | `ACTION` | ☐ | Status → `COMPLETED`, `completedAt` = now; the line **leaves the page** for the Completed page (toast: undo, rate). Unticking it there → back to `ACTIVE` (or `DRAFT` if it has no flags) at its old place, `completedAt` cleared. | — |
 | `REPETITIVE_ACTION` | ↻ + `count/target` | `completionCount += 1`, stays `ACTIVE`, and the line is **hidden until its next occurrence** (`hiddenUntil`, see below). If it reaches `targetCount` → `COMPLETED` instead (`completedAt` set; it moves to the Completed page). | Panel: complete or archive the series. |
 | `HABIT` | ↻ + streak 🔥n | `streak += 1`, stays `ACTIVE`, hidden until its next occurrence. Reaching `targetStreak` shows a hint "mark as formed?" (panel → `COMPLETED`). | Panel. |
-| `ATTITUDE` | ◇ (not clickable) | Nothing. Ctrl+Enter opens the feedback section of the panel. | Panel: completed (internalized) or archive. |
-| `SKILL` | level badge | Nothing; level changed in the panel. | Panel. |
+| `ATTITUDE` | ◇ | **Spaced review** (below): asks "¿Cómo te fue?" Bien / Mal, then hides the line until its next review. | "Bien" on the last step → `COMPLETED` (internalized). Panel: complete or archive. |
+| `SKILL` | level badge | **Spaced review**, same as `ATTITUDE`; the level is changed in the panel. | Same as `ATTITUDE` (mastered). |
 | `MOMENTO` | ★ (not clickable) | Nothing. | Archive only (never `COMPLETED`). |
 | `GRATITUDE` | ☐ | Opens the panel with the notes field focused. "Save & complete" requires non-empty `description` → `COMPLETED`. | — |
 | `EXPIRATION` | days-left badge (red when overdue) | Opens the panel: "Renewed → new date" (rewrites the `@date` mark, `isRenewed` stays false) or "Archive" (`isRenewed = true`, `ARCHIVED`). | — |
+
+**Spaced review** (`ATTITUDE`, `SKILL`; confirmed 2026-11-18; `services/lifecycle/review.ts`).
+They come back at intervals that adapt to how it goes, like flash cards:
+
+- Ladder (`reviewStep` = index): 1 day · 3 days · 1 week · 2 weeks · 1 month · 2 months ·
+  3 months · 6 months.
+- The tick (or Ctrl+Enter) opens a prompt (`review-prompt`): **Bien** = one step up, **Mal** = one
+  step down (never below the first). A line never reviewed starts on the first step either way.
+  Escape / Cerrar leaves it untouched.
+- The line is hidden (`hiddenUntil`) until **03:00 local** on the day the wait ends (a month from
+  the 31st lands on the month's last day). It is listed on Hidden; "show now" works as usual.
+- **Bien on the last step (6 months)** = internalized / mastered: `COMPLETED` (Completed page).
+- The answer is also saved as a `Feedback` row (Bien rating 5, Mal rating 1), so it is in the
+  line's history. Undo on the toast restores the step, the visibility and removes that feedback.
+- A missed review costs nothing: the line just waits on the page until it is ticked.
+- **Spacing replaces `~frequency`**: on these types the mark is `notApplicable`; typing it (or
+  changing a line with one into these types) shows a notice (`spacing-override`).
+- The panel shows the step (a select, to change it by hand) and when it is back
+  (`panel-review`, `panel-review-next`). Existing lines start "not reviewed yet" and stay
+  visible until their first review.
 
 **Done for this time** (`REPETITIVE_ACTION`, `HABIT`; confirmed 2026-11-15). The tick sets
 `hiddenUntil` to the next occurrence (`services/lifecycle/nextShow.ts`):

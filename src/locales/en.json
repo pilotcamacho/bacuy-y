@@ -231,7 +231,8 @@
       "repeat": "Add one (line {{n}}): {{count}}",
       "habit": "Add a day to the streak (line {{n}}): {{count}}",
       "gratitude": "Write the gratitude (line {{n}})",
-      "expiration": "Renew or archive (line {{n}})"
+      "expiration": "Renew or archive (line {{n}})",
+      "review": "Review: how did it go? (line {{n}})"
     },
     "streak": "Streak: {{count}}",
     "count": "Done {{count}} times",
@@ -309,7 +310,8 @@
       "custom": "It has a custom schedule (see Advanced); picking here replaces it.",
       "advanced": "Advanced: cron expression"
     },
-    "typeAndStatus": "Type and status"
+    "typeAndStatus": "Type and status",
+    "reviewStep": "Review (step and interval)"
   },
   "sync": {
     "SYNCED": "Synced",
@@ -453,7 +455,7 @@
       "frequencyExample": "water the plants ~weekly"
     },
     "types": {
-      "intro": "Each type behaves differently when ticked, and its panel shows only what fits it: its own details, the schedule if it repeats, description, flags, hide and feedback (not for gratitude or expirations).",
+      "intro": "Each type behaves differently when ticked, and its panel shows only what fits it: its own details, the schedule if it repeats (or the review, for attitudes and skills), description, flags, hide and feedback (not for gratitude or expirations).",
       "markLabel": "Mark",
       "exampleLabel": "Example",
       "dateLabel": "@date",
@@ -491,17 +493,17 @@
         "what": "A way of being or reacting you want to grow, with an affirmation that sums it up.",
         "example": "listen before answering !attitude #family",
         "start": "When you type it with !attitude. In the panel you can add an affirmation.",
-        "use": "Always on the page: it is not ticked or hidden. Ctrl+Enter opens feedback to note how it went.",
-        "repeat": "No cycle: it is a standing reminder.",
-        "end": "When it feels internalized, complete it in the panel; or archive it."
+        "use": "Tick it when you have kept it in mind: it asks “How did it go?” Well or Badly, and hides until its next review.",
+        "repeat": "It comes back at 03:00 on its day: 1 day, 3 days, 1 week, 2 weeks, 1, 2, 3 and 6 months. “Well” moves one step up (longer), “Badly” one down (sooner). If you skip a review, it waits for you. A ~frequency is not used.",
+        "end": "“Well” on the last step (6 months) marks it internalized and moves it to Completed. You can also complete or archive it in the panel."
       },
       "SKILL": {
         "what": "Something you are learning, with its level and the resources you use.",
         "example": "German !skill #personal",
         "start": "When you type it with !skill. In the panel, its level and the resources you use.",
-        "use": "Always on the page, with its level instead of the box. You raise the level in the panel.",
-        "repeat": "No cycle or frequency: it always shows, on the page and (with a flag) in Priority.",
-        "end": "Complete it in the panel once you master it, or archive it."
+        "use": "Tick it when you practise it: it asks “How did it go?” Well or Badly, and hides until its next review. You raise the level in the panel.",
+        "repeat": "Like an attitude: back at 03:00 after 1 day, 3 days, 1 week… up to 6 months, up with “Well” and down with “Badly”. If you skip a review, it waits for you.",
+        "end": "“Well” on the last step (6 months) counts it as mastered and moves it to Completed. Also from the panel, or archive it."
       },
       "MOMENTO": {
         "what": "An event with a date: a birthday, a trip, an appointment.",
@@ -542,7 +544,7 @@
     },
     "views": {
       "page": "To do: your page. It can be filtered by flag; a new line typed while filtered gets that flag.",
-      "hidden": "Hidden: what you hid from the panel (until a date and time, or until you show it) and repeating actions and habits done for now. Shows when each comes back.",
+      "hidden": "Hidden: what you hid from the panel (until a date and time, or until you show it), repeating actions and habits done for now, and attitudes and skills waiting for their next review. Shows when each comes back.",
       "completed": "Completed: what is done, newest first, grouped by day.",
       "archived": "Archived: what you kept off the page.",
       "priority": "Priority: active lines ordered by their flags' weight; lines whose cron time is within the hour and expirations coming up rise. Read only; tapping one takes you to it.",
@@ -572,6 +574,26 @@
         "Archiving keeps it off the page, in Archived, without completing it. Restoring puts it at the end of the page.",
         "Deleting it (in the panel, or Backspace on an empty line) removes it on all your devices. If it had text, a notice lets you undo it for a few seconds."
       ]
+    }
+  },
+  "review": {
+    "question": "How did it go?",
+    "good": "Well",
+    "bad": "Badly",
+    "backGood": "Well done! Back on {{date}}",
+    "backBad": "Back sooner: on {{date}}",
+    "internalized": "Internalized! Moved to Completed",
+    "overridesFrequency": "Attitudes and skills are reviewed at intervals that adapt to how it goes: the ~frequency is not used.",
+    "step": "Review",
+    "notYet": "Not reviewed yet",
+    "stepOf": "Step {{n}} of {{total}}: every {{interval}}",
+    "nextOn": "Back on {{date}}",
+    "dueNow": "Due for review: tick it and say how it went.",
+    "interval": {
+      "days_one": "{{count}} day",
+      "days_other": "{{count}} days",
+      "months_one": "{{count}} month",
+      "months_other": "{{count}} months"
     }
   }
 }

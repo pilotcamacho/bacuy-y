@@ -98,6 +98,8 @@ const schema = a.schema({
 
     // bacuy-y: when it was completed (the Completed page's order); null when not completed
     completedAt: a.datetime(),
+    // bacuy-y: ATTITUDE / SKILL spaced review, the step on the ladder (services/lifecycle/review.ts)
+    reviewStep: a.integer(),
 
     // bacuy-y page order + sync
     position:  a.string().required(),
@@ -224,6 +226,7 @@ function activityFields() {
     renewalUrl:        a.string(),
     isRenewed:         a.boolean(),
     completedAt:       a.datetime(),
+    reviewStep:        a.integer(),
     position:          a.string().required(),
     editedAt:          a.datetime().required(),
     deletedAt:         a.datetime(),

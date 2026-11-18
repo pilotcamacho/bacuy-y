@@ -603,3 +603,79 @@ describe("the panel shows only what fits the type", () => {
     expect(panel.queryByLabelText("Expresión cron")).toBeNull();
   });
 });
+
+describe("spaced review of attitudes and skills", () => {
+  it("ticking asks how it went; Bien hides it until 03:00 tomorrow and keeps the answer as feedback", async () => {
+    const user = await typeLine("ser paciente !actitud #salud");
+    await user.click(screen.getByTestId("line-done-0"));
+    const prompt = screen.getByTestId("review-prompt");
+    expect(prompt).toHaveTextContent("¿Cómo te fue?");
+    expect(within(prompt).getByTestId("review-good")).toHaveFocus();
+    await user.click(within(prompt).getByTestId("review-good"));
+    await flush();
+    const row = await onlyActivity();
+    expect(row.reviewStep).toBe(0);
+    const due = new Date(row.hiddenUntil!);
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    expect([due.getDate(), due.getHours(), due.getMinutes()]).toEqual([tomorrow.getDate(), 3, 0]);
+    await waitFor(() => expect(screen.getByTestId("hidden-toast")).toHaveTextContent(/¡Bien! Vuelve el/));
+    expect(screen.queryByTestId("feedback-prompt")).toBeNull(); // already answered
+    const feedback = (await db.getAll("Feedback")).filter((f) => !f.deletedAt);
+    expect(feedback.map((f) => [f.activityId, f.rating])).toEqual([[row.id, 5]]);
+  });
+
+  it("Mal goes one step back; undo puts the line, its step and the feedback back as they were", async () => {
+    const user = await typeLine("leer partituras !habilidad #diversión");
+    const id = (await onlyActivity()).id;
+    await act(() => usePageStore.getState().updateFields(id, { reviewStep: 3 }));
+    await user.click(screen.getByTestId("line-done-0"));
+    await user.click(screen.getByTestId("review-bad"));
+    await flush();
+    expect((await onlyActivity()).reviewStep).toBe(2);
+    await waitFor(() => expect(screen.getByTestId("hidden-toast")).toHaveTextContent(/Vuelve antes/));
+    await user.click(within(screen.getByTestId("hidden-toast")).getByRole("button", { name: "Deshacer" }));
+    await flush();
+    const row = await onlyActivity();
+    expect(row.reviewStep).toBe(3);
+    expect(row.hiddenUntil ?? null).toBeNull();
+    await waitFor(async () => expect((await db.getAll("Feedback")).filter((f) => !f.deletedAt)).toHaveLength(0));
+  });
+
+  it("Bien on the last step completes it as internalized", async () => {
+    const user = await typeLine("no pelear !actitud #familia");
+    const id = (await onlyActivity()).id;
+    await act(() => usePageStore.getState().updateFields(id, { reviewStep: 7 }));
+    await user.click(screen.getByTestId("line-done-0"));
+    await user.click(screen.getByTestId("review-good"));
+    await flush();
+    expect((await onlyActivity()).status).toBe("COMPLETED");
+    await waitFor(() => expect(screen.getByTestId("completed-toast")).toHaveTextContent("¡Interiorizada!"));
+  });
+
+  it("Escape or Cerrar leaves the line as it was", async () => {
+    const user = await typeLine("sonreír !actitud");
+    await user.click(screen.getByTestId("line-done-0"));
+    await user.keyboard("{Escape}");
+    expect(screen.queryByTestId("review-prompt")).toBeNull();
+    await flush();
+    const row = await onlyActivity();
+    expect(row.reviewStep ?? null).toBeNull();
+    expect(row.hiddenUntil ?? null).toBeNull();
+  });
+
+  it("a ~frequency on an attitude is replaced by the spacing, and says so", async () => {
+    await typeLine("respirar !actitud ~semanal");
+    expect(screen.getByTestId("spacing-override")).toHaveTextContent("la ~frecuencia no se usa");
+  });
+
+  it("the panel shows the step and when it is back, and lets you change the step", async () => {
+    const user = await typeLine("cocinar !habilidad");
+    await user.click(screen.getByTestId("line-more-0"));
+    const panel = within(screen.getByTestId("line-panel"));
+    expect(panel.getByTestId("panel-review-next")).toHaveTextContent("Toca repasarla");
+    await user.selectOptions(panel.getByLabelText("Repaso"), "Paso 3 de 8: cada 7 días");
+    await flush();
+    expect((await onlyActivity()).reviewStep).toBe(2);
+  });
+});

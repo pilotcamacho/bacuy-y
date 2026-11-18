@@ -23,6 +23,7 @@ import { FeedbackSection } from "@/components/FeedbackForm";
 import { flagLabel } from "@/services/flags/label";
 import { canComplete } from "@/services/lifecycle/status";
 import { panelSections } from "@/services/lifecycle/panelSections";
+import { REVIEW_LADDER, type ReviewInterval } from "@/services/lifecycle/review";
 import { useFeedbackStore } from "@/stores/feedbackStore";
 import { isHiddenNow } from "@/services/lifecycle/nextShow";
 import { HideChooser } from "./HideChooser";
@@ -462,10 +463,16 @@ function TypeFields({ row, dateField, intField, textField, update, renewRef, onR
         </Section>
       );
     case "ATTITUDE":
-      return <Section title={title}>{textField("affirmation", t("panel.affirmation"))}</Section>;
+      return (
+        <Section title={title}>
+          {textField("affirmation", t("panel.affirmation"))}
+          <ReviewFields row={row} update={update} />
+        </Section>
+      );
     case "SKILL":
       return (
         <Section title={title}>
+          <ReviewFields row={row} update={update} />
           <Field label={t("panel.proficiencyLevel")}>
             {(id) => (
               <select
@@ -623,4 +630,42 @@ function Schedule({ row, raw, ctx, locale, rewrite, update }: ScheduleProps) {
       </Field>
     );
   }
+}
+
+/** Spaced review of an attitude or skill: where it is on the ladder, and when it is back. */
+function ReviewFields({ row, update }: { row: ActivityRow; update(patch: Partial<ActivityRow>): void }) {
+  const { t, i18n } = useTranslation();
+  const [now] = useState(() => Date.now());
+  const interval = (i: ReviewInterval) =>
+    "days" in i ? t("review.interval.days", { count: i.days }) : t("review.interval.months", { count: i.months });
+  const step = row.reviewStep;
+  const due = row.hiddenUntil && new Date(row.hiddenUntil).getTime() > now ? new Date(row.hiddenUntil) : null;
+  return (
+    <div className="flex flex-col gap-2" data-testid="panel-review">
+      <Field label={t("review.step")}>
+        {(id) => (
+          <select
+            id={id}
+            className={INPUT}
+            value={step ?? ""}
+            onChange={(e) => update({ reviewStep: e.target.value === "" ? null : Number(e.target.value) })}
+          >
+            <option value="">{t("review.notYet")}</option>
+            {REVIEW_LADDER.map((i, n) => (
+              <option key={n} value={n}>
+                {t("review.stepOf", { n: n + 1, total: REVIEW_LADDER.length, interval: interval(i) })}
+              </option>
+            ))}
+          </select>
+        )}
+      </Field>
+      <p className="text-sm text-neutral-600 dark:text-neutral-400" data-testid="panel-review-next">
+        {due
+          ? t("review.nextOn", {
+              date: new Intl.DateTimeFormat(i18n.resolvedLanguage, { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(due),
+            })
+          : t("review.dueNow")}
+      </p>
+    </div>
+  );
 }

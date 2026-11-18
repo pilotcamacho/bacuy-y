@@ -388,3 +388,17 @@ test("the add-line button: a new line at the end, focused, without going to the 
   await expect(lines(page)).toHaveCount(3);
   await expect(lines(page).nth(2)).toHaveValue("tres");
 });
+
+test("spaced review: an attitude ticked asks how it went; Bien hides it until its next review", async ({ page }) => {
+  await signIn(page);
+  await lines(page).first().click();
+  await page.keyboard.type("escuchar antes de responder !actitud ");
+  await page.keyboard.press("Escape"); // close the autocomplete list if open
+  await page.getByTestId("line-done-0").click();
+  await expect(page.getByTestId("review-prompt")).toBeVisible();
+  await page.getByTestId("review-good").click();
+  await expect(page.getByTestId("hidden-toast")).toBeVisible();
+  await expect(lines(page).first()).not.toHaveValue(/escuchar/);
+  await page.reload();
+  await expect(page.getByTestId("hidden-count")).toBeVisible();
+});
