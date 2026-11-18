@@ -58,6 +58,34 @@ On the hosted URL:
 - [ ] A second device sees the lines after sync.
 - [ ] Push a small change: the open app shows "Hay una versión nueva" → Actualizar.
 
+## Backups (DynamoDB)
+
+Set in `amplify/backend.ts`, for the hosted branch only (sandboxes are throwaway):
+
+- **Point-in-time recovery** on `Activity`, `Flag`, `ActivityFlag` and `Feedback`: any second of
+  the last 35 days can be restored. The window starts when it is first deployed; nothing before
+  that can be recovered. Cost: about $0.20 per GB-month of table data.
+- **Deletion protection** on the same tables: they cannot be deleted, also not by removing the
+  branch or the app in Amplify. To really remove them, set it to `false` in `backend.ts` and
+  deploy first.
+
+Check: `aws dynamodb describe-continuous-backups --table-name Activity-<apiId>-NONE`
+(`<apiId>` is the AppSync API of the `main` branch: `lia5vfiy7rfulcliiqlicqceey`).
+
+**Restoring** (rare, by hand). PITR restores into a **new** table; the app keeps using the old
+one, so rows are copied back:
+
+1. DynamoDB console → the table → *Backups* → *Restore to point in time* → a time before the
+   problem → a new table name (e.g. `Activity-restore-2026-11-20`).
+2. Pick the rows to bring back from the restored table and write them into the live table with
+   `editedAt` (and `updatedAt`) set to **now**. Sync is "last edit wins" (CLAUDE.md rule 10):
+   with their old `editedAt` the devices' newer copies or tombstones would win again and undo
+   the restore. With `editedAt` = now, the next pull on every device takes them.
+3. Delete the restored table when done.
+
+Every signed-in device also keeps a full copy in its browser (IndexedDB), but that copy syncs,
+so it is not a backup: a bad change reaches every device.
+
 ## Costs
 
 Amplify Hosting bills build minutes and served data; Cognito, AppSync and DynamoDB (on-demand)
