@@ -272,21 +272,26 @@ Shared rules:
 
 ## 5. Side panel
 
-Right-hand drawer (≥ 768 px) or bottom sheet (phones). `data-testid="line-panel"`. Sections:
+Right-hand drawer (≥ 768 px) or bottom sheet (phones). `data-testid="line-panel"`. It shows
+only the parts that mean something for the line's type (`services/lifecycle/panelSections.ts`;
+reorganized 2026-11-17), in this order:
 
 1. **Text**: the line (same input as the page) for convenience.
-2. **Type** (select) and **status** (pause / reactivate / complete / archive, per type rules).
-   **Ocultar** (not for completed or archived lines): see "Hide by hand" in §4.
-3. **Flags**: chips of the resolved flags; add from the tree; remove. Writes `#flag` marks.
-4. **Type fields**: only those for the current type (§1 list). Date fields with a mark write
-   the mark; the others are plain inputs.
-5. **Description** (multiline; for `GRATITUDE` this is the journal notes).
-6. **Schedule**: frequency; for daily / weekly / monthly lines the day / date / time picker
-   (see §4), with the raw `cron` under *Avanzado*; other lines show the raw `cron` (with a
+2. **Type and status**: type (select, with a link to its entry in the Manual) and status
+   (pause / reactivate / complete / archive, per type rules; gratitude has no "complete" here:
+   it is completed with "Save & complete" next to its notes).
+3. **The type's own fields** (§1 list), titled with the type's name. Date fields with a mark
+   write the mark; the others are plain inputs.
+4. **Schedule** — repeating actions and habits only (other types only while they still have
+   a `cron`, so it can be cleared): frequency; for daily / weekly / monthly the day / date /
+   time picker (see §4) with the raw `cron` under *Avanzado*; otherwise the raw `cron` (with a
    human-readable preview through `cron-parser` + i18n).
-7. **Feedback**: list of feedback entries for the activity + "add" (rating 1–5, valence −1..1,
-   arousal 0..1, notes).
-8. **Delete line** (soft delete, same as Backspace on an empty line).
+5. **Description** (multiline; for `GRATITUDE` this is the journal notes, with "Save & complete").
+6. **Flags**: chips of the resolved flags; add from the tree; remove. Writes `#flag` marks.
+7. **Ocultar** — lines on the page only (not completed or archived): see "Hide by hand" in §4.
+8. **Feedback** — not for `GRATITUDE` or `EXPIRATION` (unless entries exist): list of feedback
+   entries + "add" (rating 1–5, valence −1..1, arousal 0..1, notes).
+9. **Delete line** (soft delete, same as Backspace on an empty line).
 
 Every change in the panel is a structural write (immediate, no debounce).
 

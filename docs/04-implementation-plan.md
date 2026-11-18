@@ -385,6 +385,10 @@ Requests from the first days of real use (2026-11-17).
 - [x] Schedule picker for repeating lines: weekdays (weekly), day of the month or last day
   (monthly), optional time; writes `cron`, so a line done late does not drift
   > No schema change. Days 29–31 left out (cron skips shorter months); "last day" uses `L`.
+- [x] Panel per type: only the parts that fit the line's type, in a fixed order (type and
+  status → its fields → schedule → description → flags → hide → feedback → delete)
+  > Schedule only for repeating lines (or a leftover cron); no feedback for gratitude and
+  > expirations; gratitude's duplicate "Complete" removed.
 - [x] Backups: point-in-time recovery and deletion protection on the hosted branch's tables
   (`amplify/backend.ts`); restore steps in `docs/06-hosting.md`
   > Found off on 2026-11-17 (no backups of any kind). Checked with a local `cdk synth` for both

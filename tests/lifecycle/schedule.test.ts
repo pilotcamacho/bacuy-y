@@ -44,3 +44,39 @@ describe("schedule picker ↔ cron", () => {
     expect(nextShowAt({ cron: "0 0 L * *", frequency: "MONTHLY" }, new Date(2027, 0, 31, 9))).toEqual(new Date(2027, 1, 28));
   });
 });
+
+import { panelSections } from "@/services/lifecycle/panelSections";
+
+describe("panel sections per type", () => {
+  const row = (activityType: Parameters<typeof panelSections>[0]["activityType"], extra: Partial<Parameters<typeof panelSections>[0]> = {}) => ({
+    activityType,
+    status: "DRAFT" as const,
+    cron: null,
+    ...extra,
+  });
+
+  it("schedule only for repeating lines, or a line that still has a cron", () => {
+    expect(panelSections(row("REPETITIVE_ACTION"), false).schedule).toBe(true);
+    expect(panelSections(row("HABIT"), false).schedule).toBe(true);
+    for (const type of ["ACTION", "ATTITUDE", "SKILL", "MOMENTO", "GRATITUDE", "EXPIRATION"] as const) {
+      expect(panelSections(row(type), false).schedule).toBe(false);
+    }
+    expect(panelSections(row("ACTION", { cron: "0 8 * * 1" }), false).schedule).toBe(true);
+  });
+
+  it("feedback everywhere except gratitude and expirations (unless they already have some)", () => {
+    expect(panelSections(row("ATTITUDE"), false).feedback).toBe(true);
+    expect(panelSections(row("GRATITUDE"), false).feedback).toBe(false);
+    expect(panelSections(row("EXPIRATION"), false).feedback).toBe(false);
+    expect(panelSections(row("EXPIRATION"), true).feedback).toBe(true);
+  });
+
+  it("hide only on the page; gratitude has no second 'complete' button", () => {
+    expect(panelSections(row("ACTION", { status: "COMPLETED" }), false).hide).toBe(false);
+    expect(panelSections(row("ACTION", { status: "ARCHIVED" }), false).hide).toBe(false);
+    expect(panelSections(row("ACTION", { status: "INACTIVE" }), false).hide).toBe(true);
+    expect(panelSections(row("GRATITUDE"), false).actions).not.toContain("complete");
+    expect(panelSections(row("ACTION"), false).actions).toContain("complete");
+    expect(panelSections(row("MOMENTO"), false).actions).toEqual(["pause", "archive"]);
+  });
+});

@@ -21,7 +21,9 @@ import {
 } from "@/services/marks";
 import { FeedbackSection } from "@/components/FeedbackForm";
 import { flagLabel } from "@/services/flags/label";
-import { canComplete, statusActions } from "@/services/lifecycle/status";
+import { canComplete } from "@/services/lifecycle/status";
+import { panelSections } from "@/services/lifecycle/panelSections";
+import { useFeedbackStore } from "@/stores/feedbackStore";
 import { isHiddenNow } from "@/services/lifecycle/nextShow";
 import { HideChooser } from "./HideChooser";
 import { SchedulePicker } from "./SchedulePicker";
@@ -88,6 +90,15 @@ function Field({ label, children }: { label: string; children: (id: string) => R
   );
 }
 
+/** How many feedback entries a line has (loaded here too: the section may be hidden). */
+function useFeedbackCount(activityId: string): number {
+  const count = useFeedbackStore((s) => s.byActivity[activityId]?.length ?? 0);
+  useEffect(() => {
+    void useFeedbackStore.getState().load(activityId);
+  }, [activityId]);
+  return count;
+}
+
 export function LinePanel() {
   const panel = usePageStore((s) => s.panel);
   const row = usePageStore((s) => (s.panel ? s.activities[s.panel.id] : undefined));
@@ -122,6 +133,9 @@ function PanelBody({ row, section, nonce }: { row: ActivityRow; section: string 
   ];
   const type = row.activityType;
   const status = row.status ?? "DRAFT";
+  // Only the parts that mean something for this type (services/lifecycle/panelSections.ts).
+  const hasFeedback = useFeedbackCount(row.id) > 0;
+  const sections = panelSections(row, hasFeedback);
 
   // Focus the section the tick asked for, else the text.
   useEffect(() => {
@@ -222,7 +236,7 @@ function PanelBody({ row, section, nonce }: { row: ActivityRow; section: string 
         </Field>
 
         {/* 2. Type and status */}
-        <Section title={t("panel.type")}>
+        <Section title={t("panel.typeAndStatus")}>
           <Field label={t("panel.type")}>
             {(id) => (
               <select id={id} className={INPUT} value={type} onChange={(e) => rewrite(setTypeMark(raw, e.target.value as ActivityType, ctx, locale))}>
@@ -248,7 +262,7 @@ function PanelBody({ row, section, nonce }: { row: ActivityRow; section: string 
             {t("panel.status")}: <span data-testid="panel-status">{t(`status.${status}`)}</span>
           </p>
           <div className="flex flex-wrap gap-2">
-            {statusActions(row).map((action) => (
+            {sections.actions.map((action) => (
               <button
                 key={action}
                 type="button"
@@ -262,31 +276,50 @@ function PanelBody({ row, section, nonce }: { row: ActivityRow; section: string 
           </div>
         </Section>
 
-        {/* 2b. Hide until… (not for completed or archived lines: they are off the page already) */}
-        {status !== "COMPLETED" && status !== "ARCHIVED" && (
-          <Section title={t("hide.title")}>
-            {isHiddenNow(row, new Date()) ? (
-              <div className="flex flex-wrap items-center gap-2" data-testid="panel-hidden">
-                <p className="text-sm">
-                  {row.isHidden
-                    ? t("hidden.untilShown")
-                    : t("page.hidden.returns", {
-                        date: new Intl.DateTimeFormat(i18n.resolvedLanguage, { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(
-                          new Date(row.hiddenUntil!),
-                        ),
-                      })}
-                </p>
-                <button type="button" className={BUTTON} onClick={() => void store().showNow(row.id)}>
-                  {t("page.hidden.showNow")}
-                </button>
-              </div>
-            ) : (
-              <HideChooser testPrefix="panel-hide" onHide={(until) => void store().hide(row.id, until)} />
-            )}
-          </Section>
-        )}
+        {/* 3. The type's own fields */}
+        <TypeFields
+          row={row}
+          dateField={dateField}
+          intField={intField}
+          textField={textField}
+          update={update}
+          renewRef={renewRef}
+          onRenew={(iso) => rewrite(setDateMark(raw, iso, ctx), { isRenewed: false })}
+        />
 
-        {/* 3. Flags */}
+        {/* 4. Schedule (repeating lines) */}
+        {sections.schedule && <Schedule row={row} raw={raw} ctx={ctx} locale={locale} rewrite={rewrite} update={update} />}
+
+        {/* 5. Description / gratitude notes */}
+        <Section title={type === "GRATITUDE" ? t("panel.gratitudeNotes") : t("panel.description")}>
+          <Field label={type === "GRATITUDE" ? t("panel.gratitudeNotes") : t("panel.description")}>
+            {(id) => (
+              <textarea
+                id={id}
+                ref={descriptionRef}
+                rows={4}
+                className={INPUT}
+                value={row.description ?? ""}
+                onChange={(e) => update({ description: e.target.value || null })}
+              />
+            )}
+          </Field>
+          {type === "GRATITUDE" && status !== "COMPLETED" && (
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                className={PRIMARY}
+                disabled={!canComplete(row)}
+                onClick={() => void store().statusAction(row.id, "complete")}
+              >
+                {t("panel.saveComplete")}
+              </button>
+              {!canComplete(row) && <span className="text-xs text-neutral-500 dark:text-neutral-400">{t("panel.needsNotes")}</span>}
+            </div>
+          )}
+        </Section>
+
+        {/* 6. Flags */}
         <Section title={t("panel.flags")}>
           {lineFlags.length === 0 ? (
             <p className="text-sm text-neutral-500 dark:text-neutral-400">{t("panel.noFlags")}</p>
@@ -350,53 +383,34 @@ function PanelBody({ row, section, nonce }: { row: ActivityRow; section: string 
           )}
         </Section>
 
-        {/* 4. Type fields */}
-        <TypeFields
-          row={row}
-          dateField={dateField}
-          intField={intField}
-          textField={textField}
-          update={update}
-          renewRef={renewRef}
-          onRenew={(iso) => rewrite(setDateMark(raw, iso, ctx), { isRenewed: false })}
-        />
-
-        {/* 5. Description */}
-        <Section title={type === "GRATITUDE" ? t("panel.gratitudeNotes") : t("panel.description")}>
-          <Field label={type === "GRATITUDE" ? t("panel.gratitudeNotes") : t("panel.description")}>
-            {(id) => (
-              <textarea
-                id={id}
-                ref={descriptionRef}
-                rows={4}
-                className={INPUT}
-                value={row.description ?? ""}
-                onChange={(e) => update({ description: e.target.value || null })}
-              />
+        {/* 7. Hide until… (lines on the page) */}
+        {sections.hide && (
+          <Section title={t("hide.title")}>
+            {isHiddenNow(row, new Date()) ? (
+              <div className="flex flex-wrap items-center gap-2" data-testid="panel-hidden">
+                <p className="text-sm">
+                  {row.isHidden
+                    ? t("hidden.untilShown")
+                    : t("page.hidden.returns", {
+                        date: new Intl.DateTimeFormat(i18n.resolvedLanguage, { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(
+                          new Date(row.hiddenUntil!),
+                        ),
+                      })}
+                </p>
+                <button type="button" className={BUTTON} onClick={() => void store().showNow(row.id)}>
+                  {t("page.hidden.showNow")}
+                </button>
+              </div>
+            ) : (
+              <HideChooser testPrefix="panel-hide" onHide={(until) => void store().hide(row.id, until)} />
             )}
-          </Field>
-          {type === "GRATITUDE" && status !== "COMPLETED" && (
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                className={PRIMARY}
-                disabled={!canComplete(row)}
-                onClick={() => void store().statusAction(row.id, "complete")}
-              >
-                {t("panel.saveComplete")}
-              </button>
-              {!canComplete(row) && <span className="text-xs text-neutral-500 dark:text-neutral-400">{t("panel.needsNotes")}</span>}
-            </div>
-          )}
-        </Section>
+          </Section>
+        )}
 
-        {/* 6. Schedule */}
-        <Schedule row={row} raw={raw} ctx={ctx} locale={locale} rewrite={rewrite} update={update} />
+        {/* 8. Feedback (where it means something) */}
+        {sections.feedback && <FeedbackSection activityId={row.id} headingRef={feedbackRef} />}
 
-        {/* 7. Feedback */}
-        <FeedbackSection activityId={row.id} headingRef={feedbackRef} />
-
-        {/* 8. Delete */}
+        {/* 9. Delete */}
         <div className="border-t border-neutral-200 pt-3 dark:border-neutral-800">
           <button
             type="button"

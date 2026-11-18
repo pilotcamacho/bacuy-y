@@ -307,7 +307,8 @@
       "none_monthly": "Sin día elegido: vuelve el mismo día del mes siguiente.",
       "custom": "Tiene un horario personalizado (ver Avanzado); elegir aquí lo reemplaza.",
       "advanced": "Avanzado: expresión cron"
-    }
+    },
+    "typeAndStatus": "Tipo y estado"
   },
   "sync": {
     "SYNCED": "Sincronizado",
@@ -450,7 +451,7 @@
       "frequencyExample": "regar plantas ~semanal"
     },
     "types": {
-      "intro": "Cada tipo se comporta distinto al marcarlo y guarda datos propios en el panel. Todos tienen además descripción, banderas, valoraciones y la opción de ocultarlo.",
+      "intro": "Cada tipo se comporta distinto al marcarlo y su panel muestra solo lo que le sirve: sus datos propios, el horario si se repite, descripción, banderas, ocultar y valoraciones (estas no en gratitud ni vencimientos).",
       "markLabel": "Marca",
       "exampleLabel": "Ejemplo",
       "tickLabel": "El cuadro",
@@ -460,7 +461,7 @@
       "frequencyYes": "sí; en el panel puedes elegir qué días de la semana, qué día del mes y a qué hora",
       "frequencyNo": "no",
       "fieldsLabel": "En el panel",
-      "noFields": "solo los campos comunes",
+      "noFields": "solo los comunes",
       "ACTION": {
         "what": "Algo que hay que hacer una vez. Es el tipo por defecto.",
         "example": "llamar al banco #recados @mañana",

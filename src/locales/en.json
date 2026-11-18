@@ -307,7 +307,8 @@
       "none_monthly": "No day picked: it comes back on the same day next month.",
       "custom": "It has a custom schedule (see Advanced); picking here replaces it.",
       "advanced": "Advanced: cron expression"
-    }
+    },
+    "typeAndStatus": "Type and status"
   },
   "sync": {
     "SYNCED": "Synced",
@@ -450,7 +451,7 @@
       "frequencyExample": "water the plants ~weekly"
     },
     "types": {
-      "intro": "Each type behaves differently when ticked and keeps its own details in the panel. All of them also have a description, flags, feedback and the option to hide them.",
+      "intro": "Each type behaves differently when ticked, and its panel shows only what fits it: its own details, the schedule if it repeats, description, flags, hide and feedback (not for gratitude or expirations).",
       "markLabel": "Mark",
       "exampleLabel": "Example",
       "tickLabel": "The box",
@@ -460,7 +461,7 @@
       "frequencyYes": "yes; in the panel you can pick which weekdays, which day of the month and what time",
       "frequencyNo": "no",
       "fieldsLabel": "In the panel",
-      "noFields": "only the common fields",
+      "noFields": "only the common ones",
       "ACTION": {
         "what": "Something to do once. It is the default type.",
         "example": "call the bank #errand @tomorrow",

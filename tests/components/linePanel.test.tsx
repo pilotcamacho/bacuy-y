@@ -554,3 +554,52 @@ describe("schedule picker (weekly / monthly / daily)", () => {
     expect((await onlyActivity()).cron).toBe("0 7 * * 1-5");
   });
 });
+
+describe("the panel shows only what fits the type", () => {
+  const headings = (panel: { getAllByRole(role: "heading"): HTMLElement[] }) => panel.getAllByRole("heading").map((h) => h.textContent);
+
+  it("an action: no schedule, no frequency; feedback and hide are there; sections in order", async () => {
+    const user = await typeLine("llamar al banco #recados");
+    await user.click(screen.getByTestId("line-more-0"));
+    const panel = within(screen.getByTestId("line-panel"));
+    expect(panel.queryByLabelText("Expresión cron")).toBeNull();
+    expect(panel.queryByLabelText("Frecuencia")).toBeNull();
+    expect(headings(panel)).toEqual([
+      "Detalles del renglón",
+      "Tipo y estado",
+      "Acción",
+      "Descripción",
+      "Banderas",
+      "Ocultar",
+      "Valoraciones",
+    ]);
+  });
+
+  it("a habit: its fields, then its schedule", async () => {
+    const user = await typeLine("meditar !hábito ~diario");
+    await user.click(screen.getByTestId("line-more-0"));
+    const panel = within(screen.getByTestId("line-panel"));
+    expect(headings(panel).slice(1, 5)).toEqual(["Tipo y estado", "Hábito", "Horario", "Descripción"]);
+    expect(panel.getByLabelText("Frecuencia")).toBeInTheDocument();
+    expect(panel.getByLabelText("Racha objetivo")).toBeInTheDocument();
+  });
+
+  it("gratitude: notes with 'save & complete', no second 'complete', no feedback", async () => {
+    const user = await typeLine("la cena con mis padres !gratitud");
+    await user.click(screen.getByTestId("line-more-0"));
+    const panel = within(screen.getByTestId("line-panel"));
+    expect(panel.getByRole("button", { name: "Guardar y completar" })).toBeInTheDocument();
+    expect(panel.queryByRole("button", { name: "Completar" })).toBeNull();
+    expect(panel.queryByRole("heading", { name: "Valoraciones" })).toBeNull();
+    expect(panel.queryByLabelText("Expresión cron")).toBeNull();
+  });
+
+  it("an expiration: renewal fields, no feedback, no schedule", async () => {
+    const user = await typeLine("pasaporte !vence @2030-03-01");
+    await user.click(screen.getByTestId("line-more-0"));
+    const panel = within(screen.getByTestId("line-panel"));
+    expect(panel.getByLabelText("Fecha de vencimiento")).toBeInTheDocument();
+    expect(panel.queryByRole("heading", { name: "Valoraciones" })).toBeNull();
+    expect(panel.queryByLabelText("Expresión cron")).toBeNull();
+  });
+});
