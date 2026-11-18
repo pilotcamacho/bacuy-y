@@ -385,6 +385,8 @@ Requests from the first days of real use (2026-11-17).
 - [x] Schedule picker for repeating lines: weekdays (weekly), day of the month or last day
   (monthly), optional time; writes `cron`, so a line done late does not drift
   > No schema change. Days 29–31 left out (cron skips shorter months); "last day" uses `L`.
+- [x] Manual: a life cycle per type (starts, day to day, repeats, ends) and one shared by
+  every line (draft/active, pause, hide, complete, archive, restore, delete, priority)
 - [x] Panel per type: only the parts that fit the line's type, in a fixed order (type and
   status → its fields → schedule → description → flags → hide → feedback → delete)
   > Schedule only for repeating lines (or a leftover cron); no feedback for gratitude and

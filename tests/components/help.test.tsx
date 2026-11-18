@@ -19,18 +19,24 @@ const renderAt = (path: string) =>
   );
 
 describe("Manual", () => {
-  it.each(["es", "en"] as const)("explains every line type with its mark, example, tick and panel fields (%s)", async (lang) => {
+  it.each(["es", "en"] as const)("explains every line type: mark, example, panel fields and life cycle (%s)", async (lang) => {
     await i18n.changeLanguage(lang);
     renderAt("/help");
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(lang === "es" ? "Manual" : "Guide");
     for (const type of TYPES) {
       const card = within(screen.getByTestId(`help-type-${type}`));
-      expect(card.getByRole("heading")).toHaveTextContent(i18n.t(`activityType.${type}`));
-      expect(card.getByRole("heading")).toHaveTextContent(`!${TYPE_KEYWORDS[type][lang][0]}`);
+      const title = card.getByRole("heading", { level: 3 });
+      expect(title).toHaveTextContent(i18n.t(`activityType.${type}`));
+      expect(title).toHaveTextContent(`!${TYPE_KEYWORDS[type][lang][0]}`);
+      // Its life cycle: starts, day to day, repeats, ends — each with real text.
+      const steps = within(card.getByTestId(`help-life-${type}`)).getAllByRole("listitem");
+      expect(steps).toHaveLength(4);
+      for (const step of steps) expect(step.textContent!.length).toBeGreaterThan(10);
       // No missing translation keys leak through as raw text.
       expect(screen.getByTestId(`help-type-${type}`).textContent).not.toMatch(/\b(help|panel|activityType)\.[a-zA-Z]+\b/);
     }
     expect(screen.getByTestId("help").textContent).not.toMatch(/\bhelp\.[a-z]/);
+    expect(within(screen.getByTestId("help-lifecycle")).getAllByRole("listitem")).toHaveLength(7);
     // A few facts that must match the app.
     expect(within(screen.getByTestId("help-type-EXPIRATION")).getByText(i18n.t("panel.expirationDate"))).toBeInTheDocument();
     expect(within(screen.getByTestId("help-type-MOMENTO")).getByText(i18n.t("panel.eventDate"))).toBeInTheDocument();

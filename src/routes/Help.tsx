@@ -41,7 +41,9 @@ const KEYS: { keys: string[]; text: string }[] = [
   { keys: ["Tab"], text: "tab" },
   { keys: ["Esc"], text: "escape" },
 ];
-const SECTIONS = ["start", "marks", "types", "status", "views", "keys"] as const;
+const SECTIONS = ["start", "marks", "types", "lifecycle", "status", "views", "keys"] as const;
+/** The life cycle of each type, in the order a line lives it. */
+const LIFE_STEPS = ["start", "use", "repeat", "end"] as const;
 
 const CODE = "rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-[0.85em] dark:bg-neutral-800";
 const MARK = "rounded-sm bg-indigo-100 px-1 font-mono text-[0.85em] text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300";
@@ -152,8 +154,6 @@ export function Help() {
                 <dd>
                   <code className={CODE}>{t(`help.types.${type}.example`)}</code>
                 </dd>
-                <dt className="font-medium text-neutral-600 dark:text-neutral-400">{t("help.types.tickLabel")}</dt>
-                <dd>{t(`help.types.${type}.tick`)}</dd>
                 <dt className="font-medium text-neutral-600 dark:text-neutral-400">{t("help.types.dateLabel")}</dt>
                 <dd>{date ? t(`panel.${date}`) : t("help.types.noDate")}</dd>
                 <dt className="font-medium text-neutral-600 dark:text-neutral-400">{t("help.types.frequencyLabel")}</dt>
@@ -169,9 +169,29 @@ export function Help() {
                 <dt className="font-medium text-neutral-600 dark:text-neutral-400">{t("help.types.fieldsLabel")}</dt>
                 <dd>{fields.length > 0 ? fields.map((f) => t(`panel.${f}`)).join(" · ") : t("help.types.noFields")}</dd>
               </dl>
+              <h4 className="mb-1 mt-3 text-sm font-semibold">{t("help.types.lifeLabel")}</h4>
+              <ol className="space-y-1 text-sm" data-testid={`help-life-${type}`}>
+                {LIFE_STEPS.map((step, i) => (
+                  <li key={step} className="grid grid-cols-[1.25rem_6rem_1fr] gap-x-2">
+                    <span aria-hidden="true" className="text-neutral-400">
+                      {i + 1}.
+                    </span>
+                    <span className="font-medium text-neutral-600 dark:text-neutral-400">{t(`help.types.${step}Label`)}</span>
+                    <span>{t(`help.types.${type}.${step}`)}</span>
+                  </li>
+                ))}
+              </ol>
             </section>
           ))}
         </div>
+      </Section>
+
+      <Section id="lifecycle" title={t("help.lifecycle.title")}>
+        <ul className="list-disc space-y-1.5 ps-5" data-testid="help-lifecycle">
+          {(t("help.lifecycle.items", { returnObjects: true }) as string[]).map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
       </Section>
 
       <Section id="status" title={t("help.toc.status")}>

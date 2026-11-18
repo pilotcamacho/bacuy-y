@@ -429,7 +429,8 @@
       "types": "Line types",
       "status": "Statuses",
       "views": "Tabs and screens",
-      "keys": "Keyboard"
+      "keys": "Keyboard",
+      "lifecycle": "Life cycle of any line"
     },
     "start": {
       "p1": "Enter makes a new line below (or splits the line, if the cursor is in the middle). Enter at the start of a line adds an empty line above, and the line keeps everything it had. Backspace at the start joins it with the line above; on an empty line, it deletes it.",
@@ -454,7 +455,6 @@
       "intro": "Each type behaves differently when ticked, and its panel shows only what fits it: its own details, the schedule if it repeats, description, flags, hide and feedback (not for gratitude or expirations).",
       "markLabel": "Mark",
       "exampleLabel": "Example",
-      "tickLabel": "The box",
       "dateLabel": "@date",
       "noDate": "no date",
       "frequencyLabel": "~frequency",
@@ -465,43 +465,72 @@
       "ACTION": {
         "what": "Something to do once. It is the default type.",
         "example": "call the bank #errand @tomorrow",
-        "tick": "Completes it: it leaves the page for Completed. Unticking it there puts it back in its place."
+        "start": "When you type it. Without a flag it is a draft; with one, active.",
+        "use": "It stays on the page until you tick it. With @date it has a deadline.",
+        "repeat": "No.",
+        "end": "Ticking it completes it and moves it to Completed. Unticking it there puts it back in its place."
       },
       "REPETITIVE_ACTION": {
         "what": "Something done again and again (watering, paying a fee). It can have a target number of times.",
         "example": "water the plants ~weekly #personal",
-        "tick": "Counts one more time and hides it until next time: the next day picked in the panel or, if none is picked, 1 day, 7 days or a month after you tick it. Then it comes back by itself. When it reaches the target, it is completed."
+        "start": "When you type it with !repeat or a ~frequency.",
+        "use": "Ticking it counts one more time (times done) and hides it.",
+        "repeat": "It comes back by itself on the next day picked in the panel; if none is picked, 1 day, 7 days or a month after you tick it. Meanwhile it is in Hidden.",
+        "end": "Completed when it reaches the target number of times, or when you complete it in the panel. Without a target it repeats forever."
       },
       "HABIT": {
         "what": "A habit you want to build. It keeps a streak.",
         "example": "meditate 10 min !habit ~daily #spiritual",
-        "tick": "Adds one to the streak and hides it until next time (the next day picked in the panel, or by its frequency). When it reaches the target streak, it offers to mark it as formed."
+        "start": "When you type it with !habit, usually with a ~frequency.",
+        "use": "Ticking it adds one to the streak and hides it.",
+        "repeat": "It comes back by itself like a repeating action. The streak is not reset by itself if you miss a day; you can reset it in the panel.",
+        "end": "When it reaches the target streak it offers to mark it as formed (completed). Also from the panel."
       },
       "ATTITUDE": {
         "what": "A way of being or reacting you want to grow, with an affirmation that sums it up.",
         "example": "listen before answering !attitude #family",
-        "tick": "Not ticked. Ctrl+Enter opens feedback to note how it went. Completed (internalized) or archived from the panel."
+        "start": "When you type it with !attitude. In the panel you can add an affirmation.",
+        "use": "Always on the page: it is not ticked or hidden. Ctrl+Enter opens feedback to note how it went.",
+        "repeat": "No cycle: it is a standing reminder.",
+        "end": "When it feels internalized, complete it in the panel; or archive it."
       },
       "SKILL": {
         "what": "Something you are learning, with its level and the resources you use.",
         "example": "German !skill #personal",
-        "tick": "Not ticked; it shows the level. The level is changed in the panel."
+        "start": "When you type it with !skill. In the panel, its level and the resources you use.",
+        "use": "Always on the page, with its level instead of the box. You raise the level in the panel.",
+        "repeat": "No cycle or frequency: it always shows, on the page and (with a flag) in Priority.",
+        "end": "Complete it in the panel once you master it, or archive it."
       },
       "MOMENTO": {
         "what": "An event with a date: a birthday, a trip, an appointment.",
         "example": "Ana's birthday !moment @15/03",
-        "tick": "Not ticked. Once it has passed, archive it from the panel."
+        "start": "When you type it with !moment and the event's @date.",
+        "use": "Always on the page, with a star instead of the box.",
+        "repeat": "No. For something yearly, like a birthday, write a new moment with the next date.",
+        "end": "Not completed: once it has passed, archive it in the panel. It is not archived by itself."
       },
       "GRATITUDE": {
         "what": "Something or someone you are grateful for. When completed it goes to the Journal.",
         "example": "dinner with my parents !gratitude",
-        "tick": "Opens the panel to write the notes; “Save & complete” takes it to the Journal (notes required)."
+        "start": "When you type it with !gratitude, or automatically every day if you turn it on in Settings (this browser).",
+        "use": "Ticking it opens the panel to write the notes (and, if you like, who it is for).",
+        "repeat": "Each entry is unique; the automatic one creates a new one per scheduled time (not for days you did not open the app).",
+        "end": "“Save & complete” (notes required) takes it to the Journal."
       },
       "EXPIRATION": {
         "what": "Something that expires and must be renewed: passport, insurance, licence.",
         "example": "passport !expires @2027-03-01 #personal",
-        "tick": "Shows the days left (red when overdue) and opens the panel to renew it with a new date or archive it without renewing."
-      }
+        "start": "When you type it with !expires and the expiry @date.",
+        "use": "It shows the days left (red when overdue). It enters Priority the notice days before (30 by default) and rises as the date gets closer.",
+        "repeat": "Renewing it with a new date keeps it on the page for the next expiry.",
+        "end": "Not completed: “Archive without renewing” takes it off the page. Restoring it makes it pending again."
+      },
+      "lifeLabel": "Life cycle",
+      "startLabel": "Starts",
+      "useLabel": "Day to day",
+      "repeatLabel": "Repeats",
+      "endLabel": "Ends"
     },
     "statusItems": {
       "DRAFT": "Just written, no flags. It can already be ticked.",
@@ -530,6 +559,18 @@
       "tab": "Accept the suggestion",
       "escape": "Close suggestions or the panel"
     },
-    "typeLink": "What is each type?"
+    "typeLink": "What is each type?",
+    "lifecycle": {
+      "title": "Life cycle of any line",
+      "items": [
+        "It is born when you type it, as a draft. With its first flag it becomes active; remove them all and it is a draft again.",
+        "The page shows drafts, active and paused lines that are not hidden. Priority shows only active lines (with a flag) that are not hidden.",
+        "Pausing (in the panel) keeps it on the page in italics, without a box and out of Priority, until you reactivate it.",
+        "Hiding (in the panel) takes it off the page until a date and time, or until you show it; you find it in Hidden.",
+        "Completing moves it to Completed (gratitude, to the Journal). Reactivating it brings it back to the page.",
+        "Archiving keeps it off the page, in Archived, without completing it. Restoring puts it at the end of the page.",
+        "Deleting it (in the panel, or Backspace on an empty line) removes it on all your devices. If it had text, a notice lets you undo it for a few seconds."
+      ]
+    }
   }
 }

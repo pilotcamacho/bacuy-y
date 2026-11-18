@@ -429,7 +429,8 @@
       "types": "Tipos de renglón",
       "status": "Estados",
       "views": "Pestañas y pantallas",
-      "keys": "Teclado"
+      "keys": "Teclado",
+      "lifecycle": "Ciclo de vida de cualquier renglón"
     },
     "start": {
       "p1": "Enter crea un renglón nuevo debajo (o lo parte, si el cursor está en medio). Enter al principio de un renglón añade uno vacío encima, y el renglón conserva todo lo suyo. Retroceso al principio lo une con el de arriba; en un renglón vacío, lo borra.",
@@ -454,7 +455,6 @@
       "intro": "Cada tipo se comporta distinto al marcarlo y su panel muestra solo lo que le sirve: sus datos propios, el horario si se repite, descripción, banderas, ocultar y valoraciones (estas no en gratitud ni vencimientos).",
       "markLabel": "Marca",
       "exampleLabel": "Ejemplo",
-      "tickLabel": "El cuadro",
       "dateLabel": "@fecha",
       "noDate": "no usa fecha",
       "frequencyLabel": "~frecuencia",
@@ -465,43 +465,72 @@
       "ACTION": {
         "what": "Algo que hay que hacer una vez. Es el tipo por defecto.",
         "example": "llamar al banco #recados @mañana",
-        "tick": "La completa: sale de la página y pasa a Completadas. Desmarcarla allí la devuelve a su sitio."
+        "start": "Al escribirla. Sin bandera es un borrador; con una, activa.",
+        "use": "Sigue en la página hasta que la marques. Con @fecha tiene fecha límite.",
+        "repeat": "No.",
+        "end": "Al marcarla se completa y pasa a Completadas. Desmarcarla allí la devuelve a su sitio."
       },
       "REPETITIVE_ACTION": {
         "what": "Algo que se hace una y otra vez (regar, pagar una cuota). Puede tener un número de veces objetivo.",
         "example": "regar plantas ~semanal #personal",
-        "tick": "Suma una vez y la oculta hasta la próxima: el próximo día elegido en el panel o, si no elegiste ninguno, 1 día, 7 días o un mes después de marcarla. Entonces vuelve sola. Al llegar a las veces objetivo, se completa."
+        "start": "Al escribirla con !repetitiva o con una ~frecuencia.",
+        "use": "Marcarla suma una vez (veces hechas) y la oculta.",
+        "repeat": "Vuelve sola el próximo día elegido en el panel; si no elegiste, 1 día, 7 días o un mes después de marcarla. Mientras, está en Ocultas.",
+        "end": "Se completa al llegar a las veces objetivo, o cuando la completas en el panel. Sin objetivo se repite siempre."
       },
       "HABIT": {
         "what": "Una costumbre que quieres formar. Lleva una racha.",
         "example": "meditar 10 min !hábito ~diario #espiritual",
-        "tick": "Suma uno a la racha y lo oculta hasta la próxima vez (el próximo día elegido en el panel, o según la frecuencia). Al llegar a la racha objetivo, te propone marcarlo como formado."
+        "start": "Al escribirlo con !hábito, normalmente con una ~frecuencia.",
+        "use": "Marcarlo suma uno a la racha y lo oculta.",
+        "repeat": "Vuelve solo como una acción repetitiva. La racha no se reinicia sola si fallas un día; puedes reiniciarla en el panel.",
+        "end": "Al llegar a la racha objetivo te propone marcarlo como formado (se completa). También desde el panel."
       },
       "ATTITUDE": {
         "what": "Una forma de ser o de reaccionar que quieres cultivar, con una afirmación que la resume.",
         "example": "escuchar antes de responder !actitud #familia",
-        "tick": "No se marca. Ctrl+Enter abre las valoraciones para anotar cómo te fue. Se completa (interiorizada) o archiva desde el panel."
+        "start": "Al escribirla con !actitud. En el panel puedes poner una afirmación.",
+        "use": "Siempre está en la página: no se marca ni se oculta. Ctrl+Enter abre las valoraciones para anotar cómo te fue.",
+        "repeat": "No tiene ciclo: es un recordatorio permanente.",
+        "end": "Cuando la sientes interiorizada, complétala en el panel; o archívala."
       },
       "SKILL": {
         "what": "Algo que estás aprendiendo, con su nivel y los recursos que usas.",
         "example": "alemán !habilidad #personal",
-        "tick": "No se marca; muestra el nivel. El nivel se cambia en el panel."
+        "start": "Al escribirla con !habilidad. En el panel, su nivel y los recursos que usas.",
+        "use": "Siempre está en la página, con su nivel en lugar del cuadro. Subes el nivel en el panel.",
+        "repeat": "No tiene ciclo ni frecuencia: aparece siempre, en la página y (con bandera) en Prioridad.",
+        "end": "Complétala en el panel cuando la domines, o archívala."
       },
       "MOMENTO": {
         "what": "Un acontecimiento con fecha: un cumpleaños, un viaje, una cita.",
         "example": "cumpleaños de Ana !momento @15/03",
-        "tick": "No se marca. Cuando pasa, se archiva desde el panel."
+        "start": "Al escribirlo con !momento y la @fecha del acontecimiento.",
+        "use": "Siempre está en la página, con una estrella en lugar del cuadro.",
+        "repeat": "No. Para algo de cada año, como un cumpleaños, escribe un momento nuevo con la próxima fecha.",
+        "end": "No se completa: cuando ya pasó, archívalo en el panel. No se archiva solo."
       },
       "GRATITUDE": {
         "what": "Algo o alguien por lo que das las gracias. Al completarla pasa al Diario.",
         "example": "la cena con mis padres !gratitud",
-        "tick": "Abre el panel para escribir las notas; «Guardar y completar» la lleva al Diario (pide notas)."
+        "start": "Al escribirla con !gratitud, o automáticamente cada día si lo activas en Ajustes (este navegador).",
+        "use": "Marcarla abre el panel para escribir las notas (y, si quieres, para quién).",
+        "repeat": "Cada entrada es única; la automática crea una nueva por cada vez del horario (sin repetir días que no abriste la app).",
+        "end": "«Guardar y completar» (pide notas) la lleva al Diario."
       },
       "EXPIRATION": {
         "what": "Algo que vence y hay que renovar: pasaporte, seguro, carné.",
         "example": "pasaporte !vence @2027-03-01 #personal",
-        "tick": "Muestra los días que faltan (en rojo si ya venció) y abre el panel para renovarlo con una fecha nueva o archivarlo sin renovar."
-      }
+        "start": "Al escribirlo con !vence y la @fecha de vencimiento.",
+        "use": "Muestra los días que faltan (en rojo si venció). Entra en Prioridad los días de aviso antes (30 por defecto) y sube a medida que se acerca.",
+        "repeat": "Al renovarlo con una fecha nueva sigue en la página para el próximo vencimiento.",
+        "end": "No se completa: «Archivar sin renovar» lo saca de la página. Restaurarlo lo vuelve pendiente."
+      },
+      "lifeLabel": "Ciclo de vida",
+      "startLabel": "Empieza",
+      "useLabel": "Día a día",
+      "repeatLabel": "Se repite",
+      "endLabel": "Termina"
     },
     "statusItems": {
       "DRAFT": "Recién escrito, sin banderas. Ya se puede marcar.",
@@ -530,6 +559,18 @@
       "tab": "Completar la sugerencia",
       "escape": "Cerrar las sugerencias o el panel"
     },
-    "typeLink": "¿Qué es cada tipo?"
+    "typeLink": "¿Qué es cada tipo?",
+    "lifecycle": {
+      "title": "Ciclo de vida de cualquier renglón",
+      "items": [
+        "Nace al escribirlo, como borrador. Al tener su primera bandera pasa a activo; si le quitas todas, vuelve a borrador.",
+        "La página muestra los borradores, los activos y los pausados que no estén ocultos. Prioridad muestra solo los activos (con bandera) que no estén ocultos.",
+        "Pausar (en el panel) lo deja en la página en cursiva, sin cuadro y fuera de Prioridad, hasta que lo reactives.",
+        "Ocultar (en el panel) lo saca de la página hasta una fecha y hora, o hasta que lo muestres; lo ves en Ocultas.",
+        "Completar lo lleva a Completadas (la gratitud, al Diario). Reactivarlo lo devuelve a la página.",
+        "Archivar lo guarda fuera de la página, en Archivadas, sin completarlo. Restaurarlo lo pone al final de la página.",
+        "Borrarlo (en el panel, o con retroceso en un renglón vacío) lo elimina en todos tus dispositivos. Si tenía texto, un aviso te deja deshacerlo unos segundos."
+      ]
+    }
   }
 }
