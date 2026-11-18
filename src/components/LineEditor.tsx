@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo } from "react";
+import { flushSync } from "react-dom";
 import { useTranslation } from "react-i18next";
 import {
   DndContext,
@@ -163,6 +164,20 @@ export function LineEditor() {
           </div>
         </SortableContext>
       </DndContext>
+      {lines.length > 0 && (
+        <button
+          type="button"
+          data-testid="line-add"
+          className="mt-1 flex items-center gap-2 rounded px-1 py-1 text-sm text-neutral-400 outline-none hover:bg-neutral-50 hover:text-neutral-700 focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-neutral-500 dark:hover:bg-neutral-900 dark:hover:text-neutral-200"
+          // flushSync: the new line is rendered and focused within the tap, so phones open the keyboard.
+          onClick={() => flushSync(() => void store().addLineAtEnd())}
+        >
+          <span aria-hidden="true" className="flex h-5 w-5 items-center justify-center text-base leading-none">
+            +
+          </span>
+          {t("page.addLine")}
+        </button>
+      )}
       <LinePanel />
       <UndoToast />
     </>

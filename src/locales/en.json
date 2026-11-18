@@ -38,7 +38,8 @@
     },
     "completed": {
       "toast": "Completed."
-    }
+    },
+    "addLine": "Add line"
   },
   "priority": {
     "title": "By priority",
@@ -433,7 +434,7 @@
       "lifecycle": "Life cycle of any line"
     },
     "start": {
-      "p1": "Enter makes a new line below (or splits the line, if the cursor is in the middle). Enter at the start of a line adds an empty line above, and the line keeps everything it had. Backspace at the start joins it with the line above; on an empty line, it deletes it.",
+      "p1": "Enter makes a new line below (or splits the line, if the cursor is in the middle). The “+ Add line” button, under the last line, adds a new one at the end from anywhere. Enter at the start of a line adds an empty line above, and the line keeps everything it had. Backspace at the start joins it with the line above; on an empty line, it deletes it.",
       "p2": "The box at the start of each line marks it as done; what happens depends on the type (see below). The ⋯ button opens the line's panel, with the rest of its details.",
       "p3": "Suggestions appear as you type: marks, and lines you wrote before (completed ones too). Enter or Tab complete a mark; ↓ and Enter, or a tap, copy a line."
     },

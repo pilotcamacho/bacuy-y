@@ -371,3 +371,20 @@ test("schedule picker: a weekly line on chosen weekdays; ticked, it comes back o
   expect([1, 4]).toContain(back.getDay());
   expect([back.getHours(), back.getMinutes()]).toEqual([8, 30]);
 });
+
+test("the add-line button: a new line at the end, focused, without going to the last line", async ({ page }) => {
+  await signIn(page);
+  await lines(page).first().click();
+  await page.keyboard.type("uno");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("dos");
+  await lines(page).first().click();
+  await page.getByTestId("line-add").click();
+  await expect(lines(page)).toHaveCount(3);
+  await expect(lines(page).nth(2)).toBeFocused();
+  await page.keyboard.type("tres");
+  await page.waitForTimeout(500); // text debounce
+  await page.reload();
+  await expect(lines(page)).toHaveCount(3);
+  await expect(lines(page).nth(2)).toHaveValue("tres");
+});

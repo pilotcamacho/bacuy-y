@@ -38,7 +38,8 @@
     },
     "completed": {
       "toast": "Completada."
-    }
+    },
+    "addLine": "Añadir renglón"
   },
   "priority": {
     "title": "Por prioridad",
@@ -433,7 +434,7 @@
       "lifecycle": "Ciclo de vida de cualquier renglón"
     },
     "start": {
-      "p1": "Enter crea un renglón nuevo debajo (o lo parte, si el cursor está en medio). Enter al principio de un renglón añade uno vacío encima, y el renglón conserva todo lo suyo. Retroceso al principio lo une con el de arriba; en un renglón vacío, lo borra.",
+      "p1": "Enter crea un renglón nuevo debajo (o lo parte, si el cursor está en medio). El botón «+ Añadir renglón», debajo del último, crea uno nuevo al final desde cualquier sitio. Enter al principio de un renglón añade uno vacío encima, y el renglón conserva todo lo suyo. Retroceso al principio lo une con el de arriba; en un renglón vacío, lo borra.",
       "p2": "El cuadro al principio de cada renglón lo marca como hecho; lo que pasa depende del tipo (ver abajo). El botón ⋯ abre el panel del renglón, con el resto de los datos.",
       "p3": "Mientras escribes aparecen sugerencias: marcas y renglones que ya escribiste antes (también los completados). Enter o Tab completan una marca; ↓ y Enter, o tocar, copian un renglón."
     },

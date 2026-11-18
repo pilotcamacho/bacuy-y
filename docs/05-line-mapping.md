@@ -157,6 +157,7 @@ a DOM. The store applies the result to `LocalDb`.
 |---|---|
 | Type | Update `rawInput` of that activity (debounced ≈300 ms, plus on blur / page hidden). |
 | Enter at end of line | New activity below (`ACTION`, `DRAFT`, empty), focused. |
+| **+ Añadir renglón** (button under the page, `line-add`) | New empty activity at the very end (after hidden rows too), focused, from anywhere. If the last line is already empty it is focused instead. Not shown on an empty page (its placeholder line is there). On a filtered page it gets the filter's flag, like Enter. (2026-11-18) |
 | Enter in the middle | Split: current keeps text before the cursor; new activity below gets the rest. Marks travel with the text they are in. |
 | Enter at start of a non-empty line | New empty activity **above**; the line keeps its row (type, panel fields, history) and the caret, as in a text editor (confirmed 2026-11-17). |
 | Backspace at start of a non-empty line | Merge into the line above: its `rawInput` += a space (only when neither side already has whitespace at the joint, so Enter then Backspace restores the line) + current text; current is soft-deleted (its `ActivityFlag`s and feedback are soft-deleted too). The line above keeps its id and fields; its marks are re-parsed. Exception: when the line above is empty, that empty row is soft-deleted instead and the current line keeps its row (undoes Enter at the start). |

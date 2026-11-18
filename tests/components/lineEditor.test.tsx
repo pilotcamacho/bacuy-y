@@ -326,3 +326,38 @@ describe("LineEditor", () => {
     expect(screen.getByTestId("line-row-1")).toBeInTheDocument();
   });
 });
+
+describe("the add-line button under the page", () => {
+  const addButton = () => screen.getByRole("button", { name: /Añadir renglón/ });
+
+  it("is not there on an empty page (its placeholder line is the place to type)", async () => {
+    await mount();
+    expect(screen.queryByTestId("line-add")).toBeNull();
+  });
+
+  it("adds an empty line at the very end, focused, and typing fills it", async () => {
+    const user = userEvent.setup();
+    await mount();
+    await user.click(boxes()[0]!);
+    await user.keyboard("uno{Enter}dos");
+    await user.click(boxes()[0]!); // the caret is far from the end
+    await user.click(addButton());
+    expect(values()).toEqual(["uno", "dos", ""]);
+    expect(boxes()[2]).toHaveFocus();
+    await user.keyboard("tres");
+    await act(() => usePageStore.getState().flushAll());
+    expect(await storedLines()).toEqual(["uno", "dos", "tres"]);
+  });
+
+  it("does not pile up empty lines: with an empty last line it just focuses it", async () => {
+    const user = userEvent.setup();
+    await mount();
+    await user.click(boxes()[0]!);
+    await user.keyboard("uno");
+    await user.click(addButton());
+    await user.click(boxes()[0]!);
+    await user.click(addButton());
+    expect(values()).toEqual(["uno", ""]);
+    expect(boxes()[1]).toHaveFocus();
+  });
+});

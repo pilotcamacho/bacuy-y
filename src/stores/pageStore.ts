@@ -101,6 +101,8 @@ interface PageState {
   type(id: string, rawInput: string): void;
   commit(id: string): Promise<void>;
   enter(id: string, selStart: number, selEnd: number): Promise<void>;
+  /** The "add line" button under the page: a new empty line at the end, focused. */
+  addLineAtEnd(): Promise<void>;
   backspaceAtStart(id: string): Promise<boolean>;
   deleteAtEnd(id: string): Promise<boolean>;
   paste(id: string, selStart: number, selEnd: number, text: string): Promise<void>;
@@ -538,6 +540,22 @@ export const usePageStore = create<PageState>((set, get) => {
         result.changed.unshift(result.lines[index]!);
       }
       await apply(result);
+    },
+
+    async addLineAtEnd() {
+      const all = lines();
+      const last = all.at(-1);
+      // An empty last line is already there to type in: focus it instead of piling up blanks.
+      if (last && last.rawInput.trim() === "") {
+        get().setFocus(last.id, last.rawInput.length);
+        return;
+      }
+      if (!last) return; // the empty page shows its placeholder line already
+      // After every row, hidden ones included, so it never shares a position with one.
+      let max = last.position;
+      for (const a of Object.values(get().activities)) if (!a.deletedAt && a.position > max) max = a.position;
+      const created = { id: newId(), rawInput: "", position: generateKeyBetween(max, null) };
+      await apply({ lines: [...all, created], changed: [created], created: [created.id], deleted: [], focus: { id: created.id, offset: 0 } });
     },
 
     async backspaceAtStart(id) {
