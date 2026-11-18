@@ -51,18 +51,25 @@ export type HidePreset = "later" | "tomorrow" | "monday" | "nextMonth";
 export const HIDE_PRESETS: readonly HidePreset[] = ["later", "tomorrow", "monday", "nextMonth"];
 /** Hour (local) the day-based choices end at. */
 export const HIDE_MORNING_HOUR = 8;
+/**
+ * Before this hour (local) the night still belongs to the day before: at 00:30, "tomorrow
+ * 8:00" is this morning, and "Monday" on a Monday at 01:00 is this morning too (the same
+ * cut-off as the spaced review).
+ */
+export const HIDE_DAY_STARTS_HOUR = 3;
 
 export function hidePresetAt(preset: HidePreset, now: Date): Date {
-  const y = now.getFullYear();
-  const m = now.getMonth();
-  const d = now.getDate();
+  const day = now.getHours() < HIDE_DAY_STARTS_HOUR ? new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1) : now;
+  const y = day.getFullYear();
+  const m = day.getMonth();
+  const d = day.getDate();
   switch (preset) {
     case "later":
       return new Date(now.getTime() + 3 * 3_600_000);
     case "tomorrow":
       return new Date(y, m, d + 1, HIDE_MORNING_HOUR);
     case "monday": {
-      const days = ((8 - now.getDay()) % 7) || 7; // the next Monday, never today
+      const days = ((8 - day.getDay()) % 7) || 7; // the next Monday, never today
       return new Date(y, m, d + days, HIDE_MORNING_HOUR);
     }
     case "nextMonth": {

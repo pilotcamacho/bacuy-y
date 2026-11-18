@@ -169,6 +169,8 @@ a DOM. The store applies the result to `LocalDb`.
 | Drag handle | Same as Alt+arrow, any distance. @dnd-kit with pointer, touch (long-press 250 ms) and keyboard sensors. |
 | Tick / Ctrl+Enter | Type-specific (see §4). |
 | Ctrl+. / ⋯ | Open the side panel for the line. |
+| Swipe right (touch) / Ctrl+Shift+H / ☾ | **Fast hide** until tomorrow 8:00 (see "Hide by hand" in §4). |
+| Long swipe right / Ctrl+Shift+Alt+H | "Hide until…" picker for the line (`hide-picker`), the panel's choices. |
 | Esc (panel open) | Close the panel, focus returns to the line. |
 
 - Only one row changes when a line moves: `position = generateKeyBetween(prev?.position, next?.position)`.
@@ -270,6 +272,22 @@ time (`datetime-local`, must be in the future), or *Hasta que la muestre*. A dat
 (`isHiddenNow`). The panel closes, the focus moves on, and a toast "Oculta hasta el …" /
 "Oculta hasta que la muestres." offers *Deshacer* (no *Valorar*: nothing was done). On a
 hidden line the panel shows when it returns and *Mostrar ahora* instead.
+
+**Fast hide** (confirmed 2026-11-18), without opening the panel:
+- **Swipe the line right** (touch and pen; a mouse drag still selects text). The line follows
+  the finger over a strip: past ~30 % of its width (min 64 px) it reads "Ocultar hasta Mañana
+  8:00" and releasing hides it until then; past ~62 % (min 160 px) it reads "Elegir hasta
+  cuándo…" and releasing opens the picker. Released earlier, it slides back. Only a clearly
+  sideways move to the right starts it (`services/editor/swipe.ts`); vertical moves scroll as
+  usual (`touch-action: pan-y`), the drag handle never starts one, and swiping left is unused.
+- **Ctrl+Shift+H** (from anywhere in the line) or the **☾ button** next to ⋯ (hover / focus;
+  not on touch screens, which swipe): until tomorrow 8:00. **Ctrl+Shift+Alt+H**: the picker.
+- The picker (`hide-picker`) is a bottom sheet on phones: the panel's choices (3 horas, mañana,
+  lunes, en un mes, a date and time, until shown). Escape / Cancelar leaves the line as it was.
+- Same result and toast (with *Deshacer*) as hiding from the panel. On an attitude or skill it
+  postpones the review without changing its step.
+- **Before 03:00** the night still belongs to the day before: "mañana 8:00" is this morning
+  (also in the panel; "lunes" on a Monday before 03:00 is this morning too).
 
 Shared rules:
 

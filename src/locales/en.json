@@ -243,7 +243,8 @@
     "attitude": "Attitude",
     "moment": "Moment",
     "paused": "Paused",
-    "more": "Details of line {{n}}"
+    "more": "Details of line {{n}}",
+    "hideQuick": "Hide until tomorrow 8:00 (line {{n}}) · Ctrl+Shift+H"
   },
   "panel": {
     "title": "Line details",
@@ -395,7 +396,11 @@
     },
     "custom": "Until",
     "apply": "Hide",
-    "indefinite": "Until I show it"
+    "indefinite": "Until I show it",
+    "pickerTitle": "Hide until…",
+    "cancel": "Cancel",
+    "swipeQuick": "Hide until {{when}}",
+    "swipePick": "Choose until when…"
   },
   "hidden": {
     "title": "Hidden",
@@ -559,6 +564,8 @@
       "altArrows": "Move the line",
       "ctrlEnter": "Mark as done",
       "ctrlDot": "Open the line's panel",
+      "ctrlShiftH": "Hide until tomorrow 8:00 (with Alt: choose until when)",
+      "swipe": "On a phone: swipe the line right to hide it until tomorrow 8:00; swipe further to choose until when",
       "tab": "Accept the suggestion",
       "escape": "Close suggestions or the panel"
     },
@@ -569,7 +576,7 @@
         "It is born when you type it, as a draft. With its first flag it becomes active; remove them all and it is a draft again.",
         "The page shows drafts, active and paused lines that are not hidden. Priority shows only active lines (with a flag) that are not hidden.",
         "Pausing (in the panel) keeps it on the page in italics, without a box and out of Priority, until you reactivate it.",
-        "Hiding (in the panel) takes it off the page until a date and time, or until you show it; you find it in Hidden.",
+        "Hiding takes it off the page until a date and time, or until you show it; it is listed on Hidden. Fastest: swiping it right (or Ctrl+Shift+H, or the moon next to ⋯) hides it until tomorrow 8:00; swiping further lets you choose. Before 3:00, “tomorrow 8:00” means this morning.",
         "Completing moves it to Completed (gratitude, to the Journal). Reactivating it brings it back to the page.",
         "Archiving keeps it off the page, in Archived, without completing it. Restoring puts it at the end of the page.",
         "Deleting it (in the panel, or Backspace on an empty line) removes it on all your devices. If it had text, a notice lets you undo it for a few seconds."

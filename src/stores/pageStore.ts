@@ -24,6 +24,7 @@ import { keepInMemory } from "@/services/lifecycle/completed";
 import { deriveTextFields, newActivityDefaults } from "@/services/lifecycle/derive";
 import { applyStatusAction, reactivatedStatus, type StatusAction } from "@/services/lifecycle/status";
 import { tick as tickRule, type PanelSection } from "@/services/lifecycle/tick";
+import { hidePresetAt } from "@/services/lifecycle/nextShow";
 import { isSpaced, reviewDueAt, reviewOutcome } from "@/services/lifecycle/review";
 import { useFeedbackStore } from "./feedbackStore";
 import { commitLine, parseLine, type FlagLite, type ParseContext } from "@/services/marks";
@@ -103,6 +104,8 @@ interface PageState {
   undo: UndoEntry | null;
   panel: PanelState | null;
   notice: Notice | null;
+  /** The line whose "hide until…" picker is open (long swipe, Ctrl+Shift+Alt+H). */
+  hidePicker: string | null;
 
   /** `ownerSub` seeds the user's default flags (missing ones only). */
   load(ownerSub?: string | null): Promise<void>;
@@ -143,6 +146,10 @@ interface PageState {
    * focus moves to the line taking its place; a toast offers undo.
    */
   hide(id: string, until: string | null): Promise<void>;
+  /** The fast hide (swipe right, Ctrl+Shift+H): until tomorrow 8:00 (this morning before 03:00). */
+  hideQuick(id: string): Promise<void>;
+  openHidePicker(id: string): void;
+  closeHidePicker(refocus?: boolean): void;
   hasFlags(id: string): boolean;
   /** Flag ids (and NO_FLAG) the page is filtered by; empty = every line. Kept on this device. */
   filter: string[];
@@ -470,6 +477,7 @@ export const usePageStore = create<PageState>((set, get) => {
     undo: null,
     panel: null,
     notice: null,
+    hidePicker: null,
     filter: kvGetJson<string[]>(FILTER_KEY, []),
 
     setFilter(filter) {
@@ -812,6 +820,24 @@ export const usePageStore = create<PageState>((set, get) => {
       set({ notice: { kind: "hidden", id, until: until ?? undefined, manual: true, before: row, nonce: ++nonce } });
     },
 
+    async hideQuick(id) {
+      await get().hide(id, hidePresetAt("tomorrow", new Date()).toISOString());
+    },
+
+    openHidePicker(id) {
+      const row = get().activities[id];
+      if (!row || row.deletedAt) return;
+      set({ hidePicker: id });
+    },
+
+    closeHidePicker(refocus = true) {
+      const id = get().hidePicker;
+      if (!id) return;
+      set({ hidePicker: null });
+      const row = get().activities[id];
+      if (refocus && row && !row.deletedAt) get().setFocus(id, (row.rawInput ?? "").length);
+    },
+
     hasFlags(id) {
       const row = get().activities[id];
       return row ? hasFlags(row) : false;
@@ -918,6 +944,7 @@ export function resetPageStore() {
     undo: null,
     panel: null,
     notice: null,
+    hidePicker: null,
     filter: kvGetJson<string[]>(FILTER_KEY, []),
   });
 }

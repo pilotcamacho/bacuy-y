@@ -225,6 +225,15 @@ describe("hide until…", () => {
     expect(hidePresetAt("nextMonth", new Date(2027, 0, 31, 10))).toEqual(new Date(2027, 1, 28, 8));
   });
 
+  it("before 03:00 the night belongs to the day before: tomorrow 8:00 is this morning", () => {
+    expect(hidePresetAt("tomorrow", new Date(2026, 10, 18, 0, 30))).toEqual(new Date(2026, 10, 18, 8));
+    expect(hidePresetAt("tomorrow", new Date(2026, 10, 18, 2, 59))).toEqual(new Date(2026, 10, 18, 8));
+    expect(hidePresetAt("tomorrow", new Date(2026, 10, 18, 3, 0))).toEqual(new Date(2026, 10, 19, 8));
+    expect(hidePresetAt("tomorrow", new Date(2026, 11, 1, 1))).toEqual(new Date(2026, 11, 1, 8)); // month start
+    // Monday 16 Nov at 01:00: still Sunday night, so "Monday" is this morning.
+    expect(hidePresetAt("monday", new Date(2026, 10, 16, 1))).toEqual(new Date(2026, 10, 16, 8));
+  });
+
   it("isHidden hides with no time; hiddenUntil hides until it passes", () => {
     expect(isHiddenNow({ isHidden: true, hiddenUntil: null }, NOW)).toBe(true);
     expect(isHiddenNow({ isHidden: false, hiddenUntil: new Date(2026, 10, 16).toISOString() }, NOW)).toBe(true);

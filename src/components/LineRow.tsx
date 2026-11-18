@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useLineSuggestions } from "@/hooks/useLineSuggestions";
+import { useSwipe } from "@/hooks/useSwipe";
 import type { ActivityRow } from "@/lib/db/types";
 import type { EditorLine } from "@/services/editor";
 import { isRemovedFromTitle, parseLine, type FlagLite, type MarkSpan } from "@/services/marks";
@@ -27,6 +28,10 @@ export interface LineHandlers {
   onFocusNeighbour(id: string, direction: -1 | 1, caret: number): void;
   onTick(id: string): void;
   onOpenPanel(id: string): void;
+  /** Swipe right / Ctrl+Shift+H / the moon button: hide until tomorrow 8:00. */
+  onHideQuick(id: string): void;
+  /** Long swipe right / Ctrl+Shift+Alt+H: choose until when. */
+  onHidePicker(id: string): void;
 }
 
 interface Props extends LineHandlers {
@@ -103,6 +108,11 @@ export const LineRow = memo(function LineRow(props: Props) {
   });
 
   const suggestions = useLineSuggestions({ id: line.id, raw: line.rawInput, flags, inputRef: ref, onType: props.onType });
+  const swipe = useSwipe({
+    enabled: !!row && !isDragging,
+    onRelease: (stage) => (stage === "pick" ? props.onHidePicker(line.id) : props.onHideQuick(line.id)),
+  });
+  const swiping = swipe.dx > 0;
   const listOpen = suggestions.items.length > 0;
 
   useEffect(() => {
@@ -164,18 +174,43 @@ export const LineRow = memo(function LineRow(props: Props) {
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      // Ctrl/Cmd+. from anywhere in the line (text, tick, handle): open the panel.
+      // From anywhere in the line (text, tick, handle): Ctrl/Cmd+. opens the panel,
+      // Ctrl/Cmd+Shift+H hides it until tomorrow 8:00 (+Alt: choose until when).
       onKeyDown={(e) => {
-        if (e.key === "." && (e.ctrlKey || e.metaKey) && !e.altKey && row) {
+        if (!row || !(e.ctrlKey || e.metaKey)) return;
+        if (e.key === "." && !e.altKey) {
           e.preventDefault();
           props.onOpenPanel(line.id);
+        } else if (e.shiftKey && e.code === "KeyH") {
+          e.preventDefault();
+          if (e.altKey) props.onHidePicker(line.id);
+          else props.onHideQuick(line.id);
         }
       }}
-      className={`group flex items-start gap-1 rounded ${isDragging ? "relative z-10 bg-white shadow-md dark:bg-neutral-900" : ""}`}
+      {...swipe.handlers}
+      className={`group relative touch-pan-y rounded ${swiping ? "overflow-hidden" : ""} ${isDragging ? "z-10 bg-white shadow-md dark:bg-neutral-900" : ""}`}
       data-testid={`line-row-${index}`}
     >
+      {swiping && (
+        <div
+          aria-hidden="true"
+          data-testid={`line-swipe-${index}`}
+          data-stage={swipe.stage}
+          className={`absolute inset-0 flex items-center gap-2 rounded px-3 text-sm font-medium text-white ${
+            swipe.stage === "pick" ? "bg-amber-600" : swipe.stage === "quick" ? "bg-indigo-600" : "bg-neutral-400 dark:bg-neutral-600"
+          }`}
+        >
+          <MoonIcon />
+          {swipe.stage === "pick" ? t("hide.swipePick") : t("hide.swipeQuick", { when: t("hide.presets.tomorrow") })}
+        </div>
+      )}
+      <div
+        className={`flex items-start gap-1 rounded ${swiping ? "relative bg-white dark:bg-neutral-950" : ""}`}
+        style={{ transform: swiping ? `translateX(${swipe.dx}px)` : undefined, transition: swiping ? "none" : "transform 150ms ease-out" }}
+      >
       <button
         type="button"
+        data-no-swipe
         ref={setActivatorNodeRef}
         {...attributes}
         {...listeners}
@@ -245,6 +280,17 @@ export const LineRow = memo(function LineRow(props: Props) {
       </div>
       <button
         type="button"
+        onClick={() => row && props.onHideQuick(line.id)}
+        disabled={!row}
+        aria-label={t("line.hideQuick", { n: index + 1 })}
+        title={t("line.hideQuick", { n: index + 1 })}
+        data-testid={`line-hide-${index}`}
+        className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded text-neutral-400 opacity-0 outline-none hover:bg-neutral-100 hover:text-neutral-700 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-indigo-500 group-focus-within:opacity-100 group-hover:opacity-100 disabled:invisible dark:hover:bg-neutral-800 dark:hover:text-neutral-200 [@media(hover:none)]:hidden"
+      >
+        <MoonIcon />
+      </button>
+      <button
+        type="button"
         onClick={() => row && props.onOpenPanel(line.id)}
         disabled={!row}
         aria-label={t("line.more", { n: index + 1 })}
@@ -258,6 +304,15 @@ export const LineRow = memo(function LineRow(props: Props) {
           <circle cx="14" cy="2" r="1.5" />
         </svg>
       </button>
+      </div>
     </div>
   );
 });
+
+function MoonIcon() {
+  return (
+    <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="currentColor">
+      <path d="M6.2 1.3a6.8 6.8 0 1 0 8.5 8.5A5.6 5.6 0 0 1 6.2 1.3Z" />
+    </svg>
+  );
+}

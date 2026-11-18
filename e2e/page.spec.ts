@@ -402,3 +402,59 @@ test("spaced review: an attitude ticked asks how it went; Bien hides it until it
   await page.reload();
   await expect(page.getByTestId("hidden-count")).toBeVisible();
 });
+
+test("fast hide: Ctrl+Shift+H, or (touch) a swipe right; a long swipe opens the picker", async ({ page, browserName }, testInfo) => {
+  await signIn(page);
+  await lines(page).first().click();
+  await page.keyboard.type("uno");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("dos");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("tres");
+  await page.waitForTimeout(500); // text debounce
+
+  const touch = testInfo.project.name === "mobile" && browserName === "chromium";
+  if (!touch) {
+    await lines(page).first().click();
+    await page.keyboard.press("Control+Shift+H");
+    await expect(page.getByTestId("hidden-toast")).toContainText(/oculta hasta|hidden until/i);
+    await expect(lines(page)).toHaveCount(2);
+    await expect(lines(page).first()).toHaveValue("dos");
+    await page.keyboard.press("Control+Shift+Alt+H");
+    await expect(page.getByTestId("hide-picker")).toContainText("dos");
+    await page.getByTestId("hide-picker-preset-nextMonth").click();
+    await expect(lines(page)).toHaveCount(1);
+    return;
+  }
+
+  // A real touch swipe (CDP touch events: touch-action, pointer capture and scrolling as on a phone).
+  const cdp = await page.context().newCDPSession(page);
+  async function swipe(index: number, distance: number) {
+    // Over the text (the drag handle never starts a swipe).
+    const box = (await lines(page).nth(index).boundingBox())!;
+    const y = box.y + box.height / 2;
+    const x0 = box.x + 10;
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: x0, y }] });
+    for (let i = 1; i <= 10; i++) {
+      await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: x0 + (distance * i) / 10, y }] });
+    }
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  }
+  const width = (await page.getByTestId("line-row-0").boundingBox())!.width;
+
+  await swipe(0, width * 0.15); // too short: nothing
+  await expect(lines(page)).toHaveCount(3);
+  await swipe(0, width * 0.45);
+  await expect(page.getByTestId("hidden-toast")).toContainText(/oculta hasta|hidden until/i);
+  await expect(lines(page)).toHaveCount(2);
+  await expect(lines(page).first()).toHaveValue("dos");
+
+  await swipe(0, width * 0.8);
+  await expect(page.getByTestId("hide-picker")).toContainText("dos");
+  await page.getByTestId("hide-picker-preset-nextMonth").click();
+  await expect(lines(page)).toHaveCount(1);
+
+  await page.reload();
+  await expect(lines(page)).toHaveCount(1);
+  await expect(lines(page).first()).toHaveValue("tres");
+});

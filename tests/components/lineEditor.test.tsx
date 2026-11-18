@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { LineEditor } from "@/components/LineEditor";
@@ -359,5 +359,101 @@ describe("the add-line button under the page", () => {
     await user.click(addButton());
     expect(values()).toEqual(["uno", ""]);
     expect(boxes()[1]).toHaveFocus();
+  });
+});
+
+describe("fast hide: swipe right, Ctrl+Shift+H, the moon button", () => {
+  async function twoLines() {
+    const user = userEvent.setup();
+    await mount();
+    await user.click(boxes()[0]!);
+    await user.keyboard("uno{Enter}dos");
+    await act(() => usePageStore.getState().flushAll());
+    return user;
+  }
+  const stored = async (raw: string) => (await db.getAll("Activity")).find((r) => r.rawInput === raw)!;
+  const tomorrow8 = () => {
+    const now = new Date();
+    const day = now.getHours() < 3 ? now.getDate() : now.getDate() + 1;
+    return new Date(now.getFullYear(), now.getMonth(), day, 8).toISOString();
+  };
+
+  it("Ctrl+Shift+H hides the line until tomorrow 8:00, with an undo toast", async () => {
+    const user = await twoLines();
+    await user.click(boxes()[0]!);
+    await user.keyboard("{Control>}{Shift>}H{/Shift}{/Control}");
+    await waitFor(() => expect(values()).toEqual(["dos"]));
+    expect((await stored("uno")).hiddenUntil).toBe(tomorrow8());
+    expect(boxes()[0]).toHaveFocus();
+    await user.click(screen.getByRole("button", { name: "Deshacer" }));
+    await waitFor(() => expect(values()).toEqual(["uno", "dos"]));
+    expect((await stored("uno")).hiddenUntil).toBeNull();
+  });
+
+  it("the moon button next to ⋯ does the same", async () => {
+    const user = await twoLines();
+    await user.click(screen.getByTestId("line-hide-1"));
+    await waitFor(() => expect(values()).toEqual(["uno"]));
+    expect((await stored("dos")).hiddenUntil).toBe(tomorrow8());
+  });
+
+  it("Ctrl+Shift+Alt+H opens the picker; a choice hides, Escape leaves the line as it was", async () => {
+    const user = await twoLines();
+    await user.click(boxes()[1]!);
+    await user.keyboard("{Control>}{Shift>}{Alt>}H{/Alt}{/Shift}{/Control}");
+    const picker = await screen.findByTestId("hide-picker");
+    expect(picker).toHaveTextContent("«dos»");
+    expect(screen.getByTestId("hide-picker-preset-later")).toHaveFocus();
+    await user.keyboard("{Escape}");
+    expect(screen.queryByTestId("hide-picker")).toBeNull();
+    expect(values()).toEqual(["uno", "dos"]);
+    expect(boxes()[1]).toHaveFocus();
+
+    await user.keyboard("{Control>}{Shift>}{Alt>}H{/Alt}{/Shift}{/Control}");
+    await user.click(await screen.findByTestId("hide-picker-indefinite"));
+    await waitFor(() => expect(values()).toEqual(["uno"]));
+    expect((await stored("dos")).isHidden).toBe(true);
+    expect(screen.queryByTestId("hide-picker")).toBeNull();
+  });
+
+  function swipe(row: HTMLElement, to: number, { release = true, dy = 0 } = {}) {
+    row.getBoundingClientRect = () => ({ width: 400, height: 28, x: 0, y: 0, top: 0, left: 0, right: 400, bottom: 28, toJSON: () => ({}) });
+    const target = row.querySelector("textarea")!;
+    const opts = { pointerId: 7, pointerType: "touch", isPrimary: true, clientY: 10, bubbles: true };
+    fireEvent.pointerDown(target, { ...opts, clientX: 10 });
+    fireEvent.pointerMove(target, { ...opts, clientX: 25, clientY: 10 + dy });
+    fireEvent.pointerMove(target, { ...opts, clientX: 10 + to, clientY: 10 + dy });
+    if (release) fireEvent.pointerUp(target, { ...opts, clientX: 10 + to });
+  }
+
+  it("a swipe right past the first stop hides until tomorrow 8:00; the strip shows the stage", async () => {
+    await twoLines();
+    swipe(screen.getByTestId("line-row-0"), 150, { release: false });
+    expect(screen.getByTestId("line-swipe-0")).toHaveAttribute("data-stage", "quick");
+    expect(screen.getByTestId("line-swipe-0")).toHaveTextContent("Ocultar hasta Mañana 8:00");
+    fireEvent.pointerUp(screen.getByTestId("line-row-0").querySelector("textarea")!, { pointerId: 7, pointerType: "touch", isPrimary: true, clientX: 160 });
+    await waitFor(() => expect(values()).toEqual(["dos"]));
+    expect((await stored("uno")).hiddenUntil).toBe(tomorrow8());
+  });
+
+  it("a long swipe opens the picker; a short one or a vertical move does nothing", async () => {
+    await twoLines();
+    swipe(screen.getByTestId("line-row-0"), 60);
+    swipe(screen.getByTestId("line-row-0"), 150, { dy: 40 });
+    expect(screen.queryByTestId("line-swipe-0")).toBeNull();
+    expect(values()).toEqual(["uno", "dos"]);
+    swipe(screen.getByTestId("line-row-1"), 300);
+    expect(await screen.findByTestId("hide-picker")).toHaveTextContent("«dos»");
+  });
+
+  it("a mouse drag never swipes (it selects text)", async () => {
+    await twoLines();
+    const row = screen.getByTestId("line-row-0");
+    const t = row.querySelector("textarea")!;
+    const opts = { pointerId: 1, pointerType: "mouse", isPrimary: true, clientY: 10 };
+    fireEvent.pointerDown(t, { ...opts, clientX: 10 });
+    fireEvent.pointerMove(t, { ...opts, clientX: 300 });
+    fireEvent.pointerUp(t, { ...opts, clientX: 300 });
+    expect(values()).toEqual(["uno", "dos"]);
   });
 });

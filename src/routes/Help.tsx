@@ -38,6 +38,8 @@ const KEYS: { keys: string[]; text: string }[] = [
   { keys: ["Alt+↑", "Alt+↓"], text: "altArrows" },
   { keys: ["Ctrl+Enter"], text: "ctrlEnter" },
   { keys: ["Ctrl+."], text: "ctrlDot" },
+  { keys: ["Ctrl+Shift+H"], text: "ctrlShiftH" },
+  { keys: ["→"], text: "swipe" },
   { keys: ["Tab"], text: "tab" },
   { keys: ["Esc"], text: "escape" },
 ];

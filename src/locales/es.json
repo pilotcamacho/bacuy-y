@@ -243,7 +243,8 @@
     "attitude": "Actitud",
     "moment": "Momento",
     "paused": "En pausa",
-    "more": "Detalles del renglón {{n}}"
+    "more": "Detalles del renglón {{n}}",
+    "hideQuick": "Ocultar hasta mañana 8:00 (renglón {{n}}) · Ctrl+Mayús+H"
   },
   "panel": {
     "title": "Detalles del renglón",
@@ -395,7 +396,11 @@
     },
     "custom": "Hasta",
     "apply": "Ocultar",
-    "indefinite": "Hasta que la muestre"
+    "indefinite": "Hasta que la muestre",
+    "pickerTitle": "Ocultar hasta…",
+    "cancel": "Cancelar",
+    "swipeQuick": "Ocultar hasta {{when}}",
+    "swipePick": "Elegir hasta cuándo…"
   },
   "hidden": {
     "title": "Ocultas",
@@ -559,6 +564,8 @@
       "altArrows": "Mover el renglón",
       "ctrlEnter": "Marcar como hecho",
       "ctrlDot": "Abrir el panel del renglón",
+      "ctrlShiftH": "Ocultar hasta mañana 8:00 (con Alt: elegir hasta cuándo)",
+      "swipe": "En el teléfono: desliza el renglón a la derecha para ocultarlo hasta mañana 8:00; deslízalo más para elegir hasta cuándo",
       "tab": "Completar la sugerencia",
       "escape": "Cerrar las sugerencias o el panel"
     },
@@ -569,7 +576,7 @@
         "Nace al escribirlo, como borrador. Al tener su primera bandera pasa a activo; si le quitas todas, vuelve a borrador.",
         "La página muestra los borradores, los activos y los pausados que no estén ocultos. Prioridad muestra solo los activos (con bandera) que no estén ocultos.",
         "Pausar (en el panel) lo deja en la página en cursiva, sin cuadro y fuera de Prioridad, hasta que lo reactives.",
-        "Ocultar (en el panel) lo saca de la página hasta una fecha y hora, o hasta que lo muestres; lo ves en Ocultas.",
+        "Ocultar lo saca de la página hasta una fecha y hora, o hasta que lo muestres; lo ves en Ocultas. Lo más rápido: deslizarlo a la derecha (o Ctrl+Mayús+H, o la luna junto a ⋯) lo oculta hasta mañana 8:00; deslizarlo más deja elegir. Antes de las 3:00, «mañana 8:00» es esta mañana.",
         "Completar lo lleva a Completadas (la gratitud, al Diario). Reactivarlo lo devuelve a la página.",
         "Archivar lo guarda fuera de la página, en Archivadas, sin completarlo. Restaurarlo lo pone al final de la página.",
         "Borrarlo (en el panel, o con retroceso en un renglón vacío) lo elimina en todos tus dispositivos. Si tenía texto, un aviso te deja deshacerlo unos segundos."

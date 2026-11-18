@@ -21,6 +21,7 @@ import { GHOST_LINE } from "@/services/editor/pageLines";
 import { usePageStore, visiblePageLines } from "@/stores/pageStore";
 import { LineRow, type LineHandlers } from "./LineRow";
 import { LinePanel } from "./LinePanel";
+import { HidePicker } from "./HidePicker";
 import { UndoToast } from "./UndoToast";
 
 /** The page: every line, in order, as a plain-text editor (docs/05-line-mapping.md §3). */
@@ -99,6 +100,8 @@ export function LineEditor() {
       },
       onTick: (id) => void store().tick(id),
       onOpenPanel: (id) => store().openPanel(id),
+      onHideQuick: (id) => void store().hideQuick(id),
+      onHidePicker: (id) => store().openHidePicker(id),
     }),
     [store],
   );
@@ -179,6 +182,7 @@ export function LineEditor() {
         </button>
       )}
       <LinePanel />
+      <HidePicker />
       <UndoToast />
     </>
   );

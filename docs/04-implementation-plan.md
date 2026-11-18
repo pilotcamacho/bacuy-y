@@ -389,6 +389,10 @@ Requests from the first days of real use (2026-11-17).
   2m · 3m · 6m (adapting), back at 03:00; Bien on the last step completes it; replaces ~frequency
   > New field `Activity.reviewStep` (additive). `date-fns` is not installed (the stack table lists
   > it): the date math is done by hand in `services/lifecycle/review.ts`.
+- [x] Fast hide: swipe right (touch) / Ctrl+Shift+H / ☾ → until tomorrow 8:00; long swipe /
+  Ctrl+Shift+Alt+H → picker. "Mañana" before 03:00 = this morning
+  > No gesture library: pointer events + `touch-action: pan-y` (`hooks/useSwipe.ts`). The e2e
+  > test swipes with real CDP touch events on the mobile project.
 - [x] "+ Añadir renglón" button under the page: a new line at the end without going there
 - [x] Manual: a life cycle per type (starts, day to day, repeats, ends) and one shared by
   every line (draft/active, pause, hide, complete, archive, restore, delete, priority)
