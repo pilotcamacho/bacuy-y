@@ -224,6 +224,16 @@ square at the start of the line.
   cron) → tomorrow; `~semanal` → same weekday next week; `~mensual` → same day next month
   (its last day if shorter).
 
+Counted from the tick, so a line done late drifts to the day it was done. To pin the day, the
+panel's **schedule picker** (confirmed 2026-11-17; `components/SchedulePicker`,
+`services/lifecycle/schedule.ts`) writes a plain `cron` (no schema change), which then wins:
+`~semanal` → weekdays (several allowed) `m h * * 1,4`; `~mensual` → day 1–28 or "último día"
+`m h D * *` / `m h L * *` (29–31 are not offered: cron would skip shorter months); `~diario` →
+a time `m h * * *`. The time is optional (00:00). Only these shapes are read back into the
+picker; any other cron is "custom", shown with a note, and edited under *Avanzado*. Changing the
+frequency (panel or mark) clears a picked cron of the other kind; a custom cron, and a switch to
+`CUSTOM`, keep it.
+
 The line leaves the page and the priority view until then, and comes back by itself at that
 time, in the same place (the page keeps a timer to the soonest one; offline too). A toast
 "Hecho por ahora. Vuelve el …" offers *Deshacer* (counter and visibility as before) and
@@ -271,7 +281,9 @@ Right-hand drawer (≥ 768 px) or bottom sheet (phones). `data-testid="line-pane
 4. **Type fields**: only those for the current type (§1 list). Date fields with a mark write
    the mark; the others are plain inputs.
 5. **Description** (multiline; for `GRATITUDE` this is the journal notes).
-6. **Schedule**: `cron` (with a human-readable preview through `cron-parser` + i18n), frequency.
+6. **Schedule**: frequency; for daily / weekly / monthly lines the day / date / time picker
+   (see §4), with the raw `cron` under *Avanzado*; other lines show the raw `cron` (with a
+   human-readable preview through `cron-parser` + i18n).
 7. **Feedback**: list of feedback entries for the activity + "add" (rating 1–5, valence −1..1,
    arousal 0..1, notes).
 8. **Delete line** (soft delete, same as Backspace on an empty line).

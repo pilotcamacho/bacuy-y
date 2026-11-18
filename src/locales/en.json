@@ -295,7 +295,19 @@
     "delete": "Delete line",
     "habitFormed": "You reached the target streak. Mark the habit as formed?",
     "markFormed": "Mark as formed",
-    "dismiss": "Not now"
+    "dismiss": "Not now",
+    "picker": {
+      "days": "Which days",
+      "monthDay": "Which day of the month",
+      "noMonthDay": "No fixed day",
+      "lastDay": "Last day of the month",
+      "time": "Time (optional)",
+      "none_daily": "No time: it comes back the day after you tick it, at 00:00.",
+      "none_weekly": "No day picked: it comes back 7 days after you tick it.",
+      "none_monthly": "No day picked: it comes back on the same day next month.",
+      "custom": "It has a custom schedule (see Advanced); picking here replaces it.",
+      "advanced": "Advanced: cron expression"
+    }
   },
   "sync": {
     "SYNCED": "Synced",
@@ -445,7 +457,7 @@
       "dateLabel": "@date",
       "noDate": "no date",
       "frequencyLabel": "~frequency",
-      "frequencyYes": "yes (or a cron schedule in the panel)",
+      "frequencyYes": "yes; in the panel you can pick which weekdays, which day of the month and what time",
       "frequencyNo": "no",
       "fieldsLabel": "In the panel",
       "noFields": "only the common fields",
@@ -457,12 +469,12 @@
       "REPETITIVE_ACTION": {
         "what": "Something done again and again (watering, paying a fee). It can have a target number of times.",
         "example": "water the plants ~weekly #personal",
-        "tick": "Counts one more time and hides it until next time (by its frequency or cron); then it comes back by itself. When it reaches the target, it is completed."
+        "tick": "Counts one more time and hides it until next time: the next day picked in the panel or, if none is picked, 1 day, 7 days or a month after you tick it. Then it comes back by itself. When it reaches the target, it is completed."
       },
       "HABIT": {
         "what": "A habit you want to build. It keeps a streak.",
         "example": "meditate 10 min !habit ~daily #spiritual",
-        "tick": "Adds one to the streak and hides it until next time. When it reaches the target streak, it offers to mark it as formed."
+        "tick": "Adds one to the streak and hides it until next time (the next day picked in the panel, or by its frequency). When it reaches the target streak, it offers to mark it as formed."
       },
       "ATTITUDE": {
         "what": "A way of being or reacting you want to grow, with an affirmation that sums it up.",

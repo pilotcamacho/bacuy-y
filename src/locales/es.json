@@ -295,7 +295,19 @@
     "delete": "Borrar renglón",
     "habitFormed": "Llegaste a la racha objetivo. ¿Marcar el hábito como formado?",
     "markFormed": "Marcar como formado",
-    "dismiss": "Ahora no"
+    "dismiss": "Ahora no",
+    "picker": {
+      "days": "Qué días",
+      "monthDay": "Qué día del mes",
+      "noMonthDay": "Sin día fijo",
+      "lastDay": "Último día del mes",
+      "time": "Hora (opcional)",
+      "none_daily": "Sin hora: vuelve al día siguiente de marcarlo, a las 00:00.",
+      "none_weekly": "Sin día elegido: vuelve 7 días después de marcarlo.",
+      "none_monthly": "Sin día elegido: vuelve el mismo día del mes siguiente.",
+      "custom": "Tiene un horario personalizado (ver Avanzado); elegir aquí lo reemplaza.",
+      "advanced": "Avanzado: expresión cron"
+    }
   },
   "sync": {
     "SYNCED": "Sincronizado",
@@ -445,7 +457,7 @@
       "dateLabel": "@fecha",
       "noDate": "no usa fecha",
       "frequencyLabel": "~frecuencia",
-      "frequencyYes": "sí (o un horario cron en el panel)",
+      "frequencyYes": "sí; en el panel puedes elegir qué días de la semana, qué día del mes y a qué hora",
       "frequencyNo": "no",
       "fieldsLabel": "En el panel",
       "noFields": "solo los campos comunes",
@@ -457,12 +469,12 @@
       "REPETITIVE_ACTION": {
         "what": "Algo que se hace una y otra vez (regar, pagar una cuota). Puede tener un número de veces objetivo.",
         "example": "regar plantas ~semanal #personal",
-        "tick": "Suma una vez y la oculta hasta la próxima (según la frecuencia o el cron); entonces vuelve sola. Al llegar a las veces objetivo, se completa."
+        "tick": "Suma una vez y la oculta hasta la próxima: el próximo día elegido en el panel o, si no elegiste ninguno, 1 día, 7 días o un mes después de marcarla. Entonces vuelve sola. Al llegar a las veces objetivo, se completa."
       },
       "HABIT": {
         "what": "Una costumbre que quieres formar. Lleva una racha.",
         "example": "meditar 10 min !hábito ~diario #espiritual",
-        "tick": "Suma uno a la racha y lo oculta hasta la próxima vez. Al llegar a la racha objetivo, te propone marcarlo como formado."
+        "tick": "Suma uno a la racha y lo oculta hasta la próxima vez (el próximo día elegido en el panel, o según la frecuencia). Al llegar a la racha objetivo, te propone marcarlo como formado."
       },
       "ATTITUDE": {
         "what": "Una forma de ser o de reaccionar que quieres cultivar, con una afirmación que la resume.",

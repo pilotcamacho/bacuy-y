@@ -349,3 +349,25 @@ test("the manual: from the panel's type, to that type's explanation; reachable f
     await expect(page.getByTestId(`help-type-${type}`)).toBeVisible();
   }
 });
+
+test("schedule picker: a weekly line on chosen weekdays; ticked, it comes back on one of them", async ({ page }) => {
+  await signIn(page);
+  await lines(page).first().click();
+  await page.keyboard.type("regar plantas ~semanal");
+  await page.keyboard.press("ControlOrMeta+.");
+  const panel = page.getByTestId("line-panel");
+  await panel.getByTestId("schedule-day-1").click();
+  await panel.getByTestId("schedule-day-4").click();
+  await expect(panel.getByTestId("schedule-day-1")).toHaveAttribute("aria-pressed", "true");
+  await panel.getByTestId("schedule-time").fill("08:30");
+  await expect(panel.getByTestId("schedule-next")).toBeVisible();
+  await panel.getByRole("button", { name: /^(Cerrar|Close)$/ }).click();
+
+  await page.getByTestId("line-done-0").click();
+  await expect(page.getByTestId("hidden-toast")).toBeVisible();
+  await page.getByRole("tab", { name: /(Ocultas|Hidden)/ }).or(page.getByRole("link", { name: /(Ocultas|Hidden)/ })).first().click();
+  const when = await page.getByTestId("hidden-item-0").locator("time").getAttribute("datetime");
+  const back = new Date(when!);
+  expect([1, 4]).toContain(back.getDay());
+  expect([back.getHours(), back.getMinutes()]).toEqual([8, 30]);
+});

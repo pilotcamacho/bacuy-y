@@ -486,3 +486,71 @@ function fireRange(input: HTMLInputElement, value: string) {
     input.dispatchEvent(new Event("input", { bubbles: true }));
   });
 }
+
+describe("schedule picker (weekly / monthly / daily)", () => {
+  it("weekly: pick weekdays and a time; ticking hides it until the next picked day", async () => {
+    const user = await typeLine("regar plantas ~semanal");
+    await user.click(screen.getByTestId("line-more-0"));
+    const panel = within(screen.getByTestId("line-panel"));
+    expect(panel.getByText("Sin día elegido: vuelve 7 días después de marcarlo.")).toBeInTheDocument();
+    expect(panel.getByTestId("schedule-time")).toBeDisabled(); // a time needs a day first
+
+    await user.click(panel.getByRole("button", { name: "lunes" }));
+    await user.click(panel.getByRole("button", { name: "jueves" }));
+    expect(panel.getByRole("button", { name: "lunes" })).toHaveAttribute("aria-pressed", "true");
+    fireDate(panel.getByTestId("schedule-time") as HTMLInputElement, "08:30");
+    await flush();
+    expect(await onlyActivity()).toMatchObject({ frequency: "WEEKLY", cron: "30 8 * * 1,4", rawInput: "regar plantas ~semanal" });
+    expect(panel.getByTestId("schedule-next")).toHaveTextContent(/^Próxima vez: (lunes|jueves)/);
+
+    await user.click(panel.getByRole("button", { name: "Cerrar" }));
+    await user.click(screen.getByTestId("line-done-0"));
+    await flush();
+    const back = new Date((await onlyActivity()).hiddenUntil!);
+    expect([1, 4]).toContain(back.getDay());
+    expect([back.getHours(), back.getMinutes()]).toEqual([8, 30]);
+    expect(back.getTime() - Date.now()).toBeLessThanOrEqual(4 * 86_400_000); // never more than 4 days away
+  });
+
+  it("switching to monthly drops the weekdays; a day of the month or the last day can be picked", async () => {
+    const user = await typeLine("pagar cuota ~semanal");
+    await user.click(screen.getByTestId("line-more-0"));
+    const panel = within(screen.getByTestId("line-panel"));
+    await user.click(panel.getByRole("button", { name: "viernes" }));
+    await flush();
+    expect((await onlyActivity()).cron).toBe("0 0 * * 5");
+
+    await user.selectOptions(panel.getByLabelText("Frecuencia"), "MONTHLY");
+    await flush();
+    expect(await onlyActivity()).toMatchObject({ rawInput: "pagar cuota ~mensual", frequency: "MONTHLY", cron: null });
+    expect(panel.getByText("Sin día elegido: vuelve el mismo día del mes siguiente.")).toBeInTheDocument();
+
+    await user.selectOptions(panel.getByTestId("schedule-monthday"), "last");
+    await flush();
+    expect((await onlyActivity()).cron).toBe("0 0 L * *");
+    await user.selectOptions(panel.getByTestId("schedule-monthday"), "5");
+    fireDate(panel.getByTestId("schedule-time") as HTMLInputElement, "09:00");
+    await flush();
+    expect((await onlyActivity()).cron).toBe("0 9 5 * *");
+
+    // The mark typed by hand works the same: back to weekly drops the monthly day.
+    await user.selectOptions(panel.getByLabelText("Frecuencia"), "WEEKLY");
+    await flush();
+    expect((await onlyActivity()).cron).toBeNull();
+  });
+
+  it("daily: a time makes it come back at that time; a custom cron is kept and shown as custom", async () => {
+    const user = await typeLine("meditar !hábito ~diario");
+    await user.click(screen.getByTestId("line-more-0"));
+    const panel = within(screen.getByTestId("line-panel"));
+    fireDate(panel.getByTestId("schedule-time") as HTMLInputElement, "07:15");
+    await flush();
+    expect((await onlyActivity()).cron).toBe("15 7 * * *");
+
+    await user.clear(panel.getByLabelText("Expresión cron"));
+    await user.type(panel.getByLabelText("Expresión cron"), "0 7 * * 1-5");
+    await flush();
+    expect(panel.getByText(/horario personalizado/)).toBeInTheDocument();
+    expect((await onlyActivity()).cron).toBe("0 7 * * 1-5");
+  });
+});

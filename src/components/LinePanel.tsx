@@ -24,6 +24,8 @@ import { flagLabel } from "@/services/flags/label";
 import { canComplete, statusActions } from "@/services/lifecycle/status";
 import { isHiddenNow } from "@/services/lifecycle/nextShow";
 import { HideChooser } from "./HideChooser";
+import { SchedulePicker } from "./SchedulePicker";
+import { kindOfFrequency } from "@/services/lifecycle/schedule";
 import { useFlagStore } from "@/stores/flagStore";
 import { usePageStore } from "@/stores/pageStore";
 
@@ -533,6 +535,8 @@ function Schedule({ row, raw, ctx, locale, rewrite, update }: ScheduleProps) {
   const { t, i18n } = useTranslation();
   const usesFrequency = row.activityType === "REPETITIVE_ACTION" || row.activityType === "HABIT";
   const cron = row.cron ?? "";
+  // Daily / weekly / monthly: pick the day(s) and time; the raw cron is under "Advanced".
+  const picker = usesFrequency ? kindOfFrequency(row.frequency) : null;
 
   const next = useMemo(() => {
     if (!cron.trim()) return null;
@@ -566,6 +570,20 @@ function Schedule({ row, raw, ctx, locale, rewrite, update }: ScheduleProps) {
           )}
         </Field>
       )}
+      {picker && <SchedulePicker kind={picker} cron={row.cron ?? null} next={typeof next === "string" ? next : null} onChange={(c) => update({ cron: c })} />}
+      {picker ? (
+        <details className="text-sm">
+          <summary className="cursor-pointer select-none text-neutral-600 dark:text-neutral-400">{t("panel.picker.advanced")}</summary>
+          <div className="mt-2">{cronFieldOf()}</div>
+        </details>
+      ) : (
+        cronFieldOf()
+      )}
+    </Section>
+  );
+
+  function cronFieldOf() {
+    return (
       <Field label={t("panel.cron")}>
         {(id) => (
           <>
@@ -589,6 +607,6 @@ function Schedule({ row, raw, ctx, locale, rewrite, update }: ScheduleProps) {
           </>
         )}
       </Field>
-    </Section>
-  );
+    );
+  }
 }

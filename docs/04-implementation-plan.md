@@ -382,6 +382,13 @@ Requests from the first days of real use (2026-11-17).
   the panel's Type field links to its entry
   > Built as a page inside the app rather than an external document: every user can reach it,
   > it works offline and follows the UI language.
+- [x] Schedule picker for repeating lines: weekdays (weekly), day of the month or last day
+  (monthly), optional time; writes `cron`, so a line done late does not drift
+  > No schema change. Days 29–31 left out (cron skips shorter months); "last day" uses `L`.
+- [x] Backups: point-in-time recovery and deletion protection on the hosted branch's tables
+  (`amplify/backend.ts`); restore steps in `docs/06-hosting.md`
+  > Found off on 2026-11-17 (no backups of any kind). Checked with a local `cdk synth` for both
+  > deployment types: branch → both on; sandbox → unchanged.
 
 ---
 

@@ -1,5 +1,6 @@
 import type { ActivityRow } from "@/lib/db/types";
 import { DATE_FIELD_BY_TYPE, parseLine, type ParseContext } from "@/services/marks";
+import { cronAfterFrequencyChange } from "./schedule";
 import { statusForFlags } from "./status";
 
 const DATE_FIELDS = ["deadline", "eventDate", "expirationDate"] as const;
@@ -10,7 +11,7 @@ const DATE_FIELDS = ["deadline", "eventDate", "expirationDate"] as const;
  * (DRAFT ↔ ACTIVE). The ActivityFlag rows come from `flagIds` (see activityFlags.ts).
  */
 export function deriveTextFields(
-  row: Pick<ActivityRow, "frequency" | "status">,
+  row: Pick<ActivityRow, "frequency" | "status"> & Partial<Pick<ActivityRow, "cron">>,
   rawInput: string,
   ctx: ParseContext,
 ): { fields: Partial<ActivityRow>; flagIds: string[] } {
@@ -24,6 +25,11 @@ export function deriveTextFields(
 
   // CUSTOM has no mark: a line without ~frequency keeps a CUSTOM set in the panel.
   if (parsed.frequency || row.frequency !== "CUSTOM") fields.frequency = parsed.frequency;
+  // A day / date picked for the old frequency does not carry over to a new one.
+  if (fields.frequency !== undefined && fields.frequency !== row.frequency && row.cron) {
+    const cron = cronAfterFrequencyChange(row.cron, fields.frequency);
+    if (cron !== row.cron) fields.cron = cron;
+  }
 
   // All three date fields belong to the `@date` mark: the type's own gets the value, the
   // others are cleared (a type change must not leave a stale deadline behind).
