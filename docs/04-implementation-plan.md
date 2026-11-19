@@ -389,6 +389,7 @@ Requests from the first days of real use (2026-11-17).
   2m · 3m · 6m (adapting), back at 03:00; Bien on the last step completes it; replaces ~frequency
   > New field `Activity.reviewStep` (additive). `date-fns` is not installed (the stack table lists
   > it): the date math is done by hand in `services/lifecycle/review.ts`.
+- [x] Hidden tab: a text filter (any part of the line, case- and accent-insensitive)
 - [x] Fast hide: swipe right (touch) / Ctrl+Shift+H / ☾ → until tomorrow 8:00; long swipe /
   Ctrl+Shift+Alt+H → picker. "Mañana" before 03:00 = this morning
   > No gesture library: pointer events + `touch-action: pan-y` (`hooks/useSwipe.ts`). The e2e

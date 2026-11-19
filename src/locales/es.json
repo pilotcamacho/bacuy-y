@@ -410,7 +410,11 @@
     "change": "Cambiar",
     "changeLine": "Cambiar hasta cuándo se oculta «{{title}}»",
     "changed": "«{{title}}»: nueva fecha guardada.",
-    "shown": "«{{title}}» ha vuelto a la página."
+    "shown": "«{{title}}» ha vuelto a la página.",
+    "search": "Buscar en ocultas",
+    "searchPlaceholder": "Buscar en ocultas…",
+    "matches": "{{count}} de {{total}}",
+    "noMatches": "Ninguna oculta contiene «{{query}}»."
   },
   "filter": {
     "button": "Filtrar por bandera",
@@ -549,7 +553,7 @@
     },
     "views": {
       "page": "Pendientes: tu página. Se puede filtrar por bandera; un renglón nuevo con el filtro puesto recibe esa bandera.",
-      "hidden": "Ocultas: lo que ocultaste desde el panel (hasta una fecha y hora, o hasta que lo muestres), las repetitivas y hábitos hechos por ahora, y las actitudes y habilidades que esperan su próximo repaso. Muestra cuándo vuelve cada uno.",
+      "hidden": "Ocultas: lo que ocultaste desde el panel (hasta una fecha y hora, o hasta que lo muestres), las repetitivas y hábitos hechos por ahora, y las actitudes y habilidades que esperan su próximo repaso. Muestra cuándo vuelve cada uno. Arriba hay un buscador: escribe cualquier parte del texto (sin importar mayúsculas ni tildes).",
       "completed": "Completadas: lo hecho, lo más reciente primero, agrupado por día.",
       "archived": "Archivadas: lo que guardaste fuera de la página.",
       "priority": "Prioridad: los renglones activos ordenados por el peso de sus banderas; suben los que tienen su horario cron dentro de la próxima hora y los vencimientos cercanos. Solo lectura; al tocar uno vas a él.",

@@ -344,7 +344,7 @@ Every change in the panel is a structural write (immediate, no debounce).
 | View | Rows | Order | Editable |
 |---|---|---|---|
 | Page | not deleted, status ≠ `ARCHIVED` / `COMPLETED`, not hidden (`isHidden`, or `hiddenUntil` in the future) | `position` | yes |
-| Hidden | the page's rows that are hidden now | `hiddenUntil` asc, then "until shown" (`isHidden`) by `position` | show now, change (same choices as the panel), panel |
+| Hidden | the page's rows that are hidden now; a **text filter** (`hidden-search`): every word anywhere in the line, marks included, ignoring case and accents (`services/editor/textFilter.ts`); Escape clears it; not kept | `hiddenUntil` asc, then "until shown" (`isHidden`) by `position` | show now, change (same choices as the panel), panel |
 | Priority | `status = ACTIVE`, not `isHidden`, `hiddenUntil` passed, expiration within `renewalLeadDays` | score desc (`services/priority/score.ts`) | tick and panel only; no text editing, no drag. Click → go to that line on the page. |
 | Journal | `GRATITUDE` + `COMPLETED` | `updatedAt`/`editedAt` desc | via panel |
 | Completed | `status = COMPLETED`, not `GRATITUDE` (the journal's) | `completedAt` desc (falls back to `editedAt` for lines completed before the field existed), grouped by day, 50 at a time | untick (back to its place), panel, delete |

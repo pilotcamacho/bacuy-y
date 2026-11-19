@@ -410,7 +410,11 @@
     "change": "Change",
     "changeLine": "Change until when “{{title}}” is hidden",
     "changed": "“{{title}}”: new date saved.",
-    "shown": "“{{title}}” is back on the page."
+    "shown": "“{{title}}” is back on the page.",
+    "search": "Search hidden lines",
+    "searchPlaceholder": "Search hidden lines…",
+    "matches": "{{count}} of {{total}}",
+    "noMatches": "No hidden line contains “{{query}}”."
   },
   "filter": {
     "button": "Filter by flag",
@@ -549,7 +553,7 @@
     },
     "views": {
       "page": "To do: your page. It can be filtered by flag; a new line typed while filtered gets that flag.",
-      "hidden": "Hidden: what you hid from the panel (until a date and time, or until you show it), repeating actions and habits done for now, and attitudes and skills waiting for their next review. Shows when each comes back.",
+      "hidden": "Hidden: what you hid from the panel (until a date and time, or until you show it), repeating actions and habits done for now, and attitudes and skills waiting for their next review. Shows when each comes back. A search box at the top finds any part of the text (case and accents don't matter).",
       "completed": "Completed: what is done, newest first, grouped by day.",
       "archived": "Archived: what you kept off the page.",
       "priority": "Priority: active lines ordered by their flags' weight; lines whose cron time is within the hour and expirations coming up rise. Read only; tapping one takes you to it.",

@@ -312,4 +312,29 @@ describe("Hidden view", () => {
     await waitFor(async () => expect((await db.get("Activity", "someday"))!.isHidden).toBe(false));
     expect(new Date((await db.get("Activity", "someday"))!.hiddenUntil!).getHours()).toBe(8);
   });
+
+  it("a text filter finds any part of the line, ignoring case and accents; Escape clears it", async () => {
+    const user = userEvent.setup();
+    renderAt("/hidden", <Hidden />);
+    await waitFor(() => expect(items()).toHaveLength(3));
+    const search = screen.getByRole("searchbox", { name: "Buscar en ocultas" });
+
+    await user.type(search, "ADELA");
+    expect(items()).toEqual(["más adelante"]);
+    expect(screen.getByTestId("hidden-search-count")).toHaveTextContent("1 de 3");
+
+    await user.clear(search);
+    await user.type(search, "algun di"); // no accents, two words
+    expect(items()).toEqual(["algún día"]);
+
+    await user.clear(search);
+    await user.type(search, "zzz");
+    expect(screen.queryAllByTestId(/^hidden-item-/)).toHaveLength(0);
+    expect(screen.getByTestId("hidden-search-empty")).toHaveTextContent("Ninguna oculta contiene «zzz».");
+
+    await user.keyboard("{Escape}");
+    expect(search).toHaveValue("");
+    expect(items()).toEqual(["pronto", "más adelante", "algún día"]);
+    expect(screen.queryByTestId("hidden-search-count")).toBeNull();
+  });
 });

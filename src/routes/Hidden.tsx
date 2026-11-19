@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { HideChooser } from "@/components/HideChooser";
 import { LinePanel } from "@/components/LinePanel";
@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePageClock } from "@/hooks/usePageClock";
 import { subscribe } from "@/lib/events";
 import { hiddenLines } from "@/services/editor/pageLines";
+import { matchesText, queryWords } from "@/services/editor/textFilter";
 import { usePageStore } from "@/stores/pageStore";
 
 const BUTTON =
@@ -30,6 +31,8 @@ export function Hidden() {
   const [changing, setChanging] = useState<string | null>(null);
   const [announce, setAnnounce] = useState("");
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const searchId = useId();
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     void store().load(ownerSub);
@@ -42,7 +45,13 @@ export function Hidden() {
     [store],
   );
 
-  const rows = useMemo(() => hiddenLines(activities, now), [activities, now]);
+  const all = useMemo(() => hiddenLines(activities, now), [activities, now]);
+  // The text filter: every word somewhere in the line, ignoring case and accents.
+  const rows = useMemo(() => {
+    const words = queryWords(query);
+    return all.filter((row) => matchesText(row.rawInput || row.title || "", words));
+  }, [all, query]);
+  const filtering = queryWords(query).length > 0;
   const when = new Intl.DateTimeFormat(i18n.resolvedLanguage, { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
 
   /** The row leaves the list: keep the keyboard user on the screen (next row, or the heading). */
@@ -75,7 +84,42 @@ export function Hidden() {
         {announce}
       </p>
 
-      {status === "ready" && rows.length === 0 && <p className="text-neutral-500 dark:text-neutral-400">{t("hidden.empty")}</p>}
+      {status === "ready" && all.length === 0 && <p className="text-neutral-500 dark:text-neutral-400">{t("hidden.empty")}</p>}
+
+      {all.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <label htmlFor={searchId} className="sr-only">
+            {t("hidden.search")}
+          </label>
+          <input
+            id={searchId}
+            type="search"
+            value={query}
+            placeholder={t("hidden.searchPlaceholder")}
+            data-testid="hidden-search"
+            autoComplete="off"
+            spellCheck={false}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape" && query) {
+                e.preventDefault();
+                setQuery("");
+              }
+            }}
+            className="min-w-0 flex-1 rounded border border-neutral-300 bg-white px-2 py-1 text-sm outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-neutral-700 dark:bg-neutral-900"
+          />
+          {filtering && (
+            <span className="text-xs text-neutral-500 dark:text-neutral-400" role="status" data-testid="hidden-search-count">
+              {t("hidden.matches", { count: rows.length, total: all.length })}
+            </span>
+          )}
+        </div>
+      )}
+      {filtering && rows.length === 0 && (
+        <p className="text-neutral-500 dark:text-neutral-400" data-testid="hidden-search-empty">
+          {t("hidden.noMatches", { query: query.trim() })}
+        </p>
+      )}
 
       <ul className="space-y-2" data-testid="hidden-list">
         {rows.map((row, index) => {

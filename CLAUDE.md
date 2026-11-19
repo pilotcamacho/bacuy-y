@@ -374,7 +374,7 @@ These adapt the expo-amplify-kit conventions to a web-only app.
   `hide-picker`, `hide-picker-preset-<preset>`, `hide-picker-cancel`, `suggestions`, `suggestion-<index>`, `help`, `help-type-<TYPE>`, `panel-type-help`, `schedule-picker`, `schedule-day-<0-6>`,
   `schedule-monthday`, `schedule-time`, `review-prompt`, `review-good`, `review-bad`, `spacing-override`,
   `panel-review`, `panel-review-next`,
-  `hidden-show-<index>`, `update-prompt`, `install-section`, `line-tabs`, `completed-toast`, `completed-list`,
+  `hidden-show-<index>`, `hidden-search`, `hidden-search-count`, `hidden-search-empty`, `update-prompt`, `install-section`, `line-tabs`, `completed-toast`, `completed-list`,
   `completed-item-<index>`, `completed-reopen-<index>`, `completed-more-<index>`, `completed-delete-<index>`,
   `completed-delete-confirm-<index>`, `completed-show-more`).
 - **Packages:** `npm install <pkg>`. Pin exact versions for `aws-amplify` and `@aws-amplify/backend`.
