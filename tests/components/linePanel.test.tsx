@@ -229,7 +229,9 @@ describe("tick", () => {
     const uno = (await db.getAll("Activity")).find((r) => r.rawInput === "uno")!;
     const back = new Date(uno.hiddenUntil!);
     expect([back.getHours(), back.getMinutes()]).toEqual([8, 0]);
-    expect(back.getDate()).toBe(new Date(Date.now() + 86_400_000).getDate());
+    // Before 03:00 "Mañana 8:00" is this morning (the night belongs to the day before).
+    const now = new Date();
+    expect(back.getDate()).toBe(new Date(now.getFullYear(), now.getMonth(), now.getDate() + (now.getHours() < 3 ? 0 : 1)).getDate());
     expect(uno.isHidden).toBe(false);
 
     const toast = screen.getByTestId("hidden-toast");
