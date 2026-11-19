@@ -100,6 +100,9 @@ export const LineRow = memo(function LineRow(props: Props) {
       : status === "INACTIVE"
         ? "italic text-neutral-500 dark:text-neutral-400"
         : "";
+  // A gratitude entry appears on its own (auto-created on its schedule), so it is easy to miss:
+  // a soft warm tint and an accent bar at the start, nothing louder (docs/05-line-mapping.md §3).
+  const gratitude = row?.activityType === "GRATITUDE" && status !== "COMPLETED";
   const { t } = useTranslation();
   const ref = useRef<HTMLTextAreaElement>(null);
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({
@@ -205,7 +208,12 @@ export const LineRow = memo(function LineRow(props: Props) {
         </div>
       )}
       <div
-        className={`flex items-start gap-1 rounded ${swiping ? "relative bg-white dark:bg-neutral-950" : ""}`}
+        data-gratitude={gratitude || undefined}
+        className={`flex items-start gap-1 rounded ${swiping ? "relative bg-white dark:bg-neutral-950" : ""} ${
+          gratitude
+            ? `relative ${swiping ? "" : "bg-amber-50/80 dark:bg-amber-950/25"} before:absolute before:inset-y-1 before:start-0 before:w-[3px] before:rounded-full before:bg-amber-400 dark:before:bg-amber-500/80`
+            : ""
+        }`}
         style={{ transform: swiping ? `translateX(${swipe.dx}px)` : undefined, transition: swiping ? "none" : "transform 150ms ease-out" }}
       >
       <button
@@ -240,7 +248,11 @@ export const LineRow = memo(function LineRow(props: Props) {
       />
       {/* The focus background goes on the wrapper, behind the mirror: a background on the
           textarea itself would cover the mirror and hide the text being typed. */}
-      <div className="relative min-w-0 flex-1 rounded focus-within:bg-neutral-50 dark:focus-within:bg-neutral-900">
+      <div
+        className={`relative min-w-0 flex-1 rounded ${
+          gratitude ? "focus-within:bg-amber-100/60 dark:focus-within:bg-amber-900/20" : "focus-within:bg-neutral-50 dark:focus-within:bg-neutral-900"
+        }`}
+      >
         <Mirror text={line.rawInput} flags={flags} className={textStyle} />
         <textarea
           ref={ref}

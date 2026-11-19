@@ -457,3 +457,16 @@ describe("fast hide: swipe right, Ctrl+Shift+H, the moon button", () => {
     expect(values()).toEqual(["uno", "dos"]);
   });
 });
+
+describe("gratitude lines stand out", () => {
+  it("a pending gratitude line gets the warm accent; other lines do not", async () => {
+    const user = userEvent.setup();
+    await mount();
+    await user.click(boxes()[0]!);
+    await user.keyboard("gracias por hoy !gratitud{Enter}comprar pan");
+    const accent = (i: number) => screen.getByTestId(`line-row-${i}`).querySelector("[data-gratitude]");
+    await waitFor(() => expect(accent(0)).not.toBeNull());
+    expect(accent(0)!.className).toContain("before:bg-amber-400");
+    expect(accent(1)).toBeNull();
+  });
+});

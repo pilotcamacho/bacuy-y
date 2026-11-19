@@ -18,14 +18,16 @@ const BOX =
 const CLICKABLE = "cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-800";
 const BADGE = "text-neutral-500 dark:text-neutral-400";
 
-function Checkbox({ checked }: { checked: boolean }) {
+function Checkbox({ checked, warm = false }: { checked: boolean; warm?: boolean }) {
   return (
     <span
       aria-hidden="true"
       className={`flex h-4 w-4 items-center justify-center rounded border ${
         checked
           ? "border-indigo-500 bg-indigo-500 text-white dark:border-indigo-400 dark:bg-indigo-400 dark:text-neutral-900"
-          : "border-neutral-400 dark:border-neutral-500"
+          : warm
+            ? "border-amber-500 dark:border-amber-400"
+            : "border-neutral-400 dark:border-neutral-500"
       }`}
     >
       {checked && (
@@ -84,7 +86,7 @@ export function TickCell({ row, index, onTick }: Props) {
       return button(<Checkbox checked={completed} />, t(completed ? "line.tick.uncomplete" : "line.tick.complete", { n }), completed);
 
     case "GRATITUDE":
-      return button(<Checkbox checked={completed} />, completed ? t("status.COMPLETED") : t("line.tick.gratitude", { n }), completed);
+      return button(<Checkbox checked={completed} warm />, completed ? t("status.COMPLETED") : t("line.tick.gratitude", { n }), completed);
 
     case "REPETITIVE_ACTION": {
       const count = row.completionCount ?? 0;

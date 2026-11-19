@@ -200,6 +200,9 @@ a DOM. The store applies the result to `LocalDb`.
   cannot color marks, the line is a transparent auto-growing `<textarea>` (Enter intercepted, so
   it never holds a newline) layered over a mirror `<div>` that draws the mark highlights.
   Long lines wrap visually. (assumption — confirmed or replaced in Phase 5.)
+- A pending `GRATITUDE` line stands out (confirmed 2026-11-18): it appears on its own, so it is
+  easy to miss. A soft warm tint (`amber-50`, dark `amber-950/25`), a thin amber bar at the
+  start and an amber checkbox; nothing animated or louder (`data-gratitude` on the row).
 
 ---
 
