@@ -58,8 +58,10 @@ describe("schedule window", () => {
   });
 
   it("settings are device-local, off by default, 20:00 daily", () => {
-    expect(getGratitudeSettings()).toEqual({ enabled: false, cron: "0 20 * * *" });
-    setGratitudeSettings({ enabled: true, cron: " 0 9 * * 1 " });
+    expect(getGratitudeSettings()).toEqual({ enabled: true, cron: "0 20 * * *" }); // on by default
+    setGratitudeSettings({ enabled: false, cron: " 0 9 * * 1 " });
+    expect(getGratitudeSettings()).toEqual({ enabled: false, cron: "0 9 * * 1" }); // an explicit off sticks
+    setGratitudeSettings({ enabled: true });
     expect(getGratitudeSettings()).toEqual({ enabled: true, cron: "0 9 * * 1" });
     expect(localStorage.getItem("bacuyy_gratitudeEnabled")).toBe("1");
   });

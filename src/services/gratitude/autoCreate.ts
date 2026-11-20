@@ -32,9 +32,12 @@ export interface GratitudeSettings {
 const ENABLED_KEY = "gratitudeEnabled";
 const CRON_KEY = "gratitudeCron";
 
-/** Device-local (CLAUDE.md conventions): `bacuyy_gratitudeEnabled`, `bacuyy_gratitudeCron`. */
+/**
+ * Device-local (CLAUDE.md conventions): `bacuyy_gratitudeEnabled`, `bacuyy_gratitudeCron`.
+ * **On by default** (confirmed 2026-11-20): only an explicit "off" ("0") turns it off.
+ */
 export function getGratitudeSettings(): GratitudeSettings {
-  return { enabled: kvGet(ENABLED_KEY) === "1", cron: kvGet(CRON_KEY) ?? DEFAULT_GRATITUDE_CRON };
+  return { enabled: kvGet(ENABLED_KEY) !== "0", cron: kvGet(CRON_KEY) ?? DEFAULT_GRATITUDE_CRON };
 }
 
 export function setGratitudeSettings(next: Partial<GratitudeSettings>): void {

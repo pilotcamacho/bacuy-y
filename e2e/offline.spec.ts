@@ -48,7 +48,9 @@ test("after one online visit: reload offline, edit, reload offline again, then s
     // 1. No network, reload: the page opens (signed in, from the cached session).
     await a.context.setOffline(true);
     await a.page.reload();
-    await expect(a.page.getByTestId("line-row-0")).toBeVisible();
+    // Playwright's WebKit on Windows runs JS far slower than Safari: with the shared test
+    // account's ~240 rows the offline load takes ~5 s there (0.4 s in Chromium).
+    await expect(a.page.getByTestId("line-row-0")).toBeVisible({ timeout: 20_000 });
     const indicator = a.page.getByTestId("sync-indicator");
     await expect(indicator).toHaveAttribute("data-status", "offline");
 
@@ -61,7 +63,7 @@ test("after one online visit: reload offline, edit, reload offline again, then s
 
     // 3. Reload, still offline: the edit is there, waiting to be uploaded.
     await a.page.reload();
-    await expect(a.page.getByTestId("line-row-0")).toBeVisible();
+    await expect(a.page.getByTestId("line-row-0")).toBeVisible({ timeout: 20_000 });
     await expect.poll(() => values(a.page)).toContain(`${run} escrito sin red`);
     await expect(indicator).not.toHaveAttribute("data-dirty", "0");
 

@@ -380,7 +380,7 @@ These adapt the expo-amplify-kit conventions to a web-only app.
   `schedule-monthday`, `schedule-time`, `review-prompt`, `review-good`, `review-bad`, `spacing-override`,
   `panel-review`, `panel-review-next`,
   `hidden-show-<index>`, `expirations-list`, `expiration-item-<index>`, `expiration-where-<index>`,
-  `expiration-renew-<index>`, `expiration-more-<index>`, `expirations-search`, `expiration-waiting`, `hidden-search`, `hidden-search-count`, `hidden-search-empty`, `update-prompt`, `install-section`, `line-tabs`, `completed-toast`, `completed-list`,
+  `expiration-renew-<index>`, `expiration-more-<index>`, `expirations-search`, `expiration-waiting`, `hidden-search`, `gratitude-memory`, `gratitude-memory-text`, `hidden-search-count`, `hidden-search-empty`, `update-prompt`, `install-section`, `line-tabs`, `completed-toast`, `completed-list`,
   `completed-item-<index>`, `completed-reopen-<index>`, `completed-more-<index>`, `completed-delete-<index>`,
   `completed-delete-confirm-<index>`, `completed-show-more`).
 - **Packages:** `npm install <pkg>`. Pin exact versions for `aws-amplify` and `@aws-amplify/backend`.

@@ -362,8 +362,18 @@ Every change in the panel is a structural write (immediate, no debounce).
 | Hidden | the page's rows that are hidden now (not waiting expirations: they are on Vencimientos); a **text filter** (`hidden-search`): every word anywhere in the line, marks included, ignoring case and accents (`services/editor/textFilter.ts`); Escape clears it; not kept | `hiddenUntil` asc, then "until shown" (`isHidden`) by `position` | show now, change (same choices as the panel), panel |
 | Priority | `status = ACTIVE`, not `isHidden`, `hiddenUntil` passed, not a waiting expiration (the same rule as the page) | score desc (`services/priority/score.ts`) | tick and panel only; no text editing, no drag. Click → go to that line on the page. |
 | Journal | `GRATITUDE` + `COMPLETED` | `updatedAt`/`editedAt` desc | via panel |
+| A moment of gratitude (top of Page, `GratitudeMemory`) | one `GRATITUDE` + `COMPLETED` entry with notes, at random (`services/gratitude/memory.ts`) | — | no; tap or click → another one |
 | Completed | `status = COMPLETED`, not `GRATITUDE` (the journal's) | `completedAt` desc (falls back to `editedAt` for lines completed before the field existed), grouped by day, 50 at a time | untick (back to its place), panel, delete |
 | Archived | `status = ARCHIVED` | `editedAt` desc | restore, delete |
+
+**A moment of gratitude** (confirmed 2026-11-20). A small warm card under the Page tabs shows
+the notes of one past completed gratitude entry (with notes), in a serif italic quote, with the
+day it was written (`completedAt`, else `editedAt`). It is a button, not a line: never part of
+editing, arrows or drag. A new one is chosen each time the app is opened (never the one shown
+last time: `bacuyy_lastMemory`), on every tap/click, and when the app comes back after 10 min or
+more in the background; moving between tabs keeps the same one. Hidden when there are no
+entries; with only one it does not react. Up to 4 lines (line breaks kept); fades in
+(`motion-safe` only).
 
 **Manual** (`/help`, `routes/Help.tsx`; top menu "Manual" / "Guide"; confirmed 2026-11-17).
 A user-facing summary of this document, bundled with the app (works offline), all text in

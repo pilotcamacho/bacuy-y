@@ -57,6 +57,10 @@
     "pending_other": "You have {{count}} pending entries on the page.",
     "edit": "Edit"
   },
+  "memory": {
+    "label": "A moment of gratitude",
+    "another": "Show another"
+  },
   "flags": {
     "title": "Flags",
     "intro": "Flags rank your lines by importance. Type #name in a line to assign one. The weights of each group of siblings must add up to 100.",
@@ -553,7 +557,7 @@
       "ARCHIVED": "Kept off the page, in Archived; it can be restored."
     },
     "views": {
-      "page": "To do: your page. It can be filtered by flag; a new line typed while filtered gets that flag.",
+      "page": "To do: your page. It can be filtered by flag; a new line typed while filtered gets that flag. At the top, a moment of gratitude: one of your past entries at random; it changes each time you open the app and when you tap it.",
       "hidden": "Hidden: what you hid from the panel (until a date and time, or until you show it), repeating actions and habits done for now, and attitudes and skills waiting for their next review. Shows when each comes back. A search box at the top finds any part of the text (case and accents don't matter).",
       "expirations": "Expirations: everything that expires, soonest first, with the days left and whether it is on the page or when it shows up. Renew from here.",
       "completed": "Completed: what is done, newest first, grouped by day.",

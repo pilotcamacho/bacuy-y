@@ -57,6 +57,10 @@
     "pending_other": "Tienes {{count}} entradas pendientes en la página.",
     "edit": "Editar"
   },
+  "memory": {
+    "label": "Un momento de gratitud",
+    "another": "Mostrar otro"
+  },
   "flags": {
     "title": "Banderas",
     "intro": "Las banderas ordenan tus renglones por importancia. Escribe #nombre en un renglón para asignarla. Los pesos de cada grupo de hermanas deben sumar 100.",
@@ -553,7 +557,7 @@
       "ARCHIVED": "Guardado fuera de la página, en Archivadas; se puede restaurar."
     },
     "views": {
-      "page": "Pendientes: tu página. Se puede filtrar por bandera; un renglón nuevo con el filtro puesto recibe esa bandera.",
+      "page": "Pendientes: tu página. Se puede filtrar por bandera; un renglón nuevo con el filtro puesto recibe esa bandera. Arriba, un momento de gratitud: una de tus entradas pasadas, al azar; cambia cada vez que abres la app y al tocarlo.",
       "hidden": "Ocultas: lo que ocultaste desde el panel (hasta una fecha y hora, o hasta que lo muestres), las repetitivas y hábitos hechos por ahora, y las actitudes y habilidades que esperan su próximo repaso. Muestra cuándo vuelve cada uno. Arriba hay un buscador: escribe cualquier parte del texto (sin importar mayúsculas ni tildes).",
       "expirations": "Vencimientos: todo lo que vence, lo más próximo primero, con los días que faltan y si ya está en la página o cuándo aparece. Desde aquí lo renuevas.",
       "completed": "Completadas: lo hecho, lo más reciente primero, agrupado por día.",

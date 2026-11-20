@@ -47,11 +47,15 @@ const gratitude = (id: string, editedAt: string, status: "ACTIVE" | "COMPLETED",
 });
 
 describe("Settings › gratitude", () => {
-  it("turning it on creates this window's entry; an invalid schedule is not stored", async () => {
+  it("on by default; turning it on creates this window's entry; an invalid schedule is not stored", async () => {
     await db.setMeta("lastPulledAt:Activity", "2026-11-01T00:00:00.000Z");
     const user = userEvent.setup();
     render(<GratitudeSettings />);
-    await user.click(screen.getByLabelText("Crear entradas automáticamente"));
+    const box = screen.getByLabelText("Crear entradas automáticamente");
+    expect(box).toBeChecked(); // ticked by default
+    await user.click(box); // off…
+    expect(getGratitudeSettings().enabled).toBe(false);
+    await user.click(box); // …and on again
     expect(getGratitudeSettings().enabled).toBe(true);
     await waitFor(async () => expect((await db.getAll("Activity")).filter((a) => a.activityType === "GRATITUDE")).toHaveLength(1));
     expect((await db.getAll("Activity"))[0]!.rawInput).toMatch(/^Gratitud — .+ !gratitud #personal$/);

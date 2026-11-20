@@ -389,6 +389,8 @@ Requests from the first days of real use (2026-11-17).
   2m · 3m · 6m (adapting), back at 03:00; Bien on the last step completes it; replaces ~frequency
   > New field `Activity.reviewStep` (additive). `date-fns` is not installed (the stack table lists
   > it): the date math is done by hand in `services/lifecycle/review.ts`.
+- [x] A moment of gratitude: a random past entry at the top of the page (new on each open and tap)
+- [x] Gratitude auto-entries **on by default** (an explicit "off" in Settings stays off, per device)
 - [x] Expirations wait off the page until their window (lead days before, 03:00); Vencimientos tab
 - [x] The app's day starts at 03:00 everywhere a day matters (`lib/day.ts`)
 - [x] Time zones: calendar dates stored as UTC midnight (old values still read as before);
