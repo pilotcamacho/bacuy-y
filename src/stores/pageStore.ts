@@ -25,6 +25,7 @@ import { deriveTextFields, newActivityDefaults } from "@/services/lifecycle/deri
 import { applyStatusAction, reactivatedStatus, type StatusAction } from "@/services/lifecycle/status";
 import { tick as tickRule, type PanelSection } from "@/services/lifecycle/tick";
 import { hidePresetAt } from "@/services/lifecycle/nextShow";
+import { expirationRevealAt, isExpirationWaiting } from "@/services/lifecycle/expiration";
 import { isSpaced, reviewDueAt, reviewOutcome } from "@/services/lifecycle/review";
 import { useFeedbackStore } from "./feedbackStore";
 import { commitLine, parseLine, type FlagLite, type ParseContext } from "@/services/marks";
@@ -81,10 +82,10 @@ export interface Notice {
    * "review": the "how did it go?" question of an attitude or skill. "spacingOverride": a
    * `~frequency` was typed on one (spacing replaces it).
    */
-  kind: "habitFormed" | "hidden" | "completed" | "review" | "spacingOverride";
+  kind: "habitFormed" | "hidden" | "completed" | "review" | "spacingOverride" | "expirationWaiting";
   id: string;
   nonce: number;
-  /** "hidden": when the line comes back (none: until shown again). */
+  /** "hidden": when the line comes back (none: until shown again). "expirationWaiting": when its window opens. */
   until?: string;
   /** "hidden": hidden by hand from the panel (not a tick: nothing to rate). */
   manual?: boolean;
@@ -150,6 +151,11 @@ interface PageState {
   hideQuick(id: string): Promise<void>;
   openHidePicker(id: string): void;
   closeHidePicker(refocus?: boolean): void;
+  /**
+   * The page is on screen (or not). An expiration edited on the page that starts waiting for
+   * its window stays in view until the page is left, so it never vanishes mid-edit.
+   */
+  setPageMounted(mounted: boolean): void;
   hasFlags(id: string): boolean;
   /** Flag ids (and NO_FLAG) the page is filtered by; empty = every line. Kept on this device. */
   filter: string[];
@@ -177,6 +183,18 @@ const timers = new Map<string, ReturnType<typeof setTimeout>>();
  * being edited never vanishes. Cleared when the filter changes.
  */
 const filterKeep = new Set<string>();
+/** Lines edited on the page this visit: shown even if they now wait for their window (lifecycle/expiration). */
+const waitKeep = new Set<string>();
+/** The window already announced per line (date + lead), so the notice is not repeated on every blur. */
+const waitNoticed = new Map<string, string>();
+let pageMounted = false;
+
+/** An edit from the page: keep the line in view even if it starts waiting. */
+function keepWhileEditing(before: Pick<Activity, "id" | "activityType" | "status" | "expirationDate" | "renewalLeadDays"> | undefined, id: string) {
+  if (!pageMounted) return;
+  if (before && isExpirationWaiting(before, new Date())) return; // was not on the page anyway
+  waitKeep.add(id);
+}
 const FILTER_KEY = "pageFilter";
 
 function markLocale(): "es" | "en" {
@@ -230,7 +248,7 @@ export function visiblePageLines(
   filter: string[],
   now: Date = new Date(),
 ): EditorLine[] {
-  const all = pageLines(activities, now);
+  const all = pageLines(activities, now, waitKeep);
   if (filter.length === 0 || activeFilter(filter, flags).length === 0) return all;
   const shown = new Set(filterLines(all, filter, parseContext(flags)).map((l) => l.id));
   for (const id of shown) filterKeep.add(id);
@@ -382,7 +400,10 @@ export const usePageStore = create<PageState>((set, get) => {
       filterKeep.add(line.id);
       return rowFor({ ...line, rawInput: withFilterFlag(line.rawInput, get().filter, ctx(), markLocale()) }, now);
     });
-    for (const row of rows) noteSpacingOverride(before[row.id], row);
+    for (const row of rows) {
+      noteSpacingOverride(before[row.id], row);
+      keepWhileEditing(before[row.id], row.id);
+    }
     for (const id of result.deleted) {
       const row = before[id];
       if (row) rows.push({ ...row, deletedAt: now, editedAt: now, dirty: 1 });
@@ -416,6 +437,19 @@ export const usePageStore = create<PageState>((set, get) => {
       parseLine(row.rawInput ?? "", ctx()).marks.some((m) => m.kind === "frequency" && m.status === "notApplicable");
     if (!ignored(after) || ignored(before)) return; // only when it starts (already said otherwise)
     set({ notice: { kind: "spacingOverride", id: after.id, nonce: ++nonce } });
+  }
+
+  /**
+   * An expiration edited on the page now waits for its window: say when it comes back (it stays
+   * in view until the page is left, then lives on the Vencimientos tab). Once per date + lead.
+   */
+  function noteWaiting(id: string) {
+    const row = get().activities[id];
+    if (!row || !waitKeep.has(id) || !isExpirationWaiting(row, new Date())) return;
+    const key = `${row.expirationDate}|${row.renewalLeadDays ?? ""}`;
+    if (waitNoticed.get(id) === key) return;
+    waitNoticed.set(id, key);
+    set({ notice: { kind: "expirationWaiting", id, until: expirationRevealAt(row)!.toISOString(), nonce: ++nonce } });
   }
 
   /** Typing into the ghost line creates the first real row. */
@@ -534,6 +568,7 @@ export const usePageStore = create<PageState>((set, get) => {
       if (!existing) return;
       const clean = rawInput.replace(/\r\n|\r|\n/g, " ");
       const row = rowFor({ id, rawInput: clean, position: existing.position }, nowIso());
+      keepWhileEditing(existing, id);
       set({ activities: { ...get().activities, [id]: row } });
       noteSpacingOverride(existing, row);
       journalPut([row]); // the debounce may never fire if the page is closed now
@@ -556,6 +591,7 @@ export const usePageStore = create<PageState>((set, get) => {
       const committed = commitLine(raw, ctx());
       if (committed !== raw) get().type(id, committed);
       await flushText(id);
+      noteWaiting(id);
     },
 
     async enter(id, selStart, selEnd) {
@@ -717,6 +753,7 @@ export const usePageStore = create<PageState>((set, get) => {
       if (!row) return;
       // Text-owned fields are never patched directly: they would disagree with the marks.
       const { rawInput: _r, title: _t, activityType: _a, ...rest } = patch;
+      keepWhileEditing(row, id);
       await commitRows([{ ...row, ...rest, editedAt: nowIso(), dirty: 1 }]);
     },
 
@@ -726,6 +763,7 @@ export const usePageStore = create<PageState>((set, get) => {
       const clean = rawInput.replace(/\r\n|\r|\n/g, " ");
       const next = rowFor({ id, rawInput: clean, position: row.position }, nowIso(), patch);
       noteSpacingOverride(row, next);
+      keepWhileEditing(row, id);
       await commitRows([next]);
     },
 
@@ -776,6 +814,12 @@ export const usePageStore = create<PageState>((set, get) => {
       const row = get().activities[panel.id];
       const onPage = row && !row.deletedAt && row.status !== "ARCHIVED" && row.status !== "COMPLETED";
       if (onPage) get().setFocus(panel.id, (row.rawInput ?? "").length);
+      noteWaiting(panel.id);
+    },
+
+    setPageMounted(mounted) {
+      pageMounted = mounted;
+      waitKeep.clear();
     },
 
     dismissNotice() {
@@ -933,6 +977,8 @@ export function resetPageStore() {
   for (const t of timers.values()) clearTimeout(t);
   timers.clear();
   filterKeep.clear();
+  waitKeep.clear();
+  waitNoticed.clear();
   resetRowHistory();
   writeChain = Promise.resolve();
   usePageStore.setState({

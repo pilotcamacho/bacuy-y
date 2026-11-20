@@ -77,7 +77,12 @@ v1 has **one page per user**: all of the user's non-deleted, non-archived activi
    has an `Activity`, and every non-deleted, non-archived `Activity` is one visible line, except
    a hidden line: a repetitive task or habit ticked "done for this time" (hidden until
    `hiddenUntil`, its next occurrence), or a line hidden by hand from the panel (until a date
-   and time, or until shown again: `isHidden`). The **Hidden** tab lists them.
+   and time, or until shown again: `isHidden`). The **Hidden** tab lists them. An expiration
+   also waits off the page until its warning window opens (`renewalLeadDays` before its date);
+   the **Vencimientos** tab lists every expiration.
+   **The app's day starts at 03:00** (`lib/day.ts`): 02:00 on the 20th belongs to the 19th,
+   for every "today / tomorrow / days left / back tomorrow / group by day". Calendar dates are
+   stored as UTC midnight (docs/05-line-mapping.md §7).
 2. **The device is the source of truth for the UI.** Screens read and write only IndexedDB,
    through the stores. They never wait for the network. No user action is ever blocked or rolled
    back because the device is offline.
@@ -374,7 +379,8 @@ These adapt the expo-amplify-kit conventions to a web-only app.
   `hide-picker`, `hide-picker-preset-<preset>`, `hide-picker-cancel`, `suggestions`, `suggestion-<index>`, `help`, `help-type-<TYPE>`, `panel-type-help`, `schedule-picker`, `schedule-day-<0-6>`,
   `schedule-monthday`, `schedule-time`, `review-prompt`, `review-good`, `review-bad`, `spacing-override`,
   `panel-review`, `panel-review-next`,
-  `hidden-show-<index>`, `hidden-search`, `hidden-search-count`, `hidden-search-empty`, `update-prompt`, `install-section`, `line-tabs`, `completed-toast`, `completed-list`,
+  `hidden-show-<index>`, `expirations-list`, `expiration-item-<index>`, `expiration-where-<index>`,
+  `expiration-renew-<index>`, `expiration-more-<index>`, `expirations-search`, `expiration-waiting`, `hidden-search`, `hidden-search-count`, `hidden-search-empty`, `update-prompt`, `install-section`, `line-tabs`, `completed-toast`, `completed-list`,
   `completed-item-<index>`, `completed-reopen-<index>`, `completed-more-<index>`, `completed-delete-<index>`,
   `completed-delete-confirm-<index>`, `completed-show-more`).
 - **Packages:** `npm install <pkg>`. Pin exact versions for `aws-amplify` and `@aws-amplify/backend`.

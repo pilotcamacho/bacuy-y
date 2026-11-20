@@ -1,3 +1,4 @@
+import { logicalToday } from "@/lib/day";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
@@ -12,6 +13,7 @@ import i18n from "@/lib/i18n";
 import { activityFlagId, flagId } from "@/lib/ids";
 import { Archived } from "@/routes/Archived";
 import { COMPLETED_PAGE_SIZE, Completed } from "@/routes/Completed";
+import { Expirations } from "@/routes/Expirations";
 import { Hidden } from "@/routes/Hidden";
 import { PriorityView } from "@/routes/PriorityView";
 import { resetFeedbackStore } from "@/stores/feedbackStore";
@@ -190,7 +192,7 @@ describe("Archived view", () => {
 
 describe("Completed view", () => {
   const noon = (daysAgo: number) => {
-    const d = new Date();
+    const d = logicalToday(new Date()); // the app's day: before 03:00 "today" is yesterday
     d.setDate(d.getDate() - daysAgo);
     d.setHours(12, 0, 0, 0);
     return d.toISOString();
@@ -336,5 +338,52 @@ describe("Hidden view", () => {
     expect(search).toHaveValue("");
     expect(items()).toEqual(["pronto", "más adelante", "algún día"]);
     expect(screen.queryByTestId("hidden-search-count")).toBeNull();
+  });
+});
+
+describe("Expirations view (Vencimientos)", () => {
+  // `!vence @yyyy-mm-dd` N days from the app's today (the text is what the store derives from).
+  const mark = (days: number) => {
+    const d = new Date();
+    if (d.getHours() < 3) d.setDate(d.getDate() - 1); // the app's day starts at 03:00
+    d.setDate(d.getDate() + days);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `!vence @${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  };
+  const exp = (over: Record<string, unknown> = {}) => ({ activityType: "EXPIRATION" as const, ...over });
+
+  beforeEach(async () => {
+    await db.putLocal("Activity", line("passport", "pasaporte", mark(400), "a1", exp()));
+    await db.putLocal("Activity", line("soat", "soat", mark(10), "a2", exp()));
+    await db.putLocal("Activity", line("licence", "licencia", "!vence", "a3", exp()));
+    await db.putLocal("Activity", line("old", "seguro", mark(-3), "a4", exp()));
+    await db.putLocal("Activity", line("hid", "visa", mark(5), "a5", exp({ isHidden: true })));
+    await db.putLocal("Activity", line("todo", "comprar pan", "", "a6"));
+  });
+
+  const items = () => screen.getAllByTestId(/^expiration-item-/).map((li) => li.querySelector("p")!.textContent!.split(" !")[0]);
+
+  it("lists every expiration, soonest first, undated last, with where each one is", async () => {
+    renderAt("/expirations", <Expirations />);
+    await waitFor(() => expect(items()).toEqual(["seguro", "visa", "soat", "pasaporte", "licencia"]));
+    expect(screen.getByTestId("expiration-item-0")).toHaveTextContent("Venció hace 3 días");
+    expect(screen.getByTestId("expiration-where-0")).toHaveTextContent("en la página");
+    expect(screen.getByTestId("expiration-where-1")).toHaveTextContent("oculto por ti");
+    expect(screen.getByTestId("expiration-where-2")).toHaveTextContent("en la página");
+    expect(screen.getByTestId("expiration-where-3")).toHaveTextContent(/^aparece el /);
+    expect(screen.getByTestId("expiration-where-4")).toHaveTextContent("sin fecha");
+    expect(within(screen.getByTestId("line-tabs")).getByRole("link", { name: "Vencimientos" })).toHaveAttribute("aria-current", "page");
+    // The waiting one is neither on Hidden's count nor on the page.
+    expect(screen.getByTestId("hidden-count")).toHaveTextContent("1");
+  });
+
+  it("Renovar opens the line's expiration section; the search filters", async () => {
+    const user = userEvent.setup();
+    renderAt("/expirations", <Expirations />);
+    await user.click(await screen.findByRole("button", { name: "Renovar o archivar «pasaporte»" }));
+    expect(await screen.findByTestId("line-panel")).toBeInTheDocument();
+    await user.keyboard("{Escape}");
+    await user.type(screen.getByRole("searchbox", { name: "Buscar en vencimientos" }), "PASA");
+    expect(items()).toEqual(["pasaporte"]);
   });
 });

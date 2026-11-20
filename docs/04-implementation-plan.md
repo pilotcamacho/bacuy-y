@@ -389,6 +389,12 @@ Requests from the first days of real use (2026-11-17).
   2m · 3m · 6m (adapting), back at 03:00; Bien on the last step completes it; replaces ~frequency
   > New field `Activity.reviewStep` (additive). `date-fns` is not installed (the stack table lists
   > it): the date math is done by hand in `services/lifecycle/review.ts`.
+- [x] Expirations wait off the page until their window (lead days before, 03:00); Vencimientos tab
+- [x] The app's day starts at 03:00 everywhere a day matters (`lib/day.ts`)
+- [x] Time zones: calendar dates stored as UTC midnight (old values still read as before);
+  gratitude ids by local wall-clock time (old ids still recognized)
+  > Tests: the whole suite also runs with TZ=Asia/Tokyo past midnight and TZ=UTC (the build
+  > machine), via `NODE_OPTIONS=--require <file setting process.env.TZ>` (Windows ignores TZ=…).
 - [x] Hidden tab: a text filter (any part of the line, case- and accent-insensitive)
 - [x] Fast hide: swipe right (touch) / Ctrl+Shift+H / ☾ → until tomorrow 8:00; long swipe /
   Ctrl+Shift+Alt+H → picker. "Mañana" before 03:00 = this morning

@@ -1,3 +1,4 @@
+import { logicalToday } from "@/lib/day";
 import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -197,7 +198,7 @@ describe("tick", () => {
     const row = await onlyActivity();
     expect(row).toMatchObject({ activityType: "REPETITIVE_ACTION", completionCount: 1 });
     const back = new Date(row.hiddenUntil!);
-    expect(back.getHours()).toBe(0);
+    expect(back.getHours()).toBe(3); // when the day starts (lib/day)
     expect(Math.round((back.getTime() - Date.now()) / 86_400_000)).toBeGreaterThanOrEqual(6);
     // Gone from the page (only the empty line to type in), and a toast to undo.
     expect(boxes().map((b) => b.value)).toEqual([""]);
@@ -287,7 +288,9 @@ describe("tick", () => {
     await flush();
     const after = await onlyActivity();
     expect(after.streak).toBe(1);
-    expect(new Date(after.hiddenUntil!).getDate()).toBe(new Date(Date.now() + 86_400_000).getDate());
+    const tomorrow = logicalToday(new Date());
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    expect(new Date(after.hiddenUntil!)).toEqual(new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 3)); // the next day starts at 03:00
     await user.click(await screen.findByRole("button", { name: "Marcar como formado" }));
     await flush();
     expect((await onlyActivity()).status).toBe("COMPLETED");
@@ -350,7 +353,7 @@ describe("side panel", () => {
     fireDate(panel().getByLabelText("Fecha límite") as HTMLInputElement, "2026-12-31");
     await flush();
     expect(boxes()[0]!.value).toBe("informe #salud #proyecto @2026-12-31");
-    expect((await onlyActivity()).deadline).toBe(new Date(2026, 11, 31).toISOString());
+    expect((await onlyActivity()).deadline).toBe("2026-12-31T00:00:00.000Z"); // a calendar date: UTC midnight
 
     await user.click(panel().getByRole("button", { name: "Quitar Salud" }));
     await flush();
@@ -360,7 +363,9 @@ describe("side panel", () => {
     await flush();
     const row = await onlyActivity();
     expect(row.rawInput).toBe("informe #proyecto @2026-12-31 !vence");
-    expect(row).toMatchObject({ activityType: "EXPIRATION", expirationDate: new Date(2026, 11, 31).toISOString(), deadline: null });
+    expect(row).toMatchObject({ activityType: "EXPIRATION", expirationDate: "2026-12-31T00:00:00.000Z", deadline: null });
+    // Over 30 days away it now waits for its window, but stays in view while being edited here.
+    expect(boxes()[0]!.value).toBe("informe #proyecto @2026-12-31 !vence");
   });
 
   it("frequency CUSTOM has no mark and survives re-deriving the text", async () => {
@@ -618,7 +623,7 @@ describe("spaced review of attitudes and skills", () => {
     const row = await onlyActivity();
     expect(row.reviewStep).toBe(0);
     const due = new Date(row.hiddenUntil!);
-    const tomorrow = new Date();
+    const tomorrow = logicalToday(new Date()); // before 03:00 it is still yesterday
     tomorrow.setDate(tomorrow.getDate() + 1);
     expect([due.getDate(), due.getHours(), due.getMinutes()]).toEqual([tomorrow.getDate(), 3, 0]);
     await waitFor(() => expect(screen.getByTestId("hidden-toast")).toHaveTextContent(/¡Bien! Vuelve el/));

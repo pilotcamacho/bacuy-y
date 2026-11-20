@@ -24,24 +24,30 @@ const NOW = new Date(2026, 10, 15, 18, 30); // Sun 15 Nov 2026, 18:30 local
 const local = (y: number, m: number, d: number, h = 0, min = 0) => new Date(y, m - 1, d, h, min).toISOString();
 
 describe("done for this time: when the line comes back", () => {
-  it("by frequency, at 00:00: tomorrow, same weekday next week, same day next month", () => {
-    expect(nextShowAt({ cron: null, frequency: "DAILY" }, NOW).toISOString()).toBe(local(2026, 11, 16));
-    expect(nextShowAt({ cron: null, frequency: "WEEKLY" }, NOW).toISOString()).toBe(local(2026, 11, 22));
-    expect(nextShowAt({ cron: null, frequency: "MONTHLY" }, NOW).toISOString()).toBe(local(2026, 12, 15));
+  it("by frequency, when the day starts (03:00): tomorrow, same weekday next week, same day next month", () => {
+    expect(nextShowAt({ cron: null, frequency: "DAILY" }, NOW).toISOString()).toBe(local(2026, 11, 16, 3));
+    expect(nextShowAt({ cron: null, frequency: "WEEKLY" }, NOW).toISOString()).toBe(local(2026, 11, 22, 3));
+    expect(nextShowAt({ cron: null, frequency: "MONTHLY" }, NOW).toISOString()).toBe(local(2026, 12, 15, 3));
     // A shorter next month: its last day.
-    expect(nextShowAt({ cron: null, frequency: "MONTHLY" }, new Date(2027, 0, 31, 9)).toISOString()).toBe(local(2027, 2, 28));
-    expect(nextShowAt({ cron: null, frequency: "MONTHLY" }, new Date(2026, 11, 20, 9)).toISOString()).toBe(local(2027, 1, 20));
+    expect(nextShowAt({ cron: null, frequency: "MONTHLY" }, new Date(2027, 0, 31, 9)).toISOString()).toBe(local(2027, 2, 28, 3));
+    expect(nextShowAt({ cron: null, frequency: "MONTHLY" }, new Date(2026, 11, 20, 9)).toISOString()).toBe(local(2027, 1, 20, 3));
   });
 
-  it("no schedule (or CUSTOM without a cron) -> tomorrow at 00:00", () => {
-    expect(nextShowAt({ cron: null, frequency: null }, NOW).toISOString()).toBe(local(2026, 11, 16));
-    expect(nextShowAt({ cron: null, frequency: "CUSTOM" }, NOW).toISOString()).toBe(local(2026, 11, 16));
+  it("ticked before 03:00 it counted for the day before: back at 03:00 the same night", () => {
+    const night = new Date(2026, 10, 16, 1, 30); // Mon 01:30 = still Sunday 15
+    expect(nextShowAt({ cron: null, frequency: "DAILY" }, night).toISOString()).toBe(local(2026, 11, 16, 3));
+    expect(nextShowAt({ cron: null, frequency: "WEEKLY" }, night).toISOString()).toBe(local(2026, 11, 22, 3));
+  });
+
+  it("no schedule (or CUSTOM without a cron) -> tomorrow at 03:00", () => {
+    expect(nextShowAt({ cron: null, frequency: null }, NOW).toISOString()).toBe(local(2026, 11, 16, 3));
+    expect(nextShowAt({ cron: null, frequency: "CUSTOM" }, NOW).toISOString()).toBe(local(2026, 11, 16, 3));
   });
 
   it("a cron wins over the frequency; an invalid cron falls back to it", () => {
     expect(nextShowAt({ cron: "0 8 * * 1", frequency: "DAILY" }, NOW).toISOString()).toBe(local(2026, 11, 16, 8)); // Monday 08:00
     expect(nextShowAt({ cron: "0 20 * * *", frequency: null }, NOW).toISOString()).toBe(local(2026, 11, 15, 20)); // later today
-    expect(nextShowAt({ cron: "nope", frequency: "WEEKLY" }, NOW).toISOString()).toBe(local(2026, 11, 22));
+    expect(nextShowAt({ cron: "nope", frequency: "WEEKLY" }, NOW).toISOString()).toBe(local(2026, 11, 22, 3));
   });
 
   it("hidden while hiddenUntil is in the future", () => {
@@ -66,7 +72,7 @@ describe("tick per type", () => {
     const r = row({ activityType: "REPETITIVE_ACTION", status: "ACTIVE", completionCount: 1, frequency: "WEEKLY" });
     expect(tick(r, true, NOW)).toEqual({
       kind: "update",
-      patch: { completionCount: 2, hiddenUntil: local(2026, 11, 22) },
+      patch: { completionCount: 2, hiddenUntil: local(2026, 11, 22, 3) },
       hidden: true,
     });
     expect(tick({ ...r, targetCount: 2 }, true, NOW)).toEqual({
@@ -81,7 +87,7 @@ describe("tick per type", () => {
     const r = row({ activityType: "HABIT", status: "ACTIVE", streak: 4, targetStreak: 5, frequency: "DAILY" });
     expect(tick(r, true, NOW)).toEqual({
       kind: "update",
-      patch: { streak: 5, hiddenUntil: local(2026, 11, 16) },
+      patch: { streak: 5, hiddenUntil: local(2026, 11, 16, 3) },
       formedHint: true,
       hidden: true,
     });

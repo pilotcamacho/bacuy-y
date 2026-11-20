@@ -368,6 +368,7 @@
       "page": "To do",
       "completed": "Completed",
       "hidden": "Hidden",
+      "expirations": "Expirations",
       "archived": "Archived",
       "hiddenCount_one": "{{count}} hidden",
       "hiddenCount_other": "{{count}} hidden"
@@ -534,8 +535,8 @@
         "what": "Something that expires and must be renewed: passport, insurance, licence.",
         "example": "passport !expires @2027-03-01 #personal",
         "start": "When you type it with !expires and the expiry @date.",
-        "use": "It shows the days left (red when overdue). It enters Priority the notice days before (30 by default) and rises as the date gets closer.",
-        "repeat": "Renewing it with a new date keeps it on the page for the next expiry.",
+        "use": "Shows the days left (amber inside its warning, red when overdue). It waits off the page and shows up only its lead days before (30 by default, in its panel), at 3:00; from then it is also in Priority and rises as the date nears. Meanwhile it is on Expirations.",
+        "repeat": "Renewed with a new date, it waits on Expirations again until the next warning.",
         "end": "Not completed: “Archive without renewing” takes it off the page. Restoring it makes it pending again."
       },
       "lifeLabel": "Life cycle",
@@ -554,6 +555,7 @@
     "views": {
       "page": "To do: your page. It can be filtered by flag; a new line typed while filtered gets that flag.",
       "hidden": "Hidden: what you hid from the panel (until a date and time, or until you show it), repeating actions and habits done for now, and attitudes and skills waiting for their next review. Shows when each comes back. A search box at the top finds any part of the text (case and accents don't matter).",
+      "expirations": "Expirations: everything that expires, soonest first, with the days left and whether it is on the page or when it shows up. Renew from here.",
       "completed": "Completed: what is done, newest first, grouped by day.",
       "archived": "Archived: what you kept off the page.",
       "priority": "Priority: active lines ordered by their flags' weight; lines whose cron time is within the hour and expirations coming up rise. Read only; tapping one takes you to it.",
@@ -583,7 +585,8 @@
         "Hiding takes it off the page until a date and time, or until you show it; it is listed on Hidden. Fastest: swiping it right (or Ctrl+Shift+H, or the moon next to ⋯) hides it until tomorrow 8:00; swiping further lets you choose. Before 3:00, “tomorrow 8:00” means this morning.",
         "Completing moves it to Completed (gratitude, to the Journal). Reactivating it brings it back to the page.",
         "Archiving keeps it off the page, in Archived, without completing it. Restoring puts it at the end of the page.",
-        "Deleting it (in the panel, or Backspace on an empty line) removes it on all your devices. If it had text, a notice lets you undo it for a few seconds."
+        "Deleting it (in the panel, or Backspace on an empty line) removes it on all your devices. If it had text, a notice lets you undo it for a few seconds.",
+        "The day starts at 3:00: until then the night counts as the day before (for “today”, “tomorrow”, days left, what comes back “tomorrow” and Completed)."
       ]
     }
   },
@@ -606,5 +609,23 @@
       "months_one": "{{count}} month",
       "months_other": "{{count}} months"
     }
+  },
+  "expirations": {
+    "title": "Expirations",
+    "intro": "Everything that expires (passport, insurance, licences…), soonest first. Each one waits off the page and shows up only when its warning starts (the lead days in its panel, 30 by default), at 3:00.",
+    "empty": "No expirations. Type a line with !expires and a date, e.g. “Passport !expires @2027-03-01”.",
+    "noDate": "no date: add one with @date",
+    "onPage": "on the page",
+    "hiddenByHand": "hidden by you",
+    "appears": "shows up on {{date}}",
+    "renew": "Renew",
+    "renewLine": "Renew or archive “{{title}}”",
+    "moreLine": "Details of “{{title}}”",
+    "waitingToast": "Expires later on: it will show up on the page on {{date}}.",
+    "see": "See Expirations",
+    "search": "Search expirations",
+    "searchPlaceholder": "Search expirations…",
+    "matches": "{{count}} of {{total}}",
+    "noMatches": "No expiration contains “{{query}}”."
   }
 }

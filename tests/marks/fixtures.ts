@@ -22,5 +22,5 @@ export const TODAY = new Date(2026, 10, 14, 10, 30);
 
 export const CTX = { flags: FLAGS, today: TODAY };
 
-/** Start of a local day as stored. */
-export const day = (y: number, m: number, d: number) => new Date(y, m - 1, d).toISOString();
+/** A calendar date as stored: UTC midnight (the same day in every time zone). */
+export const day = (y: number, m: number, d: number) => new Date(Date.UTC(y, m - 1, d)).toISOString();

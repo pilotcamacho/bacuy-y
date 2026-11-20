@@ -1,3 +1,4 @@
+import { DAY_START_HOUR, logicalToday } from "@/lib/day";
 import type { ActivityRow } from "@/lib/db/types";
 
 /**
@@ -25,8 +26,8 @@ export const REVIEW_LADDER: readonly ReviewInterval[] = [
 
 export const LAST_REVIEW_STEP = REVIEW_LADDER.length - 1;
 
-/** Local hour the line comes back on its review day. */
-export const REVIEW_HOUR = 3;
+/** Local hour the line comes back on its review day: when that day starts (lib/day). */
+export const REVIEW_HOUR = DAY_START_HOUR;
 
 type Row = Pick<ActivityRow, "activityType">;
 
@@ -55,12 +56,13 @@ export function reviewOutcome(step: number | null | undefined, good: boolean): R
   return { step: Math.max((current ?? 0) - 1, 0), done: false };
 }
 
-/** When a line on `step` comes back: 03:00 local on the day its wait ends. */
+/** When a line on `step` comes back: 03:00 local on the day its wait ends (from the app's day). */
 export function reviewDueAt(step: number, now: Date): Date {
   const interval = REVIEW_LADDER[Math.min(Math.max(step, 0), LAST_REVIEW_STEP)]!;
-  const y = now.getFullYear();
-  const m = now.getMonth();
-  const d = now.getDate();
+  const today = logicalToday(now);
+  const y = today.getFullYear();
+  const m = today.getMonth();
+  const d = today.getDate();
   if ("days" in interval) return new Date(y, m, d + interval.days, REVIEW_HOUR, 0, 0, 0);
   // Same day of the month, or the month's last day (31 Jan + 1 month = 28/29 Feb).
   const lastDay = new Date(y, m + interval.months + 1, 0).getDate();

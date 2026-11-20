@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { Link, useInRouterContext } from "react-router-dom";
 import { UNDO_MS, usePageStore } from "@/stores/pageStore";
 
 /** "How did it go?" stays this long; ignoring it does nothing (docs/05-line-mapping.md §4). */
@@ -94,6 +95,19 @@ export function UndoToast() {
     );
   }
 
+  if (notice?.kind === "expirationWaiting") {
+    const fmt = new Intl.DateTimeFormat(i18n.resolvedLanguage, { weekday: "short", day: "numeric", month: "short", year: "numeric" });
+    return (
+      <div role="status" className={TOAST} data-testid="expiration-waiting">
+        <span>{t("expirations.waitingToast", { date: fmt.format(new Date(notice.until!)) })}</span>
+        <ExpirationsLink onClick={() => usePageStore.getState().dismissNotice()} />
+        <button type="button" className={ACTION} onClick={() => usePageStore.getState().dismissNotice()}>
+          {t("panel.dismiss")}
+        </button>
+      </div>
+    );
+  }
+
   if (notice?.kind === "spacingOverride") {
     return (
       <div role="status" className={TOAST} data-testid="spacing-override">
@@ -170,4 +184,16 @@ export function UndoToast() {
   }
 
   return null;
+}
+
+/** "See Vencimientos" (only inside the router; the editor's tests render it alone). */
+function ExpirationsLink({ onClick }: { onClick(): void }) {
+  const { t } = useTranslation();
+  const inRouter = useInRouterContext();
+  if (!inRouter) return null;
+  return (
+    <Link to="/expirations" className={ACTION} onClick={onClick}>
+      {t("expirations.see")}
+    </Link>
+  );
 }

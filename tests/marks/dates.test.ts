@@ -45,7 +45,7 @@ describe("@date bodies", () => {
   });
 
   it("crosses month and year ends", () => {
-    const dec31 = new Date(2026, 11, 31); // Thursday
+    const dec31 = new Date(2026, 11, 31, 12); // Thursday, noon
     expect(d("mañana", dec31)).toBe("2027-01-01*");
     expect(d("viernes", dec31)).toBe("2027-01-01*");
   });
@@ -54,9 +54,23 @@ describe("@date bodies", () => {
     for (const body of ["pronto", "2026", "11/2026", "1-1", "lunes2"]) expect(d(body)).toBeUndefined();
   });
 
-  it("stores the start of the local day and reads it back", () => {
+  it("stores a calendar date as UTC midnight and reads it back, whatever the time zone", () => {
     const iso = dayToIso({ year: 2026, month: 3, day: 29 });
-    expect(new Date(iso).getHours()).toBe(0);
+    expect(iso).toBe("2026-03-29T00:00:00.000Z");
     expect(isoToDay(iso)).toEqual({ year: 2026, month: 3, day: 29 });
+  });
+
+  it("reads dates saved before 2026-11-20 (the writer's local midnight) as before", () => {
+    // Saved in Bogotá (UTC-5): local midnight = 05:00Z; read on this device in local time.
+    const legacy = new Date(2026, 2, 29).toISOString();
+    expect(isoToDay(legacy)).toEqual({ year: 2026, month: 3, day: 29 });
+  });
+
+  it("before 03:00 the night still belongs to the day before: @hoy, @mañana, weekdays", () => {
+    const night = new Date(2026, 10, 20, 1, 30); // Fri 20 Nov 01:30 = still Thursday 19
+    expect(d("hoy", night)).toBe("2026-11-19*");
+    expect(d("mañana", night)).toBe("2026-11-20*");
+    expect(d("viernes", night)).toBe("2026-11-20*");
+    expect(d("mañana", new Date(2026, 10, 20, 3, 0))).toBe("2026-11-21*");
   });
 });

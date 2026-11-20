@@ -1,7 +1,7 @@
 import { CronExpressionParser } from "cron-parser";
 import { generateKeyBetween } from "fractional-indexing";
 import type { ActivityRow, LocalDb, WriteOp } from "@/lib/db/types";
-import { gratitudeId } from "@/lib/ids";
+import { gratitudeId, legacyGratitudeId } from "@/lib/ids";
 import { kvGet, kvSet } from "@/lib/kv";
 import { diffActivityFlags } from "@/services/lifecycle/activityFlags";
 import { deriveTextFields, newActivityDefaults } from "@/services/lifecycle/derive";
@@ -104,6 +104,8 @@ export async function autoCreateGratitude(
   if (!windowStart) return null;
   const id = gratitudeId(ctx.ownerSub, windowStart);
   if (await db.get("Activity", id)) return null; // created, completed, archived or deleted: done
+  // Created before the id changed to local time (2026-11-20): the same window, already done.
+  if (await db.get("Activity", legacyGratitudeId(ctx.ownerSub, windowStart))) return null;
   if (!(await db.getMeta("lastPulledAt:Activity"))) return null; // see the note above
 
   const [activities, flags] = await Promise.all([db.getAll("Activity"), db.getAll("Flag")]);

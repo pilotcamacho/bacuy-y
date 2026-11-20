@@ -1,5 +1,6 @@
 import { CronExpressionParser } from "cron-parser";
 import type { ActivityFlagRow, ActivityRow, FlagRow } from "@/lib/db/types";
+import { DEFAULT_RENEWAL_LEAD_DAYS, leadDays } from "@/services/lifecycle/expiration";
 import { daysUntil } from "@/services/lifecycle/tick";
 
 /**
@@ -21,7 +22,7 @@ import { daysUntil } from "@/services/lifecycle/tick";
 
 export const CRON_BOOST = 0.3;
 export const CRON_WINDOW_MINUTES = 60;
-export const DEFAULT_RENEWAL_LEAD_DAYS = 30;
+export { DEFAULT_RENEWAL_LEAD_DAYS };
 
 type FlagLike = Pick<FlagRow, "id" | "parentId" | "weight"> & { deletedAt?: string | null };
 type LinkLike = Pick<ActivityFlagRow, "activityId" | "flagId"> & { deletedAt?: string | null };
@@ -93,7 +94,7 @@ export function isCronActive(cron: string, now: Date): boolean {
 export function isExpirationVisible(expirationDate: string, renewalLeadDays: number | null | undefined, now: Date): boolean {
   const days = daysUntil(expirationDate, now);
   if (Number.isNaN(days)) return true;
-  return days <= (renewalLeadDays ?? DEFAULT_RENEWAL_LEAD_DAYS);
+  return days <= leadDays({ renewalLeadDays }); // the same rule as the page (lifecycle/expiration)
 }
 
 export function computeActivityScore(activity: ScoredActivity, flagIds: Iterable<string>, index: FlagIndex, now: Date): number {

@@ -87,6 +87,7 @@ Activity: a.model({
   recipient: a.string(),                                     // legacy, unused (as in bacuy-x)
   // EXPIRATION
   expirationDate: a.datetime(), renewalLeadDays: a.integer().default(30),
+  // deadline / eventDate / expirationDate are calendar dates: UTC midnight (docs/05 §2.3, §7)
   documentRef: a.string(), renewalUrl: a.string(), isRenewed: a.boolean().default(false),
 
   // bacuy-y

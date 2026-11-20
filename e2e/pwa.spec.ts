@@ -51,7 +51,7 @@ test("keyboard only: type, split, tick, panel open and close, move a line, navig
 
   // Tab from the nav reaches the first line; typing works.
   await page.getByRole("link", { name: /^página$|^page$/i }).focus();
-  for (let i = 0; i < 12 && !(await lines(page).first().evaluate((el) => el === document.activeElement)); i++) {
+  for (let i = 0; i < 20 && !(await lines(page).first().evaluate((el) => el === document.activeElement)); i++) {
     await page.keyboard.press("Tab");
   }
   await expect(lines(page).first()).toBeFocused();

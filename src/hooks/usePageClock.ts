@@ -2,7 +2,10 @@ import { useEffect, useState } from "react";
 import type { ActivityRow } from "@/lib/db/types";
 import { nextReveal } from "@/services/editor/pageLines";
 
-type Row = Pick<ActivityRow, "id" | "rawInput" | "position" | "status" | "deletedAt" | "hiddenUntil" | "isHidden">;
+type Row = Pick<
+  ActivityRow,
+  "id" | "rawInput" | "position" | "status" | "deletedAt" | "hiddenUntil" | "isHidden" | "activityType" | "expirationDate" | "renewalLeadDays"
+>;
 
 /**
  * The page's clock: "now" for deciding which lines are hidden. It ticks when the next hidden

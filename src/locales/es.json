@@ -368,6 +368,7 @@
       "page": "Pendientes",
       "completed": "Completadas",
       "hidden": "Ocultas",
+      "expirations": "Vencimientos",
       "archived": "Archivadas",
       "hiddenCount_one": "{{count}} oculto",
       "hiddenCount_other": "{{count}} ocultos"
@@ -534,8 +535,8 @@
         "what": "Algo que vence y hay que renovar: pasaporte, seguro, carné.",
         "example": "pasaporte !vence @2027-03-01 #personal",
         "start": "Al escribirlo con !vence y la @fecha de vencimiento.",
-        "use": "Muestra los días que faltan (en rojo si venció). Entra en Prioridad los días de aviso antes (30 por defecto) y sube a medida que se acerca.",
-        "repeat": "Al renovarlo con una fecha nueva sigue en la página para el próximo vencimiento.",
+        "use": "Muestra los días que faltan (ámbar dentro del aviso, rojo si venció). Espera fuera de la página y aparece solo los días de aviso antes (30 por defecto, en su panel), a las 3:00; desde ahí también está en Prioridad y sube a medida que se acerca. Mientras tanto lo ves en Vencimientos.",
+        "repeat": "Al renovarlo con una fecha nueva vuelve a esperar en Vencimientos hasta el próximo aviso.",
         "end": "No se completa: «Archivar sin renovar» lo saca de la página. Restaurarlo lo vuelve pendiente."
       },
       "lifeLabel": "Ciclo de vida",
@@ -554,6 +555,7 @@
     "views": {
       "page": "Pendientes: tu página. Se puede filtrar por bandera; un renglón nuevo con el filtro puesto recibe esa bandera.",
       "hidden": "Ocultas: lo que ocultaste desde el panel (hasta una fecha y hora, o hasta que lo muestres), las repetitivas y hábitos hechos por ahora, y las actitudes y habilidades que esperan su próximo repaso. Muestra cuándo vuelve cada uno. Arriba hay un buscador: escribe cualquier parte del texto (sin importar mayúsculas ni tildes).",
+      "expirations": "Vencimientos: todo lo que vence, lo más próximo primero, con los días que faltan y si ya está en la página o cuándo aparece. Desde aquí lo renuevas.",
       "completed": "Completadas: lo hecho, lo más reciente primero, agrupado por día.",
       "archived": "Archivadas: lo que guardaste fuera de la página.",
       "priority": "Prioridad: los renglones activos ordenados por el peso de sus banderas; suben los que tienen su horario cron dentro de la próxima hora y los vencimientos cercanos. Solo lectura; al tocar uno vas a él.",
@@ -583,7 +585,8 @@
         "Ocultar lo saca de la página hasta una fecha y hora, o hasta que lo muestres; lo ves en Ocultas. Lo más rápido: deslizarlo a la derecha (o Ctrl+Mayús+H, o la luna junto a ⋯) lo oculta hasta mañana 8:00; deslizarlo más deja elegir. Antes de las 3:00, «mañana 8:00» es esta mañana.",
         "Completar lo lleva a Completadas (la gratitud, al Diario). Reactivarlo lo devuelve a la página.",
         "Archivar lo guarda fuera de la página, en Archivadas, sin completarlo. Restaurarlo lo pone al final de la página.",
-        "Borrarlo (en el panel, o con retroceso en un renglón vacío) lo elimina en todos tus dispositivos. Si tenía texto, un aviso te deja deshacerlo unos segundos."
+        "Borrarlo (en el panel, o con retroceso en un renglón vacío) lo elimina en todos tus dispositivos. Si tenía texto, un aviso te deja deshacerlo unos segundos.",
+        "El día empieza a las 3:00: hasta entonces la noche cuenta como el día anterior (para «hoy», «mañana», los días que faltan, lo que vuelve «mañana» y Completadas)."
       ]
     }
   },
@@ -606,5 +609,23 @@
       "months_one": "{{count}} mes",
       "months_other": "{{count}} meses"
     }
+  },
+  "expirations": {
+    "title": "Vencimientos",
+    "intro": "Todo lo que vence (pasaporte, seguros, licencias…), lo más próximo primero. Cada uno espera fuera de la página y aparece solo cuando empieza su aviso (los días de antelación de su panel, 30 si no dices nada), a las 3:00.",
+    "empty": "No hay vencimientos. Escribe un renglón con !vence y una fecha, p. ej. «Pasaporte !vence @2027-03-01».",
+    "noDate": "sin fecha: ponle una con @fecha",
+    "onPage": "en la página",
+    "hiddenByHand": "oculto por ti",
+    "appears": "aparece el {{date}}",
+    "renew": "Renovar",
+    "renewLine": "Renovar o archivar «{{title}}»",
+    "moreLine": "Detalles de «{{title}}»",
+    "waitingToast": "Vence más adelante: aparecerá en la página el {{date}}.",
+    "see": "Ver Vencimientos",
+    "search": "Buscar en vencimientos",
+    "searchPlaceholder": "Buscar en vencimientos…",
+    "matches": "{{count}} de {{total}}",
+    "noMatches": "Ningún vencimiento contiene «{{query}}»."
   }
 }

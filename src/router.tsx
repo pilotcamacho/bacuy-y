@@ -5,6 +5,7 @@ import { Archived } from "@/routes/Archived";
 import { Completed } from "@/routes/Completed";
 import { Flags } from "@/routes/Flags";
 import { Help } from "@/routes/Help";
+import { Expirations } from "@/routes/Expirations";
 import { Hidden } from "@/routes/Hidden";
 import { Journal } from "@/routes/Journal";
 import { Page } from "@/routes/Page";
@@ -28,6 +29,7 @@ export const routes: RouteObject[] = [
       { path: "journal", element: <Journal /> },
       { path: "flags", element: <Flags /> },
       { path: "hidden", element: <Hidden /> },
+      { path: "expirations", element: <Expirations /> },
       { path: "completed", element: <Completed /> },
       { path: "archived", element: <Archived /> },
       { path: "settings", element: <Settings /> },

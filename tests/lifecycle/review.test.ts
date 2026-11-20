@@ -43,8 +43,9 @@ describe("spaced review (attitudes and skills)", () => {
     expect(reviewDueAt(7, now)).toEqual(new Date(2027, 4, 18, REVIEW_HOUR));
   });
 
-  it("a month from the 31st lands on the month's last day; ticked after midnight still counts days", () => {
+  it("a month from the 31st lands on the month's last day; before 03:00 counts from the day before", () => {
     expect(reviewDueAt(4, new Date(2027, 0, 31, 10))).toEqual(new Date(2027, 1, 28, REVIEW_HOUR));
-    expect(reviewDueAt(0, new Date(2026, 10, 19, 1, 30))).toEqual(new Date(2026, 10, 20, REVIEW_HOUR));
+    // 19 Nov 01:30 is still the 18th: one day later is the 19th at 03:00.
+    expect(reviewDueAt(0, new Date(2026, 10, 19, 1, 30))).toEqual(new Date(2026, 10, 19, REVIEW_HOUR));
   });
 });

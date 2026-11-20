@@ -1,13 +1,15 @@
 import { CronExpressionParser } from "cron-parser";
+import { DAY_START_HOUR, addDays, dayStartAt, logicalToday } from "@/lib/day";
 import type { ActivityRow } from "@/lib/db/types";
 
 /**
  * "Done for this time" (docs/05-line-mapping.md §4): ticking a repetitive task or a habit day
  * hides the line until its next occurrence, stored in `hiddenUntil` (synced like any field).
  * - `cron` set and valid → its next fire time after now;
- * - otherwise by `frequency`, at 00:00 local: DAILY (or none, or CUSTOM without a cron) →
- *   tomorrow; WEEKLY → the same weekday next week; MONTHLY → the same day next month (the
- *   last day when the next month is shorter).
+ * - otherwise by `frequency`, when that day starts (03:00 local, lib/day): DAILY (or none, or
+ *   CUSTOM without a cron) → tomorrow; WEEKLY → the same weekday next week; MONTHLY → the same
+ *   day next month (the last day when the next month is shorter). "Today" is the app's day:
+ *   ticked at 01:30, it counted for the day before, so it is back at 03:00.
  * Pure; takes `now`.
  */
 export type NextShowRow = Pick<ActivityRow, "cron" | "frequency">;
@@ -22,18 +24,19 @@ export function nextShowAt(row: NextShowRow, now: Date): Date {
       // An invalid cron falls back to the frequency.
     }
   }
-  const y = now.getFullYear();
-  const m = now.getMonth();
-  const d = now.getDate();
+  const today = logicalToday(now);
+  const y = today.getFullYear();
+  const m = today.getMonth();
+  const d = today.getDate();
   switch (row.frequency) {
     case "WEEKLY":
-      return new Date(y, m, d + 7);
+      return dayStartAt(addDays(today, 7));
     case "MONTHLY": {
       const lastDay = new Date(y, m + 2, 0).getDate();
-      return new Date(y, m + 1, Math.min(d, lastDay));
+      return dayStartAt(new Date(y, m + 1, Math.min(d, lastDay)));
     }
     default:
-      return new Date(y, m, d + 1);
+      return dayStartAt(addDays(today, 1));
   }
 }
 
@@ -52,14 +55,13 @@ export const HIDE_PRESETS: readonly HidePreset[] = ["later", "tomorrow", "monday
 /** Hour (local) the day-based choices end at. */
 export const HIDE_MORNING_HOUR = 8;
 /**
- * Before this hour (local) the night still belongs to the day before: at 00:30, "tomorrow
- * 8:00" is this morning, and "Monday" on a Monday at 01:00 is this morning too (the same
- * cut-off as the spaced review).
+ * The day-based choices count from the app's day (lib/day): at 00:30, "tomorrow 8:00" is this
+ * morning, and "Monday" on a Monday at 01:00 is this morning too.
  */
-export const HIDE_DAY_STARTS_HOUR = 3;
+export const HIDE_DAY_STARTS_HOUR = DAY_START_HOUR;
 
 export function hidePresetAt(preset: HidePreset, now: Date): Date {
-  const day = now.getHours() < HIDE_DAY_STARTS_HOUR ? new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1) : now;
+  const day = logicalToday(now);
   const y = day.getFullYear();
   const m = day.getMonth();
   const d = day.getDate();

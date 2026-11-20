@@ -1,3 +1,4 @@
+import { logicalToday } from "@/lib/day";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -293,7 +294,7 @@ describe("LineEditor", () => {
     await user.click(boxes()[0]!);
     await user.keyboard("informe @hoy");
     await user.keyboard("{Enter}");
-    const d = new Date();
+    const d = logicalToday(new Date()); // @hoy is the app's day (before 03:00, yesterday)
     const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
     await waitFor(() => expect(values()[0]).toBe(`informe @${iso}`));
   });
@@ -468,5 +469,33 @@ describe("gratitude lines stand out", () => {
     await waitFor(() => expect(accent(0)).not.toBeNull());
     expect(accent(0)!.className).toContain("before:bg-amber-400");
     expect(accent(1)).toBeNull();
+  });
+});
+
+describe("an expiration typed on the page that is not due yet", () => {
+  it("stays in view while being edited, says when it will show up, and is gone after leaving the page", async () => {
+    const user = userEvent.setup();
+    const view = await mount();
+    await user.click(boxes()[0]!);
+    await user.keyboard("comprar pan{Enter}pasaporte !vence @2030-03-01");
+    await user.click(boxes()[0]!); // leave the line (blur)
+    expect(await screen.findByTestId("expiration-waiting")).toHaveTextContent(/aparecerá en la página el .*2030/);
+    expect(values()).toEqual(["comprar pan", "pasaporte !vence @2030-03-01"]);
+
+    await act(() => usePageStore.getState().flushAll());
+    view.unmount(); // leave the page (the store stays loaded)
+    render(<LineEditor />);
+    await waitFor(() => expect(values()).toEqual(["comprar pan"]));
+    const stored = (await db.getAll("Activity")).find((r) => r.title === "pasaporte")!;
+    expect(stored).toMatchObject({ activityType: "EXPIRATION", expirationDate: "2030-03-01T00:00:00.000Z" });
+  });
+
+  it("one inside its window stays on the page with no notice", async () => {
+    const user = userEvent.setup();
+    await mount();
+    await user.click(boxes()[0]!);
+    await user.keyboard("seguro !vence @hoy{Enter}x");
+    expect(screen.queryByTestId("expiration-waiting")).toBeNull();
+    expect(values()[0]).toMatch(/^seguro !vence @/);
   });
 });

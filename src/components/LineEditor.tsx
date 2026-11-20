@@ -40,6 +40,12 @@ export function LineEditor() {
     void store().load(ownerSub);
   }, [store, ownerSub]);
 
+  // Expirations edited here stay in view while the page is on screen (pageStore.setPageMounted).
+  useEffect(() => {
+    store().setPageMounted(true);
+    return () => store().setPageMounted(false);
+  }, [store]);
+
   // Reload from IndexedDB after a sync that changed rows, or a write in another tab.
   useEffect(
     () =>

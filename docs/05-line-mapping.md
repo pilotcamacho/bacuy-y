@@ -96,7 +96,7 @@ according to the UI language.
 
 | Form | Meaning |
 |---|---|
-| `@hoy` / `@today` | today |
+| `@hoy` / `@today` | today (the app's day: before 03:00 it is still yesterday, §7) |
 | `@mañana` / `@manana` / `@tomorrow` | tomorrow |
 | `@lunes` … `@domingo` / `@monday` … `@sunday` | the next such day (today excluded) |
 | `@2026-12-31` | that date (canonical form) |
@@ -107,8 +107,11 @@ according to the UI language.
   Enter, or the page is hidden), not on every keystroke, and are **rewritten in the text to the
   canonical ISO form** (`@viernes` → `@2026-11-20`). That way the line means the same date
   tomorrow and on every device. (assumption)
-- The value is stored as the start of that day in local time, as an ISO datetime. A time of day
-  is set in the panel only.
+- The value is a **calendar date**, stored as **UTC midnight** (`2026-12-01T00:00:00.000Z`) and
+  read back with UTC fields, so it is the same day on every device in any time zone (§7). Dates
+  saved before 2026-11-20 (the writer's local midnight, e.g. `05:00Z` from Bogotá) are any value
+  not at exactly 00:00 UTC: they are read in local time as before, and the text re-derives them
+  in the new form on the next edit. A time of day is set in the panel only.
 
 Which field it fills depends on the type:
 
@@ -220,7 +223,7 @@ square at the start of the line.
 | `SKILL` | level badge | **Spaced review**, same as `ATTITUDE`; the level is changed in the panel. | Same as `ATTITUDE` (mastered). |
 | `MOMENTO` | ★ (not clickable) | Nothing. | Archive only (never `COMPLETED`). |
 | `GRATITUDE` | ☐ | Opens the panel with the notes field focused. "Save & complete" requires non-empty `description` → `COMPLETED`. | — |
-| `EXPIRATION` | days-left badge (red when overdue) | Opens the panel: "Renewed → new date" (rewrites the `@date` mark, `isRenewed` stays false) or "Archive" (`isRenewed = true`, `ARCHIVED`). | — |
+| `EXPIRATION` | days-left badge (amber inside its window, red when overdue) | Opens the panel: "Renewed → new date" (rewrites the `@date` mark, `isRenewed` stays false) or "Archive" (`isRenewed = true`, `ARCHIVED`). | — |
 
 **Spaced review** (`ATTITUDE`, `SKILL`; confirmed 2026-11-18; `services/lifecycle/review.ts`).
 They come back at intervals that adapt to how it goes, like flash cards:
@@ -275,6 +278,17 @@ time (`datetime-local`, must be in the future), or *Hasta que la muestre*. A dat
 (`isHiddenNow`). The panel closes, the focus moves on, and a toast "Oculta hasta el …" /
 "Oculta hasta que la muestres." offers *Deshacer* (no *Valorar*: nothing was done). On a
 hidden line the panel shows when it returns and *Mostrar ahora* instead.
+
+**Expirations wait off the page** (confirmed 2026-11-20; `services/lifecycle/expiration.ts`).
+A pending `EXPIRATION` with a date is off the page (and out of Priority) until its warning
+window opens: `renewalLeadDays` (default 30, panel "Avisar con … días") before the date, at
+03:00 (§7). Computed, never stored: changing the date or the lead days applies at once; the
+page re-renders when a window opens. Without a date, overdue or inside the window it is on the
+page. It is **not** on Hidden: the **Vencimientos** tab lists every expiration (§6). Renewing
+(a new date) sends it back to waiting. A manual hide still works on top. An expiration edited
+on the page that starts waiting **stays in view until the page is left** (never vanishes
+mid-edit) and, on leaving the line or closing the panel, a toast (`expiration-waiting`) says
+when it will show up, with a link to Vencimientos (once per date + lead days).
 
 **Fast hide** (confirmed 2026-11-18), without opening the panel:
 - **Swipe the line right** (touch and pen; a mouse drag still selects text). The line follows
@@ -343,9 +357,10 @@ Every change in the panel is a structural write (immediate, no debounce).
 
 | View | Rows | Order | Editable |
 |---|---|---|---|
-| Page | not deleted, status ≠ `ARCHIVED` / `COMPLETED`, not hidden (`isHidden`, or `hiddenUntil` in the future) | `position` | yes |
-| Hidden | the page's rows that are hidden now; a **text filter** (`hidden-search`): every word anywhere in the line, marks included, ignoring case and accents (`services/editor/textFilter.ts`); Escape clears it; not kept | `hiddenUntil` asc, then "until shown" (`isHidden`) by `position` | show now, change (same choices as the panel), panel |
-| Priority | `status = ACTIVE`, not `isHidden`, `hiddenUntil` passed, expiration within `renewalLeadDays` | score desc (`services/priority/score.ts`) | tick and panel only; no text editing, no drag. Click → go to that line on the page. |
+| Page | not deleted, status ≠ `ARCHIVED` / `COMPLETED`, not hidden (`isHidden`, or `hiddenUntil` in the future), not a **waiting expiration** (§4) | `position` | yes |
+| Vencimientos (`/expirations`) | every pending `EXPIRATION` (on the page, hidden by hand, or waiting) | `expirationDate` asc, undated last (by `position`) | renew (opens the panel's expiration section), panel; date, days left (badge colors) and where it is ("en la página", "oculto por ti", "aparece el …", "sin fecha"); text filter as on Hidden |
+| Hidden | the page's rows that are hidden now (not waiting expirations: they are on Vencimientos); a **text filter** (`hidden-search`): every word anywhere in the line, marks included, ignoring case and accents (`services/editor/textFilter.ts`); Escape clears it; not kept | `hiddenUntil` asc, then "until shown" (`isHidden`) by `position` | show now, change (same choices as the panel), panel |
+| Priority | `status = ACTIVE`, not `isHidden`, `hiddenUntil` passed, not a waiting expiration (the same rule as the page) | score desc (`services/priority/score.ts`) | tick and panel only; no text editing, no drag. Click → go to that line on the page. |
 | Journal | `GRATITUDE` + `COMPLETED` | `updatedAt`/`editedAt` desc | via panel |
 | Completed | `status = COMPLETED`, not `GRATITUDE` (the journal's) | `completedAt` desc (falls back to `editedAt` for lines completed before the field existed), grouped by day, 50 at a time | untick (back to its place), panel, delete |
 | Archived | `status = ARCHIVED` | `editedAt` desc | restore, delete |
@@ -393,7 +408,7 @@ score            = flagScore × (1 + cronBoost)
 EXPIRATION       = flagScore / max(daysUntil(expirationDate), 1) × (1 + cronBoost)
 ```
 
-`daysUntil` counts calendar days (as the line's badge does). Ties keep the page order. The view
+`daysUntil` counts days from the app's day (§7), as the line's badge does. Ties keep the page order. The view
 re-scores every minute. Restoring from Archived puts the line after the last page line, with
 the status from the flag rule (an `EXPIRATION` also gets `isRenewed: false` back); deleting
 from Archived asks for confirmation and soft-deletes the row, its links and its feedback.
@@ -401,3 +416,35 @@ from Archived asks for confirmation and soft-deletes the row, its links and its 
 Differences from bacuy-x: weights normalized by the real sibling sum (rule 11, tolerates drift
 after a merge), **no neglect multiplier** (needs the timer) and **no environment boost** (needs
 location). Both come back when those features are ported.
+
+---
+
+## 7. Days and time zones (confirmed 2026-11-20)
+
+**The day starts at 03:00** (`lib/day.ts`, `DAY_START_HOUR`). Until then the night belongs to
+the day before: 2026-11-20 02:00 is part of 2026-11-19. Used wherever a *day* matters:
+
+| Where | Effect (at 01:00 on the 20th) |
+|---|---|
+| `@hoy`, `@mañana`, weekdays, `@d/m` | `@hoy` = the 19th, `@mañana` = the 20th |
+| Days left, "vence hoy", overdue (badge, Vencimientos, Priority) | counted from the 19th |
+| Done for this time without a cron (`nextShowAt`) | back at **03:00** of the next day (not 00:00); ticked at 01:30 → back at 03:00 that night |
+| Spaced review (`reviewDueAt`), hide presets (mañana / lunes / en un mes 8:00) | from the 19th |
+| Expiration window (§4) | opens at 03:00 |
+| Completed page grouping ("Hoy", "Ayer", days) | done at 01:00 → under the 19th |
+
+Exact times are moments and do not use it: a cron, "hide until 21:30", "in 3 hours".
+
+**Time zones.**
+- **Moments** (`editedAt`, `completedAt`, `hiddenUntil`, `updatedAt`) are UTC instants: the same
+  moment everywhere; sync and "last edit wins" do not depend on the zone.
+- **Clock times** (cron schedules, 8:00 / 03:00 rules) are the device's local time: travelling,
+  a 20:00 habit fires at 20:00 where you are. A line already hidden until a moment keeps that
+  moment (hidden in Bogotá "until 8:00" → 14:00 in Madrid).
+- **Calendar dates** (`deadline`, `eventDate`, `expirationDate`) are UTC midnight (§2.3): the same
+  day in every zone, and the re-derive after a pull gives the same value on every device (before,
+  each zone wrote its own local midnight and two devices in different zones rewrote it back and
+  forth on every sync).
+- **Gratitude entries** are keyed by the window's local wall-clock time (`2026-11-19T20:00`,
+  `lib/ids.ts gratitudeId`), so devices in different zones create the same entry. The old id
+  (the window's UTC instant) is still recognized, so no entry is created twice after the change.

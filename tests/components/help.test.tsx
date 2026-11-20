@@ -36,7 +36,7 @@ describe("Manual", () => {
       expect(screen.getByTestId(`help-type-${type}`).textContent).not.toMatch(/\b(help|panel|activityType)\.[a-zA-Z]+\b/);
     }
     expect(screen.getByTestId("help").textContent).not.toMatch(/\bhelp\.[a-z]/);
-    expect(within(screen.getByTestId("help-lifecycle")).getAllByRole("listitem")).toHaveLength(7);
+    expect(within(screen.getByTestId("help-lifecycle")).getAllByRole("listitem")).toHaveLength(8); // …and the day starts at 03:00
     // A few facts that must match the app.
     expect(within(screen.getByTestId("help-type-EXPIRATION")).getByText(i18n.t("panel.expirationDate"))).toBeInTheDocument();
     expect(within(screen.getByTestId("help-type-MOMENTO")).getByText(i18n.t("panel.eventDate"))).toBeInTheDocument();

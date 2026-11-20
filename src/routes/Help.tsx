@@ -30,7 +30,7 @@ const TYPES: { type: ActivityType; symbol: string; date: DateField | null; frequ
 ];
 
 const STATUSES = ["DRAFT", "ACTIVE", "INACTIVE", "COMPLETED", "ARCHIVED"] as const;
-const VIEWS = ["page", "hidden", "completed", "archived", "priority", "journal", "flags", "settings"] as const;
+const VIEWS = ["page", "hidden", "expirations", "completed", "archived", "priority", "journal", "flags", "settings"] as const;
 const KEYS: { keys: string[]; text: string }[] = [
   { keys: ["Enter"], text: "enter" },
   { keys: ["⌫"], text: "backspace" },

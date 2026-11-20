@@ -1,3 +1,4 @@
+import { logicalToday } from "@/lib/day";
 import { DATE_TODAY, DATE_TOMORROW, WEEKDAYS, normalize } from "./keywords";
 
 /**
@@ -35,8 +36,9 @@ function addDays(today: Date, days: number): Date {
   return new Date(today.getFullYear(), today.getMonth(), today.getDate() + days);
 }
 
-export function parseDateBody(body: string, today: Date): ParsedDate | undefined {
+export function parseDateBody(body: string, now: Date): ParsedDate | undefined {
   const word = normalize(body);
+  const today = logicalToday(now); // at 01:00 "@mañana" is the day after the night's day
 
   if (DATE_TODAY.includes(word)) return { ...fromDate(addDays(today, 0)), canonical: false };
   if (DATE_TOMORROW.includes(word)) return { ...fromDate(addDays(today, 1)), canonical: false };
@@ -81,10 +83,26 @@ export function canonicalDateBody(d: CalendarDay): string {
 
 /** Stored value: the start of that day in local time, as an ISO datetime. */
 export function dayToIso(d: CalendarDay): string {
-  return new Date(d.year, d.month - 1, d.day).toISOString();
+  // A calendar day, not a moment: UTC midnight, read back with UTC fields, so it is the same
+  // day on every device whatever its time zone (docs/05-line-mapping.md §7).
+  return new Date(Date.UTC(d.year, d.month - 1, d.day)).toISOString();
 }
 
-/** The local calendar day of a stored ISO datetime. */
+/**
+ * The calendar day of a stored date. Dates saved before 2026-11-20 are the writer's local
+ * midnight (e.g. Bogotá → 05:00Z): any value not at exactly 00:00 UTC is read in local time,
+ * as it always was. The line's text re-derives them in the new form on the next edit.
+ */
 export function isoToDay(iso: string): CalendarDay {
-  return fromDate(new Date(iso));
+  const d = new Date(iso);
+  if (d.getUTCHours() === 0 && d.getUTCMinutes() === 0 && d.getUTCSeconds() === 0 && d.getUTCMilliseconds() === 0) {
+    return { year: d.getUTCFullYear(), month: d.getUTCMonth() + 1, day: d.getUTCDate() };
+  }
+  return fromDate(d);
+}
+
+/** Local 00:00 of a stored calendar date (to format it or count days). */
+export function isoToLocalDate(iso: string): Date {
+  const day = isoToDay(iso);
+  return new Date(day.year, day.month - 1, day.day);
 }

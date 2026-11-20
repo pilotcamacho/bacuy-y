@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { openLocalDb } from "@/lib/db";
 import { setDbForTests } from "@/lib/db/instance";
 import type { FlagRow, LocalDb, WriteOp } from "@/lib/db/types";
-import { activityFlagId, flagId, gratitudeId } from "@/lib/ids";
+import { activityFlagId, flagId, gratitudeId, legacyGratitudeId } from "@/lib/ids";
 import { defaultFlagRows } from "@/services/flags/defaults";
 import {
   autoCreateGratitude,
@@ -105,6 +105,30 @@ describe("auto-create", () => {
     const next = await autoCreateGratitude(db, ON, ctx(at(2026, 11, 16, 20, 5)));
     expect(next).toBe(gratitudeId(SUB, at(2026, 11, 16, 20)));
     expect((await db.getAll("Activity")).filter((a) => a.activityType === "GRATITUDE")).toHaveLength(2);
+  });
+
+  it("the id is the window's local wall-clock time, so devices in different time zones agree", () => {
+    // 20:00 on 15 Nov on two clocks: the same key, though the UTC instants differ.
+    const id = gratitudeId(SUB, at(2026, 11, 15, 20));
+    expect(id).toBe(gratitudeId(SUB, new Date(2026, 10, 15, 20, 0, 30))); // seconds ignored
+    expect(id).not.toBe(gratitudeId(SUB, at(2026, 11, 16, 20)));
+    expect(id).not.toBe(legacyGratitudeId(SUB, at(2026, 11, 15, 20)));
+  });
+
+  it("an entry created with the old id (before 2026-11-20) is not created again", async () => {
+    const window = at(2026, 11, 15, 20);
+    const legacy = legacyGratitudeId(SUB, window);
+    await db.putLocal("Activity", {
+      id: legacy,
+      title: "Gratitud — 15/11",
+      rawInput: "Gratitud — 15/11 !gratitud #personal",
+      activityType: "GRATITUDE",
+      status: "ACTIVE",
+      position: "a0",
+      editedAt: window.toISOString(),
+    });
+    expect(await autoCreateGratitude(db, ON, ctx(at(2026, 11, 15, 21)))).toBeNull();
+    expect((await db.getAll("Activity")).filter((a) => a.activityType === "GRATITUDE")).toHaveLength(1);
   });
 
   it("never brings back an entry the user deleted or completed", async () => {

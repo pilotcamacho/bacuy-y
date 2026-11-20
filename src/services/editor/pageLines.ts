@@ -1,8 +1,13 @@
 import type { ActivityRow } from "@/lib/db/types";
+import { expirationRevealAt, isExpirationWaiting } from "@/services/lifecycle/expiration";
 import { isHiddenNow } from "@/services/lifecycle/nextShow";
+import { isoToLocalDate } from "@/services/marks/dates";
 import { compareLines, type EditorLine } from "./index";
 
-type PageRow = Pick<ActivityRow, "id" | "rawInput" | "position" | "status" | "deletedAt" | "hiddenUntil" | "isHidden">;
+type PageRow = Pick<
+  ActivityRow,
+  "id" | "rawInput" | "position" | "status" | "deletedAt" | "hiddenUntil" | "isHidden" | "activityType" | "expirationDate" | "renewalLeadDays"
+>;
 
 /** Completed and archived lines live on their own pages, never on the page. */
 const offPage = (a: Pick<ActivityRow, "status" | "deletedAt">) =>
@@ -10,13 +15,15 @@ const offPage = (a: Pick<ActivityRow, "status" | "deletedAt">) =>
 
 /**
  * The page (CLAUDE.md, rule 1): every activity not deleted, archived or completed, by
- * position, except lines hidden until a later time (a repetitive task done for this time).
- * Pure; components call it inside useMemo with their own clock.
+ * position, except lines hidden until a later time (a repetitive task done for this time) and
+ * expirations still waiting for their window (lifecycle/expiration; `keep`: ids shown anyway,
+ * e.g. one being edited). Pure; components call it inside useMemo with their own clock.
  */
-export function pageLines(activities: Record<string, PageRow>, now: Date = new Date()): EditorLine[] {
+export function pageLines(activities: Record<string, PageRow>, now: Date = new Date(), keep?: ReadonlySet<string>): EditorLine[] {
   const lines: EditorLine[] = [];
   for (const a of Object.values(activities)) {
     if (offPage(a) || isHiddenNow(a, now)) continue;
+    if (isExpirationWaiting(a, now) && !keep?.has(a.id)) continue;
     lines.push({ id: a.id, rawInput: a.rawInput ?? "", position: a.position });
   }
   return lines.sort(compareLines);
@@ -24,7 +31,7 @@ export function pageLines(activities: Record<string, PageRow>, now: Date = new D
 
 /**
  * Hidden lines, the soonest back first; those hidden until shown again (`isHidden`) last, by
- * page order.
+ * page order. Waiting expirations are not here: they are on the Vencimientos tab.
  */
 export function hiddenLines<T extends PageRow>(activities: Record<string, T>, now: Date = new Date()): T[] {
   const key = (a: T) => (a.isHidden ? "~" : a.hiddenUntil!); // "~" sorts after any ISO date
@@ -38,15 +45,37 @@ export function hiddenLines<T extends PageRow>(activities: Record<string, T>, no
     });
 }
 
-/** The earliest moment a hidden line comes back (to re-render the page then), or null. */
+/**
+ * The earliest moment a hidden line comes back, or a waiting expiration's window opens (to
+ * re-render the page then), or null.
+ */
 export function nextReveal(activities: Record<string, PageRow>, now: Date = new Date()): Date | null {
   let soonest: Date | null = null;
+  const consider = (at: Date | null) => {
+    if (at && at > now && (!soonest || at < soonest)) soonest = at;
+  };
   for (const a of Object.values(activities)) {
-    if (offPage(a) || a.isHidden || !isHiddenNow(a, now)) continue;
-    const at = new Date(a.hiddenUntil!);
-    if (!soonest || at < soonest) soonest = at;
+    if (offPage(a)) continue;
+    if (!a.isHidden && isHiddenNow(a, now)) consider(new Date(a.hiddenUntil!));
+    if (isExpirationWaiting(a, now)) consider(expirationRevealAt(a));
   }
   return soonest;
+}
+
+/**
+ * The Vencimientos tab: every pending expiration (on the page, hidden by hand or waiting),
+ * the soonest date first; those without a date last, by page order.
+ */
+export function expirationLines<T extends PageRow>(activities: Record<string, T>): T[] {
+  const key = (a: T) => (a.expirationDate ? isoToLocalDate(a.expirationDate).getTime() : Number.POSITIVE_INFINITY);
+  return Object.values(activities)
+    .filter((a) => !offPage(a) && a.activityType === "EXPIRATION")
+    .sort((a, b) => {
+      const x = key(a);
+      const y = key(b);
+      if (x !== y) return x < y ? -1 : 1;
+      return a.position < b.position ? -1 : a.position > b.position ? 1 : 0;
+    });
 }
 
 /** Shown when the page has no lines, so there is always somewhere to type. Not stored. */

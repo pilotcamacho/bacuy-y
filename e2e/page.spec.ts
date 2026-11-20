@@ -458,3 +458,30 @@ test("fast hide: Ctrl+Shift+H, or (touch) a swipe right; a long swipe opens the 
   await expect(lines(page)).toHaveCount(1);
   await expect(lines(page).first()).toHaveValue("tres");
 });
+
+test("an expiration far away waits off the page; the Vencimientos tab lists it with when it shows up", async ({ page }) => {
+  await signIn(page);
+  await lines(page).first().click();
+  await page.keyboard.type("comprar pan");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("pasaporte !vence @2031-05-10");
+  await page.keyboard.press("Enter"); // leaves the line: it starts waiting, but stays while on the page
+  await expect(page.getByTestId("expiration-waiting")).toContainText(/2031/);
+  await expect(lines(page).nth(1)).toHaveValue("pasaporte !vence @2031-05-10");
+  await page.waitForTimeout(500); // text debounce
+
+  await page.getByTestId("line-tabs").getByRole("link", { name: /^vencimientos|^expirations/i }).click();
+  const item = page.getByTestId("expiration-item-0");
+  await expect(item).toContainText("pasaporte");
+  await expect(page.getByTestId("expiration-where-0")).toContainText(/aparece el|shows up on/i);
+  await expect(page.getByTestId("hidden-count")).toHaveCount(0); // not on Hidden
+
+  const values = () => lines(page).evaluateAll((els) => els.map((el) => (el as HTMLTextAreaElement).value));
+  await page.getByTestId("line-tabs").getByRole("link", { name: /^pendientes|^to do/i }).click();
+  await expect(lines(page).first()).toHaveValue("comprar pan");
+  expect((await values()).some((v) => v.includes("pasaporte"))).toBe(false);
+
+  await page.reload();
+  await expect(lines(page).first()).toHaveValue("comprar pan");
+  expect((await values()).some((v) => v.includes("pasaporte"))).toBe(false);
+});

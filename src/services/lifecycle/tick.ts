@@ -1,4 +1,6 @@
+import { logicalToday } from "@/lib/day";
 import type { ActivityRow } from "@/lib/db/types";
+import { isoToDay } from "@/services/marks/dates";
 import { nextShowAt } from "./nextShow";
 import { reactivatedStatus } from "./status";
 
@@ -74,10 +76,11 @@ export function tickIsClickable(row: TickRow): boolean {
   return true;
 }
 
-/** Whole days from today (local) to an ISO date; negative = overdue. */
-export function daysUntil(iso: string, today: Date = new Date()): number {
-  const d = new Date(iso);
-  const a = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+/** Whole days from the app's today (lib/day: before 03:00 it is still yesterday) to a stored date; negative = overdue. */
+export function daysUntil(iso: string, now: Date = new Date()): number {
+  const d = isoToDay(iso);
+  const today = logicalToday(now);
+  const a = Date.UTC(d.year, d.month - 1, d.day);
   const b = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
   return Math.round((a - b) / 86_400_000);
 }

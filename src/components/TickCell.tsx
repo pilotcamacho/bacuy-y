@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import type { ActivityRow } from "@/lib/db/types";
+import { leadDays } from "@/services/lifecycle/expiration";
 import { daysUntil, tickIsClickable } from "@/services/lifecycle/tick";
 
 /**
@@ -107,7 +108,7 @@ export function TickCell({ row, index, onTick }: Props) {
       if (!row.expirationDate) return button(<span aria-hidden="true">⏳</span>, t("line.tick.expiration", { n }), undefined, BADGE);
       const days = daysUntil(row.expirationDate);
       const label = days > 0 ? t("line.daysLeft", { count: days }) : days === 0 ? t("line.dueToday") : t("line.overdue", { count: -days });
-      const urgent = days <= (row.renewalLeadDays ?? 30);
+      const urgent = days <= leadDays(row);
       const color = days < 0 ? "text-red-600 dark:text-red-400" : urgent ? "text-amber-700 dark:text-amber-400" : BADGE;
       return button(<span aria-hidden="true">{days}d</span>, `${label} · ${t("line.tick.expiration", { n })}`, undefined, color);
     }

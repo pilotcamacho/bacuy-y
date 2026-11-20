@@ -1,3 +1,4 @@
+import { logicalDayKey } from "@/lib/day";
 import type { ActivityRow } from "@/lib/db/types";
 
 /**
@@ -37,9 +38,7 @@ export function keepInMemory(row: Row): boolean {
   return row.status !== "COMPLETED" || row.activityType === "GRATITUDE";
 }
 
-/** Local calendar day of an ISO time, `YYYY-MM-DD` (grouping key). */
+/** The app's day of an ISO time, `YYYY-MM-DD` (grouping key; done at 01:00 counts for the day before). */
 export function localDay(iso: string): string {
-  const d = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  return logicalDayKey(new Date(iso));
 }
