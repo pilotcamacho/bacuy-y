@@ -210,7 +210,7 @@ function PanelBody({ row, section, nonce }: { row: ActivityRow; section: string 
       aria-modal="false"
       aria-labelledby={titleId}
       data-testid="line-panel"
-      className="fixed inset-x-0 bottom-0 z-30 flex max-h-[85vh] flex-col rounded-t-2xl border-t border-neutral-200 bg-white shadow-2xl dark:border-neutral-800 dark:bg-neutral-950 md:inset-y-0 md:end-0 md:start-auto md:max-h-none md:w-96 md:rounded-none md:border-s md:border-t-0"
+      className="fixed inset-x-2 bottom-0 z-30 flex max-h-[85dvh] flex-col rounded-t-2xl border border-b-0 border-neutral-200 bg-white shadow-2xl dark:border-neutral-800 dark:bg-neutral-950 md:inset-x-auto md:inset-y-0 md:end-0 md:max-h-none md:w-96 md:rounded-none md:border-y-0 md:border-e-0"
     >
       <div className="flex items-center justify-between gap-2 px-4 py-3">
         <h2 id={titleId} className="font-semibold">
@@ -221,7 +221,7 @@ function PanelBody({ row, section, nonce }: { row: ActivityRow; section: string 
         </button>
       </div>
 
-      <div className="overflow-y-auto px-4 pb-6">
+      <div className="overflow-y-auto overscroll-contain px-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
         {/* 1. Text */}
         <Field label={t("panel.text")}>
           {(id) => (

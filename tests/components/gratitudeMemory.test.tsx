@@ -95,7 +95,7 @@ describe("GratitudeMemory", () => {
     await mount();
     const first = await screen.findByTestId("gratitude-memory");
     expect(first).toHaveTextContent("Un momento de gratitud");
-    expect(screen.getByText(/— \S+, 28 de agosto/)).toBeInTheDocument();
+    expect(screen.getByText(/— \S+, 28 de agosto de 2026/)).toBeInTheDocument();
     const a = shown();
 
     const button = screen.getByRole("button", { name: /Mostrar otro/ });

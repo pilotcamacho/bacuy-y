@@ -252,3 +252,5 @@ Record here every model change copied from bacuy-x (date, bacuy-x change, what c
   is additive (nothing existing changes). If bacuy-x ever adds a shopping type, align the name.
   `completedAt` on a `GROCERY` row means "last bought" (its status never becomes `COMPLETED`, so
   the Completed page, which reads by status, never lists it).
+
+- **iOS Safari zooms in on a focused form field under 16px.** The line panel focuses its text field on open, so on an iPhone the page zoomed and the panel looked wider than the screen (Close cut off). `src/index.css` sets form fields to at least 16px on touch screens (`pointer: coarse`); Android never zoomed.

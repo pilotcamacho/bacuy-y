@@ -50,12 +50,11 @@ export function GratitudeMemory() {
   if (!entry) return null;
 
   const when = memoryDate(entry);
-  const sameYear = when.getFullYear() === new Date().getFullYear();
   const date = new Intl.DateTimeFormat(i18n.resolvedLanguage, {
     weekday: "long",
     day: "numeric",
     month: "long",
-    ...(sameYear ? {} : { year: "numeric" }),
+    year: "numeric",
   }).format(when);
   const single = ids.length < 2;
 

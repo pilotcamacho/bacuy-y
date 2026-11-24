@@ -7,3 +7,13 @@ body,
 #root {
   height: 100%;
 }
+
+/* iOS Safari zooms the page in when a form field under 16px gets focus (the panel focuses its
+   text on open, so it looked wider than the screen). Touch screens: 16px fields, no zoom. */
+@media (pointer: coarse) {
+  input,
+  select,
+  textarea {
+    font-size: max(16px, 1em) !important;
+  }
+}
