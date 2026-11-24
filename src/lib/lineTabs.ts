@@ -5,6 +5,7 @@
  */
 export const LINE_TABS: { to: string; key: string }[] = [
   { to: "/", key: "lines.tabs.page" },
+  { to: "/groceries", key: "lines.tabs.groceries" },
   { to: "/hidden", key: "lines.tabs.hidden" },
   { to: "/expirations", key: "lines.tabs.expirations" },
   { to: "/completed", key: "lines.tabs.completed" },

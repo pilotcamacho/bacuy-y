@@ -24,7 +24,7 @@ const entry = (id: string, description: string | null, extra: Partial<ActivityRo
   activityType: "GRATITUDE" as const,
   status: "COMPLETED" as const,
   description,
-  completedAt: "2026-08-28T23:00:00.000Z",
+  completedAt: new Date(2026, 7, 28, 20, 0).toISOString(), // local: the 28th in any time zone
   position: `a${id}`,
   editedAt: "2026-08-28T23:00:00.000Z",
   ...extra,

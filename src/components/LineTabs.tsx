@@ -16,7 +16,8 @@ export function LineTabs() {
     <nav
       aria-label={t("lines.tabs.label")}
       data-testid="line-tabs"
-      className="mb-3 flex flex-wrap gap-1 border-b border-neutral-200 text-sm dark:border-neutral-800"
+      // One row; on a narrow phone it scrolls sideways instead of wrapping (no visible bar).
+      className="mb-3 flex gap-1 overflow-x-auto whitespace-nowrap border-b border-neutral-200 text-sm [scrollbar-width:none] dark:border-neutral-800 [&::-webkit-scrollbar]:hidden"
     >
       {TABS.map((tab) => (
         <NavLink

@@ -32,6 +32,7 @@ export const TYPE_KEYWORDS: Record<ActivityType, Record<MarkLocale, string[]>> =
   MOMENTO: { es: ["momento"], en: ["moment"] },
   GRATITUDE: { es: ["gratitud"], en: ["gratitude"] },
   EXPIRATION: { es: ["vence", "vencimiento"], en: ["expires", "expiration"] },
+  GROCERY: { es: ["mercado", "compra"], en: ["grocery", "shopping"] },
 };
 
 /** `~frequency` keywords. CUSTOM has no mark (it is set in the panel with `cron`). */

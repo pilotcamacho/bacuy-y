@@ -122,6 +122,7 @@ export function flagIdsByActivity(links: Iterable<LinkLike>): Map<string, string
 /** Rows of the priority view (docs/05-line-mapping.md §6). */
 export function isPriorityCandidate(a: ListedActivity, now: Date): boolean {
   if (a.deletedAt || a.status !== "ACTIVE" || a.isHidden) return false;
+  if (a.activityType === "GROCERY") return false; // the shopping list is not ranked (Mercado tab)
   if (a.hiddenUntil && new Date(a.hiddenUntil) > now) return false;
   if (a.activityType === "EXPIRATION" && a.expirationDate) {
     return isExpirationVisible(a.expirationDate, a.renewalLeadDays, now);

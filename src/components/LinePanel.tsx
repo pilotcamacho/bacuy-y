@@ -442,6 +442,8 @@ function TypeFields({ row, dateField, intField, textField, update, renewRef, onR
   const title = t(`activityType.${row.activityType}`);
 
   switch (row.activityType) {
+    case "GROCERY":
+      return null; // just the text: bought and put back on the Mercado tab
     case "ACTION":
       return <Section title={title}>{dateField("deadline", t("panel.deadline"))}</Section>;
     case "REPETITIVE_ACTION":

@@ -345,7 +345,7 @@ test("the manual: from the panel's type, to that type's explanation; reachable f
   await expect(lines(page).first()).toHaveValue("meditar !hábito");
   await page.getByRole("link", { name: /^(Manual|Guide)$/ }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(/^(Manual|Guide)$/);
-  for (const type of ["ACTION", "REPETITIVE_ACTION", "HABIT", "ATTITUDE", "SKILL", "MOMENTO", "GRATITUDE", "EXPIRATION"]) {
+  for (const type of ["ACTION", "REPETITIVE_ACTION", "HABIT", "ATTITUDE", "SKILL", "MOMENTO", "GRATITUDE", "EXPIRATION", "GROCERY"]) {
     await expect(page.getByTestId(`help-type-${type}`)).toBeVisible();
   }
 });
@@ -484,4 +484,36 @@ test("an expiration far away waits off the page; the Vencimientos tab lists it w
   await page.reload();
   await expect(lines(page).first()).toHaveValue("comprar pan");
   expect((await values()).some((v) => v.includes("pasaporte"))).toBe(false);
+});
+
+test("Mercado: the shopping list lives on its tab; bought goes to Ya comprados and + brings it back", async ({ page }) => {
+  await signIn(page);
+  await lines(page).first().click();
+  await page.keyboard.type("llamar al banco");
+  await page.waitForTimeout(500); // text debounce
+
+  const values = () => lines(page).evaluateAll((els) => els.map((el) => (el as HTMLTextAreaElement).value));
+  await page.getByTestId("line-tabs").getByRole("link", { name: /^mercado$|^groceries$/i }).click();
+  await expect(lines(page)).toHaveCount(1); // the empty list: one line to type in
+  await lines(page).first().click();
+  await page.keyboard.type("leche");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("arroz");
+  await expect.poll(values).toEqual([expect.stringMatching(/^leche !(mercado|grocery)$/), expect.stringMatching(/^arroz !(mercado|grocery)$/)]);
+  await page.waitForTimeout(500);
+
+  await page.getByTestId("line-done-0").click(); // leche bought
+  await expect(page.getByTestId("hidden-toast")).toBeVisible();
+  await expect(page.getByTestId("grocery-bought-0")).toContainText("leche");
+  await expect.poll(values).toEqual([expect.stringMatching(/^arroz /)]);
+
+  // Not on the page, survives a reload, and + puts it back.
+  await page.getByTestId("line-tabs").getByRole("link", { name: /^pendientes|^to do/i }).click();
+  await expect.poll(values).toEqual(["llamar al banco"]);
+  await page.reload();
+  await expect.poll(values).toEqual(["llamar al banco"]);
+  await page.getByTestId("line-tabs").getByRole("link", { name: /^mercado$|^groceries$/i }).click();
+  await page.getByTestId("grocery-again-0").click();
+  await expect.poll(values).toEqual([expect.stringMatching(/^leche /), expect.stringMatching(/^arroz /)]);
+  await expect(page.getByTestId("grocery-bought-0")).toHaveCount(0);
 });

@@ -108,6 +108,18 @@ export function UndoToast() {
     );
   }
 
+  if (notice?.kind === "movedToGroceries") {
+    return (
+      <div role="status" className={TOAST} data-testid="moved-to-groceries">
+        <span>{t("groceries.movedToast")}</span>
+        <GroceriesLink onClick={() => usePageStore.getState().dismissNotice()} />
+        <button type="button" className={ACTION} onClick={() => usePageStore.getState().dismissNotice()}>
+          {t("panel.dismiss")}
+        </button>
+      </div>
+    );
+  }
+
   if (notice?.kind === "spacingOverride") {
     return (
       <div role="status" className={TOAST} data-testid="spacing-override">
@@ -129,7 +141,9 @@ export function UndoToast() {
     return (
       <div role="status" className={TOAST} data-testid={notice.kind === "hidden" ? "hidden-toast" : "completed-toast"}>
         <span>
-          {notice.review
+          {notice.grocery
+            ? t("groceries.boughtToast")
+            : notice.review
             ? notice.kind === "completed"
               ? t("review.internalized")
               : t(notice.review.good ? "review.backGood" : "review.backBad", { date })
@@ -144,7 +158,7 @@ export function UndoToast() {
         <button type="button" className={ACTION} onClick={() => void store().undoHide()}>
           {t("page.undo")}
         </button>
-        {!notice.manual && !notice.review && (
+        {!notice.manual && !notice.review && !notice.grocery && (
         <button
           type="button"
           className={ACTION}
@@ -194,6 +208,17 @@ function ExpirationsLink({ onClick }: { onClick(): void }) {
   return (
     <Link to="/expirations" className={ACTION} onClick={onClick}>
       {t("expirations.see")}
+    </Link>
+  );
+}
+
+function GroceriesLink({ onClick }: { onClick(): void }) {
+  const { t } = useTranslation();
+  const inRouter = useInRouterContext();
+  if (!inRouter) return null;
+  return (
+    <Link to="/groceries" className={ACTION} onClick={onClick}>
+      {t("groceries.see")}
     </Link>
   );
 }

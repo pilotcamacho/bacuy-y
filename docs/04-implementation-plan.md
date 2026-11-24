@@ -389,6 +389,11 @@ Requests from the first days of real use (2026-11-17).
   2m · 3m · 6m (adapting), back at 03:00; Bien on the last step completes it; replaces ~frequency
   > New field `Activity.reviewStep` (additive). `date-fns` is not installed (the stack table lists
   > it): the date math is done by hand in `services/lifecycle/review.ts`.
+- [x] Mercado: `GROCERY` type (`!mercado` / `!grocery`) and its tab; tick = bought (hidden until
+  put back), "Ya comprados" A→Z with search and + back on the list; off the page, Hidden, Priority
+  > The editor takes a `scope` (page / groceries). Bug found by e2e: the "keep in view" set
+  > carried the page's lines into the Mercado tab's first render, so typing in its empty list
+  > went into a page line; the set now resets when the scope changes (test in groceries.test).
 - [x] A moment of gratitude: a random past entry at the top of the page (new on each open and tap)
 - [x] Gratitude auto-entries **on by default** (an explicit "off" in Settings stays off, per device)
 - [x] Expirations wait off the page until their window (lead days before, 03:00); Vencimientos tab

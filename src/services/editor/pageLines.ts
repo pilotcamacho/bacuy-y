@@ -36,7 +36,7 @@ export function pageLines(activities: Record<string, PageRow>, now: Date = new D
 export function hiddenLines<T extends PageRow>(activities: Record<string, T>, now: Date = new Date()): T[] {
   const key = (a: T) => (a.isHidden ? "~" : a.hiddenUntil!); // "~" sorts after any ISO date
   return Object.values(activities)
-    .filter((a) => !offPage(a) && isHiddenNow(a, now))
+    .filter((a) => !offPage(a) && isHiddenNow(a, now) && a.activityType !== "GROCERY") // bought: on the Mercado tab
     .sort((a, b) => {
       const x = key(a);
       const y = key(b);
@@ -81,3 +81,14 @@ export function expirationLines<T extends PageRow>(activities: Record<string, T>
 /** Shown when the page has no lines, so there is always somewhere to type. Not stored. */
 export const GHOST_LINE_ID = "__ghost__";
 export const GHOST_LINE: EditorLine = { id: GHOST_LINE_ID, rawInput: "", position: "" };
+
+/**
+ * The Mercado tab's "already bought" list: shopping items off the list (ticked, or hidden by
+ * hand), A→Z by their text, to be put back with one tap. Pure.
+ */
+export function boughtLines<T extends PageRow & Pick<ActivityRow, "title">>(activities: Record<string, T>, now: Date = new Date()): T[] {
+  const name = (a: T) => (a.title || a.rawInput || "").trim();
+  return Object.values(activities)
+    .filter((a) => !offPage(a) && a.activityType === "GROCERY" && isHiddenNow(a, now))
+    .sort((a, b) => name(a).localeCompare(name(b), undefined, { sensitivity: "base" }) || (a.id < b.id ? -1 : 1));
+}

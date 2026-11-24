@@ -12,7 +12,7 @@ from bacuy-x) a note in `docs/notes.md`.
 
 | Model / enum | In v1 schema | In v1 UI | Notes |
 |---|---|---|---|
-| `ActivityType`, `ActivityStatus`, `Frequency`, `ProficiencyLevel` | yes | yes | identical to bacuy-x |
+| `ActivityType`, `ActivityStatus`, `Frequency`, `ProficiencyLevel` | yes | yes | identical to bacuy-x, except `ActivityType.GROCERY` (bacuy-y only, 2026-11-24) |
 | `UserState`, `PlaceType` | yes | no | kept so the enums match; unused |
 | `Activity` | yes, **+ `position`, `completedAt`, `reviewStep`, `editedAt`, `deletedAt`** | yes | every bacuy-x field kept |
 | `Flag` | yes, **+ `editedAt`, `deletedAt`** | yes | |
@@ -50,7 +50,7 @@ booleans).
 ### Enums (unchanged from bacuy-x)
 
 ```ts
-ActivityType:     ACTION | REPETITIVE_ACTION | HABIT | ATTITUDE | SKILL | MOMENTO | GRATITUDE | EXPIRATION
+ActivityType:     ACTION | REPETITIVE_ACTION | HABIT | ATTITUDE | SKILL | MOMENTO | GRATITUDE | EXPIRATION | GROCERY
 ActivityStatus:   DRAFT | ACTIVE | INACTIVE | COMPLETED | ARCHIVED
 Frequency:        DAILY | WEEKLY | MONTHLY | CUSTOM
 ProficiencyLevel: BEGINNER | INTERMEDIATE | ADVANCED | EXPERT

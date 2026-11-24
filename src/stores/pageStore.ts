@@ -28,7 +28,7 @@ import { hidePresetAt } from "@/services/lifecycle/nextShow";
 import { expirationRevealAt, isExpirationWaiting } from "@/services/lifecycle/expiration";
 import { isSpaced, reviewDueAt, reviewOutcome } from "@/services/lifecycle/review";
 import { useFeedbackStore } from "./feedbackStore";
-import { commitLine, parseLine, type FlagLite, type ParseContext } from "@/services/marks";
+import { commitLine, parseLine, typeKeyword, type FlagLite, type ParseContext } from "@/services/marks";
 import { nowIso } from "@/services/sync/clock";
 import { journalClear, journalPut, rowsToReplay } from "./pendingJournal";
 import { resetRowHistory } from "./rowHistory";
@@ -82,7 +82,7 @@ export interface Notice {
    * "review": the "how did it go?" question of an attitude or skill. "spacingOverride": a
    * `~frequency` was typed on one (spacing replaces it).
    */
-  kind: "habitFormed" | "hidden" | "completed" | "review" | "spacingOverride" | "expirationWaiting";
+  kind: "habitFormed" | "hidden" | "completed" | "review" | "spacingOverride" | "expirationWaiting" | "movedToGroceries";
   id: string;
   nonce: number;
   /** "hidden": when the line comes back (none: until shown again). "expirationWaiting": when its window opens. */
@@ -93,7 +93,15 @@ export interface Notice {
   before?: Activity;
   /** "hidden" / "completed" after a review: its answer, and the feedback row it saved (undo removes it). */
   review?: { good: boolean; feedbackId: string };
+  /** "hidden": a shopping item ticked as bought (it waits on the Mercado tab). */
+  grocery?: boolean;
 }
+
+/**
+ * Which lines the editor shows: the page (every line but the shopping list), or the Mercado
+ * tab (only `GROCERY` lines; a new line typed there gets `!mercado`). docs/05 §6.
+ */
+export type LineScope = "page" | "groceries";
 
 interface PageState {
   status: "idle" | "loading" | "ready" | "error";
@@ -160,6 +168,9 @@ interface PageState {
   /** Flag ids (and NO_FLAG) the page is filtered by; empty = every line. Kept on this device. */
   filter: string[];
   setFilter(filter: string[]): void;
+  /** The editor on screen: the page or the Mercado tab (set by LineEditor on mount). */
+  scope: LineScope;
+  setScope(scope: LineScope): void;
   /** Archived view: back to the page (at the end), ACTIVE or DRAFT by the flag rule. */
   restore(id: string): Promise<void>;
   /** Archived view: soft-delete an archived line (its links and feedback too). */
@@ -183,6 +194,14 @@ const timers = new Map<string, ReturnType<typeof setTimeout>>();
  * being edited never vanishes. Cleared when the filter changes.
  */
 const filterKeep = new Set<string>();
+/**
+ * Lines shown in the current scope since the editor opened: they stay in view if an edit moves
+ * them to the other scope (`!mercado` typed on the page, or removed on the Mercado tab), so the
+ * line being edited never vanishes. Cleared when an editor opens (setScope).
+ */
+const scopeKeep = new Set<string>();
+/** The scope scopeKeep belongs to: another scope starts from an empty set (no line carried over). */
+let keepScope: LineScope = "page";
 /** Lines edited on the page this visit: shown even if they now wait for their window (lifecycle/expiration). */
 const waitKeep = new Set<string>();
 /** The window already announced per line (date + lead), so the notice is not repeated on every blur. */
@@ -199,6 +218,13 @@ const FILTER_KEY = "pageFilter";
 
 function markLocale(): "es" | "en" {
   return i18n.resolvedLanguage?.startsWith("en") ? "en" : "es";
+}
+
+/** A new line on the Mercado tab: `!mercado` added unless the line already says its type. */
+export function withGroceryMark(rawInput: string, ctx: ParseContext, locale: "es" | "en"): string {
+  if (parseLine(rawInput, ctx).marks.some((m) => m.kind === "type")) return rawInput;
+  const mark = `!${typeKeyword("GROCERY", locale)}`;
+  return rawInput.length === 0 ? ` ${mark}` : `${rawInput.replace(/\s+$/, "")} ${mark}`;
 }
 
 /**
@@ -241,15 +267,27 @@ function placeInWholePage(result: EditResult, before: Record<string, Activity>):
   return { ...result, lines, changed: result.changed.map((l) => byId.get(l.id) ?? l) };
 }
 
-/** The page as shown: every line, or with a filter, the matching ones (plus filterKeep). */
+/**
+ * The lines as shown: those of the scope (plus scopeKeep); on the page with a flag filter,
+ * the matching ones (plus filterKeep). The flag filter does not apply on the Mercado tab.
+ */
 export function visiblePageLines(
   activities: Record<string, Activity>,
   flags: FlagRow[],
   filter: string[],
+  scope: LineScope = "page",
   now: Date = new Date(),
 ): EditorLine[] {
-  const all = pageLines(activities, now, waitKeep);
-  if (filter.length === 0 || activeFilter(filter, flags).length === 0) return all;
+  if (keepScope !== scope) {
+    scopeKeep.clear();
+    keepScope = scope;
+  }
+  const all = pageLines(activities, now, waitKeep).filter((l) => {
+    const grocery = activities[l.id]?.activityType === "GROCERY";
+    return (scope === "groceries" ? grocery : !grocery) || scopeKeep.has(l.id);
+  });
+  for (const l of all) scopeKeep.add(l.id);
+  if (scope === "groceries" || filter.length === 0 || activeFilter(filter, flags).length === 0) return all;
   const shown = new Set(filterLines(all, filter, parseContext(flags)).map((l) => l.id));
   for (const id of shown) filterKeep.add(id);
   return all.filter((l) => shown.has(l.id) || filterKeep.has(l.id));
@@ -294,7 +332,7 @@ async function feedbackOps(db: LocalDb, rows: Activity[], reviveAt: string | nul
 
 export const usePageStore = create<PageState>((set, get) => {
   // The lines the user sees (filtered); every editing operation works on these.
-  const lines = () => visiblePageLines(get().activities, get().flags, get().filter);
+  const lines = () => visiblePageLines(get().activities, get().flags, get().filter, get().scope);
   const ctx = () => parseContext(get().flags);
 
   /** Builds the stored row for a line after an edit (text-owned fields re-derived). */
@@ -391,16 +429,28 @@ export const usePageStore = create<PageState>((set, get) => {
     }
     const now = nowIso();
     const before = get().activities;
-    // New lines typed while the page is filtered get the filter's flag (and stay in view).
-    const filtered = activeFilter(get().filter, get().flags).length > 0;
-    if (filtered) result = placeInWholePage(result, before);
+    // New lines typed while the page is filtered get the filter's flag (and stay in view); on
+    // the Mercado tab they get `!mercado`. Either way the editor does not see every line, so
+    // new and moved lines are placed in the whole page.
+    const groceries = get().scope === "groceries";
+    const filtered = !groceries && activeFilter(get().filter, get().flags).length > 0;
+    const partial = groceries || filtered || Object.values(before).some((a) => !a.deletedAt && a.activityType === "GROCERY");
+    if (partial) result = placeInWholePage(result, before);
     const created = new Set(result.created);
     const rows: Activity[] = result.changed.map((line) => {
-      if (!filtered || !created.has(line.id)) return rowFor(line, now);
+      const isNew = created.has(line.id);
+      if (groceries && (isNew || before[line.id]?.activityType === "GROCERY")) {
+        // New lines get `!mercado`; a shopping item that lost it in this edit (Enter before
+        // the mark splits it off to the next line) gets it back. A typed `!type` is respected.
+        scopeKeep.add(line.id);
+        return rowFor({ ...line, rawInput: withGroceryMark(line.rawInput, ctx(), markLocale()) }, now);
+      }
+      if (!isNew || !filtered) return rowFor(line, now);
       filterKeep.add(line.id);
       return rowFor({ ...line, rawInput: withFilterFlag(line.rawInput, get().filter, ctx(), markLocale()) }, now);
     });
     for (const row of rows) {
+      noteMovedToGroceries(before[row.id], row);
       noteSpacingOverride(before[row.id], row);
       keepWhileEditing(before[row.id], row.id);
     }
@@ -423,6 +473,12 @@ export const usePageStore = create<PageState>((set, get) => {
       panel: panel && result.deleted.includes(panel.id) ? null : panel,
     });
     return commitRows(rows);
+  }
+
+  /** A page line just became a shopping item: say it lives on the Mercado tab (it stays in view until the page is left). */
+  function noteMovedToGroceries(before: Activity | undefined, after: Activity) {
+    if (get().scope !== "page" || !before || before.activityType === "GROCERY" || after.activityType !== "GROCERY") return;
+    set({ notice: { kind: "movedToGroceries", id: after.id, nonce: ++nonce } });
   }
 
   /**
@@ -459,9 +515,14 @@ export const usePageStore = create<PageState>((set, get) => {
     // After every row, hidden ones included, so it never shares a position with one.
     let last: string | null = null;
     for (const a of Object.values(get().activities)) if (!a.deletedAt && (last === null || a.position > last)) last = a.position;
-    // On a filtered page the first line gets the filter's flag too (the caret stays in the text).
+    // On a filtered page the first line gets the filter's flag too (the caret stays in the
+    // text); on the Mercado tab, `!mercado`.
     filterKeep.add(id);
-    const text = withFilterFlag(rawInput, get().filter, ctx(), markLocale());
+    scopeKeep.add(id);
+    const text =
+      get().scope === "groceries"
+        ? withGroceryMark(rawInput, ctx(), markLocale())
+        : withFilterFlag(rawInput, get().filter, ctx(), markLocale());
     const row = rowFor({ id, rawInput: text, position: generateKeyBetween(last, null) }, now);
     set({ activities: { ...get().activities, [id]: row }, focus: { id, offset: rawInput.length, nonce: ++nonce } });
     void writeRows([row]);
@@ -513,6 +574,12 @@ export const usePageStore = create<PageState>((set, get) => {
     notice: null,
     hidePicker: null,
     filter: kvGetJson<string[]>(FILTER_KEY, []),
+    scope: "page",
+
+    setScope(scope) {
+      scopeKeep.clear();
+      if (get().scope !== scope) set({ scope });
+    },
 
     setFilter(filter) {
       filterKeep.clear();
@@ -570,6 +637,7 @@ export const usePageStore = create<PageState>((set, get) => {
       const row = rowFor({ id, rawInput: clean, position: existing.position }, nowIso());
       keepWhileEditing(existing, id);
       set({ activities: { ...get().activities, [id]: row } });
+      noteMovedToGroceries(existing, row);
       noteSpacingOverride(existing, row);
       journalPut([row]); // the debounce may never fire if the page is closed now
       const prev = timers.get(id);
@@ -744,7 +812,9 @@ export const usePageStore = create<PageState>((set, get) => {
       await get().updateFields(id, result.patch);
       if (result.formedHint) set({ notice: { kind: "habitFormed", id, nonce: ++nonce } });
       else if (result.hidden) {
-        set({ notice: { kind: "hidden", id, until: result.patch.hiddenUntil ?? undefined, before: row, nonce: ++nonce } });
+        set({
+          notice: { kind: "hidden", id, until: result.patch.hiddenUntil ?? undefined, before: row, grocery: result.grocery, nonce: ++nonce },
+        });
       } else if (result.completed) set({ notice: { kind: "completed", id, before: row, nonce: ++nonce } });
     },
 
@@ -762,6 +832,7 @@ export const usePageStore = create<PageState>((set, get) => {
       if (!row) return;
       const clean = rawInput.replace(/\r\n|\r|\n/g, " ");
       const next = rowFor({ id, rawInput: clean, position: row.position }, nowIso(), patch);
+      noteMovedToGroceries(row, next);
       noteSpacingOverride(row, next);
       keepWhileEditing(row, id);
       await commitRows([next]);
@@ -977,6 +1048,7 @@ export function resetPageStore() {
   for (const t of timers.values()) clearTimeout(t);
   timers.clear();
   filterKeep.clear();
+  scopeKeep.clear();
   waitKeep.clear();
   waitNoticed.clear();
   resetRowHistory();
@@ -992,6 +1064,7 @@ export function resetPageStore() {
     notice: null,
     hidePicker: null,
     filter: kvGetJson<string[]>(FILTER_KEY, []),
+    scope: "page",
   });
 }
 

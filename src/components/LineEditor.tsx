@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo } from "react";
 import { flushSync } from "react-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -18,14 +18,17 @@ import { usePageClock } from "@/hooks/usePageClock";
 import { subscribe } from "@/lib/events";
 import { restrictToVerticalAxis } from "@/lib/dndModifiers";
 import { GHOST_LINE } from "@/services/editor/pageLines";
-import { usePageStore, visiblePageLines } from "@/stores/pageStore";
+import { usePageStore, visiblePageLines, type LineScope } from "@/stores/pageStore";
 import { LineRow, type LineHandlers } from "./LineRow";
 import { LinePanel } from "./LinePanel";
 import { HidePicker } from "./HidePicker";
 import { UndoToast } from "./UndoToast";
 
-/** The page: every line, in order, as a plain-text editor (docs/05-line-mapping.md §3). */
-export function LineEditor() {
+/**
+ * The page: every line, in order, as a plain-text editor (docs/05-line-mapping.md §3). With
+ * `scope="groceries"`, the Mercado tab's list: only shopping items (pageStore.LineScope).
+ */
+export function LineEditor({ scope = "page" }: { scope?: LineScope }) {
   const { t } = useTranslation();
   const status = usePageStore((s) => s.status);
   const activities = usePageStore((s) => s.activities);
@@ -45,6 +48,8 @@ export function LineEditor() {
     store().setPageMounted(true);
     return () => store().setPageMounted(false);
   }, [store]);
+  // Before paint, so the store's edits (Enter, tick…) work on the lines shown here.
+  useLayoutEffect(() => store().setScope(scope), [store, scope]);
 
   // Reload from IndexedDB after a sync that changed rows, or a write in another tab.
   useEffect(
@@ -73,8 +78,8 @@ export function LineEditor() {
   const now = usePageClock(activities);
 
   // The page as shown: with a flag filter, only the matching lines (FlagFilter).
-  const lines = useMemo(() => visiblePageLines(activities, flags, filter, now), [activities, flags, filter, now]);
-  const filtered = filter.length > 0;
+  const lines = useMemo(() => visiblePageLines(activities, flags, filter, scope, now), [activities, flags, filter, scope, now]);
+  const filtered = scope === "page" && filter.length > 0;
   const shown = lines.length > 0 ? lines : [GHOST_LINE];
 
   const handlers: LineHandlers = useMemo(
@@ -99,7 +104,7 @@ export function LineEditor() {
       },
       onFocusNeighbour: (id, direction, caret) => {
         const s = store();
-        const current = visiblePageLines(s.activities, s.flags, s.filter);
+        const current = visiblePageLines(s.activities, s.flags, s.filter, s.scope);
         const index = current.findIndex((l) => l.id === id);
         const target = current[index + direction];
         if (target) store().setFocus(target.id, caret);
@@ -123,7 +128,7 @@ export function LineEditor() {
       const { active, over } = event;
       if (!over || active.id === over.id) return;
       const s = store();
-      const to = visiblePageLines(s.activities, s.flags, s.filter).findIndex((l) => l.id === over.id);
+      const to = visiblePageLines(s.activities, s.flags, s.filter, s.scope).findIndex((l) => l.id === over.id);
       if (to >= 0) void store().moveTo(String(active.id), to);
     },
     [store],
@@ -166,7 +171,11 @@ export function LineEditor() {
                 flags={flags}
                 focus={focus}
                 draggable={lines.length > 1}
-                placeholder={lines.length === 0 ? t(filtered ? "filter.emptyPlaceholder" : "page.placeholder") : undefined}
+                placeholder={
+                  lines.length === 0
+                    ? t(scope === "groceries" ? "groceries.placeholder" : filtered ? "filter.emptyPlaceholder" : "page.placeholder")
+                    : undefined
+                }
                 {...handlers}
               />
             ))}

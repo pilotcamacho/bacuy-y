@@ -247,3 +247,8 @@ Record here every model change copied from bacuy-x (date, bacuy-x change, what c
   Ctrl+. right after a move lost the panel's focus on slow devices.
 - The test account in the sandbox may hold lines leaked by the old page specs (before the fix
   above). Harmless: the page specs never sync; sync/offline specs clean up their own rows.
+
+- **`ActivityType.GROCERY` is bacuy-y only** (2026-11-24, the Mercado tab). Adding an enum value
+  is additive (nothing existing changes). If bacuy-x ever adds a shopping type, align the name.
+  `completedAt` on a `GROCERY` row means "last bought" (its status never becomes `COMPLETED`, so
+  the Completed page, which reads by status, never lists it).

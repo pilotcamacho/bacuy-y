@@ -61,6 +61,20 @@
     "label": "A moment of gratitude",
     "another": "Show another"
   },
+  "groceries": {
+    "title": "Groceries",
+    "placeholder": "What do you need to buy? Type and press Enter…",
+    "bought": "Already bought",
+    "boughtEmpty": "What you tick as bought stays here, to put back on the list next time.",
+    "search": "Search already bought",
+    "searchPlaceholder": "Search…",
+    "again": "Back on the list",
+    "againLine": "Back on the list: {{title}}",
+    "addedBack": "{{title}} is on the list again.",
+    "boughtToast": "Bought. It stays in “Already bought” for next time.",
+    "movedToast": "It's a grocery item: from now on it lives on the Groceries tab, not on the page.",
+    "see": "Open Groceries"
+  },
   "flags": {
     "title": "Flags",
     "intro": "Flags rank your lines by importance. Type #name in a line to assign one. The weights of each group of siblings must add up to 100.",
@@ -195,7 +209,8 @@
     "SKILL": "Skill",
     "MOMENTO": "Moment",
     "GRATITUDE": "Gratitude",
-    "EXPIRATION": "Expiration"
+    "EXPIRATION": "Expiration",
+    "GROCERY": "Groceries"
   },
   "status": {
     "DRAFT": "Draft",
@@ -236,7 +251,8 @@
       "habit": "Add a day to the streak (line {{n}}): {{count}}",
       "gratitude": "Write the gratitude (line {{n}})",
       "expiration": "Renew or archive (line {{n}})",
-      "review": "Review: how did it go? (line {{n}})"
+      "review": "Review: how did it go? (line {{n}})",
+      "grocery": "Bought (line {{n}})"
     },
     "streak": "Streak: {{count}}",
     "count": "Done {{count}} times",
@@ -370,6 +386,7 @@
     "tabs": {
       "label": "Lines",
       "page": "To do",
+      "groceries": "Groceries",
       "completed": "Completed",
       "hidden": "Hidden",
       "expirations": "Expirations",
@@ -547,7 +564,15 @@
       "startLabel": "Starts",
       "useLabel": "Day to day",
       "repeatLabel": "Repeats",
-      "endLabel": "Ends"
+      "endLabel": "Ends",
+      "GROCERY": {
+        "what": "Something to buy at the market or the shop: the shopping list, which repeats.",
+        "example": "lactose-free milk !grocery",
+        "start": "When you type it with !grocery (or !shopping), or by typing it on the Groceries tab, which adds the mark for you.",
+        "use": "It lives only on the Groceries tab, not on the page or in Priority. Ticking it means “bought”.",
+        "repeat": "Yes: ticked, it moves to “Already bought” (with when you bought it); one tap on + puts it back on the list.",
+        "end": "It is never completed. If you no longer buy it, archive or delete it from the panel."
+      }
     },
     "statusItems": {
       "DRAFT": "Just written, no flags. It can already be ticked.",
@@ -558,6 +583,7 @@
     },
     "views": {
       "page": "To do: your page. It can be filtered by flag; a new line typed while filtered gets that flag. At the top, a moment of gratitude: one of your past entries at random; it changes each time you open the app and when you tap it.",
+      "groceries": "Groceries: the shopping list (only !grocery lines). On top, what to buy, editable; a new line typed here is already a grocery item. Ticked, it moves down to “Already bought”, A→Z with a search and when you bought it; + puts it back on the list.",
       "hidden": "Hidden: what you hid from the panel (until a date and time, or until you show it), repeating actions and habits done for now, and attitudes and skills waiting for their next review. Shows when each comes back. A search box at the top finds any part of the text (case and accents don't matter).",
       "expirations": "Expirations: everything that expires, soonest first, with the days left and whether it is on the page or when it shows up. Renew from here.",
       "completed": "Completed: what is done, newest first, grouped by day.",

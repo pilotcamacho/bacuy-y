@@ -27,10 +27,11 @@ const TYPES: { type: ActivityType; symbol: string; date: DateField | null; frequ
     frequency: false,
     fields: ["renewalLeadDays", "documentRef", "renewalUrl"],
   },
+  { type: "GROCERY", symbol: "🛒", date: null, frequency: false, fields: [] },
 ];
 
 const STATUSES = ["DRAFT", "ACTIVE", "INACTIVE", "COMPLETED", "ARCHIVED"] as const;
-const VIEWS = ["page", "hidden", "expirations", "completed", "archived", "priority", "journal", "flags", "settings"] as const;
+const VIEWS = ["page", "groceries", "hidden", "expirations", "completed", "archived", "priority", "journal", "flags", "settings"] as const;
 const KEYS: { keys: string[]; text: string }[] = [
   { keys: ["Enter"], text: "enter" },
   { keys: ["⌫"], text: "backspace" },

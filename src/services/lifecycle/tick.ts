@@ -16,7 +16,7 @@ import { reactivatedStatus } from "./status";
 export type PanelSection = "feedback" | "description" | "expiration";
 
 export type TickResult =
-  | { kind: "update"; patch: Partial<ActivityRow>; formedHint?: boolean; hidden?: boolean; completed?: boolean }
+  | { kind: "update"; patch: Partial<ActivityRow>; formedHint?: boolean; hidden?: boolean; completed?: boolean; grocery?: boolean }
   | { kind: "panel"; section: PanelSection }
   | { kind: "review" }
   | { kind: "none" };
@@ -64,6 +64,16 @@ export function tick(row: TickRow, hasFlags: boolean, now: Date = new Date()): T
       return { kind: "panel", section: "expiration" };
     case "MOMENTO":
       return { kind: "none" };
+    case "GROCERY":
+      // Bought: off the list until put back by hand (Mercado tab). Never completed; the day
+      // it was last bought is `completedAt`, and `completionCount` how many times.
+      if (status === "COMPLETED") return { kind: "none" };
+      return {
+        kind: "update",
+        patch: { isHidden: true, hiddenUntil: null, completedAt: now.toISOString(), completionCount: (row.completionCount ?? 0) + 1 },
+        hidden: true,
+        grocery: true,
+      };
   }
 }
 

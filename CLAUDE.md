@@ -79,7 +79,8 @@ v1 has **one page per user**: all of the user's non-deleted, non-archived activi
    `hiddenUntil`, its next occurrence), or a line hidden by hand from the panel (until a date
    and time, or until shown again: `isHidden`). The **Hidden** tab lists them. An expiration
    also waits off the page until its warning window opens (`renewalLeadDays` before its date);
-   the **Vencimientos** tab lists every expiration.
+   the **Vencimientos** tab lists every expiration. Shopping items (`GROCERY`, `!mercado`) are
+   never on the page: they live on the **Mercado** tab, and ticking one hides it until put back.
    **The app's day starts at 03:00** (`lib/day.ts`): 02:00 on the 20th belongs to the 19th,
    for every "today / tomorrow / days left / back tomorrow / group by day". Calendar dates are
    stored as UTC midnight (docs/05-line-mapping.md §7).
@@ -380,7 +381,8 @@ These adapt the expo-amplify-kit conventions to a web-only app.
   `schedule-monthday`, `schedule-time`, `review-prompt`, `review-good`, `review-bad`, `spacing-override`,
   `panel-review`, `panel-review-next`,
   `hidden-show-<index>`, `expirations-list`, `expiration-item-<index>`, `expiration-where-<index>`,
-  `expiration-renew-<index>`, `expiration-more-<index>`, `expirations-search`, `expiration-waiting`, `hidden-search`, `gratitude-memory`, `gratitude-memory-text`, `hidden-search-count`, `hidden-search-empty`, `update-prompt`, `install-section`, `line-tabs`, `completed-toast`, `completed-list`,
+  `expiration-renew-<index>`, `expiration-more-<index>`, `expirations-search`, `expiration-waiting`, `hidden-search`, `gratitude-memory`, `gratitude-memory-text`, `groceries-bought`, `grocery-bought-<index>`,
+  `grocery-again-<index>`, `grocery-more-<index>`, `groceries-search`, `groceries-search-empty`, `moved-to-groceries`, `hidden-search-count`, `hidden-search-empty`, `update-prompt`, `install-section`, `line-tabs`, `completed-toast`, `completed-list`,
   `completed-item-<index>`, `completed-reopen-<index>`, `completed-more-<index>`, `completed-delete-<index>`,
   `completed-delete-confirm-<index>`, `completed-show-more`).
 - **Packages:** `npm install <pkg>`. Pin exact versions for `aws-amplify` and `@aws-amplify/backend`.
@@ -399,7 +401,9 @@ These adapt the expo-amplify-kit conventions to a web-only app.
 - `rawInput` means "the line as currently typed", not "the text at creation".
 - Unticking a completed `ACTION` (on the Completed page) reactivates it (bacuy-x treats
   completion as one-way).
-- `Activity.completedAt` (not in bacuy-x): when it was completed, for the Completed page.
+- `Activity.completedAt` (not in bacuy-x): when it was completed, for the Completed page (for a
+  `GROCERY` line: when it was last bought).
+- `ActivityType.GROCERY` (not in bacuy-x): the shopping list, on its own Mercado tab.
 - `Activity.reviewStep` (not in bacuy-x): attitudes and skills use **spaced review** (tick →
   Bien / Mal → hidden 1 day … 6 months, adapting; Bien on the last step completes it) instead of
   a frequency. See `docs/05-line-mapping.md` §4.

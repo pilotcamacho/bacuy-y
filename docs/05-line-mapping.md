@@ -87,6 +87,7 @@ body     := 1*( any char except whitespace )
 | `MOMENTO` | `!momento` | `!moment` |
 | `GRATITUDE` | `!gratitud` | `!gratitude` |
 | `EXPIRATION` | `!vence`, `!vencimiento` | `!expires`, `!expiration` |
+| `GROCERY` (bacuy-y only) | `!mercado`, `!compra` | `!grocery`, `!shopping` |
 
 No `!type` mark → `ACTION`, except a line with a `~frequency` mark and no `!type`, which is
 `REPETITIVE_ACTION`. Changing the type in the panel writes the Spanish or English keyword
@@ -224,6 +225,7 @@ square at the start of the line.
 | `MOMENTO` | ★ (not clickable) | Nothing. | Archive only (never `COMPLETED`). |
 | `GRATITUDE` | ☐ | Opens the panel with the notes field focused. "Save & complete" requires non-empty `description` → `COMPLETED`. | — |
 | `EXPIRATION` | days-left badge (amber inside its window, red when overdue) | Opens the panel: "Renewed → new date" (rewrites the `@date` mark, `isRenewed` stays false) or "Archive" (`isRenewed = true`, `ARCHIVED`). | — |
+| `GROCERY` | ☐ | **Bought**: `isHidden = true` (until put back by hand), `completedAt` = now (last bought), `completionCount += 1`; status unchanged. Toast: undo (no rating). The item moves to "Ya comprados" on the Mercado tab, where **+** puts it back on the list (`showNow`). | Never `COMPLETED` (no Complete in the panel); pause, archive or delete. |
 
 **Spaced review** (`ATTITUDE`, `SKILL`; confirmed 2026-11-18; `services/lifecycle/review.ts`).
 They come back at intervals that adapt to how it goes, like flash cards:
@@ -357,9 +359,10 @@ Every change in the panel is a structural write (immediate, no debounce).
 
 | View | Rows | Order | Editable |
 |---|---|---|---|
-| Page | not deleted, status ≠ `ARCHIVED` / `COMPLETED`, not hidden (`isHidden`, or `hiddenUntil` in the future), not a **waiting expiration** (§4) | `position` | yes |
+| Page | not deleted, status ≠ `ARCHIVED` / `COMPLETED`, not hidden (`isHidden`, or `hiddenUntil` in the future), not a **waiting expiration** (§4), not `GROCERY` (Mercado tab). A line that becomes `GROCERY` while on the page (`!mercado` typed) stays in view until the page is left, with a toast linking to Mercado (`moved-to-groceries`); the same "never vanishes mid-edit" rule keeps a line on Mercado whose mark is removed | `position` | yes |
 | Vencimientos (`/expirations`) | every pending `EXPIRATION` (on the page, hidden by hand, or waiting) | `expirationDate` asc, undated last (by `position`) | renew (opens the panel's expiration section), panel; date, days left (badge colors) and where it is ("en la página", "oculto por ti", "aparece el …", "sin fecha"); text filter as on Hidden |
-| Hidden | the page's rows that are hidden now (not waiting expirations: they are on Vencimientos); a **text filter** (`hidden-search`): every word anywhere in the line, marks included, ignoring case and accents (`services/editor/textFilter.ts`); Escape clears it; not kept | `hiddenUntil` asc, then "until shown" (`isHidden`) by `position` | show now, change (same choices as the panel), panel |
+| Mercado (`/groceries`, confirmed 2026-11-24) | **only** `GROCERY` lines: on top, those not hidden, as an editable list (the same editor, `LineEditor scope="groceries"`); a new line typed there gets `!mercado` / `!grocery` (UI language) unless it already has a `!type`. Below, **"Ya comprados"**: the hidden ones (bought), with when each was last bought (`completedAt`, relative: "hoy", "hace 3 días") and a text filter as on Hidden | list: `position`; bought: A→Z by title | list: as the page (tick = bought); bought: **+** back on the list, panel |
+| Hidden | the page's rows that are hidden now (not waiting expirations: they are on Vencimientos; not shopping items: they are on Mercado); a **text filter** (`hidden-search`): every word anywhere in the line, marks included, ignoring case and accents (`services/editor/textFilter.ts`); Escape clears it; not kept | `hiddenUntil` asc, then "until shown" (`isHidden`) by `position` | show now, change (same choices as the panel), panel |
 | Priority | `status = ACTIVE`, not `isHidden`, `hiddenUntil` passed, not a waiting expiration (the same rule as the page) | score desc (`services/priority/score.ts`) | tick and panel only; no text editing, no drag. Click → go to that line on the page. |
 | Journal | `GRATITUDE` + `COMPLETED` | `updatedAt`/`editedAt` desc | via panel |
 | A moment of gratitude (top of Page, `GratitudeMemory`) | one `GRATITUDE` + `COMPLETED` entry with notes, at random (`services/gratitude/memory.ts`) | — | no; tap or click → another one |

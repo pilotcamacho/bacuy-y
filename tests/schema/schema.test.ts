@@ -17,9 +17,9 @@ describe("schema", () => {
     expectTypeOf<Activity["position"]>().toEqualTypeOf<string>();
   });
 
-  it("keeps the bacuy-x enums", () => {
+  it("keeps the bacuy-x enums (ActivityType plus GROCERY, bacuy-y only)", () => {
     expectTypeOf<Schema["ActivityType"]["type"]>().toEqualTypeOf<
-      "ACTION" | "REPETITIVE_ACTION" | "HABIT" | "ATTITUDE" | "SKILL" | "MOMENTO" | "GRATITUDE" | "EXPIRATION"
+      "ACTION" | "REPETITIVE_ACTION" | "HABIT" | "ATTITUDE" | "SKILL" | "MOMENTO" | "GRATITUDE" | "EXPIRATION" | "GROCERY"
     >();
     expectTypeOf<Schema["ActivityStatus"]["type"]>().toEqualTypeOf<
       "DRAFT" | "ACTIVE" | "INACTIVE" | "COMPLETED" | "ARCHIVED"

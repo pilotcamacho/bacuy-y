@@ -83,6 +83,8 @@ export function TickCell({ row, index, onTick }: Props) {
   );
 
   switch (row.activityType) {
+    case "GROCERY":
+      return button(<Checkbox checked={false} />, t("line.tick.grocery", { n }));
     case "ACTION":
       return button(<Checkbox checked={completed} />, t(completed ? "line.tick.uncomplete" : "line.tick.complete", { n }), completed);
 

@@ -24,7 +24,7 @@ export type StatusAction = "pause" | "reactivate" | "complete" | "archive";
 type StatusRow = Pick<ActivityRow, "activityType" | "status" | "description">;
 
 export function canComplete(row: StatusRow): boolean {
-  if (row.activityType === "MOMENTO" || row.activityType === "EXPIRATION") return false;
+  if (row.activityType === "MOMENTO" || row.activityType === "EXPIRATION" || row.activityType === "GROCERY") return false;
   if (row.activityType === "GRATITUDE") return (row.description ?? "").trim().length > 0;
   return true;
 }
@@ -35,8 +35,8 @@ export function statusActions(row: StatusRow): StatusAction[] {
   const out: StatusAction[] = [];
   if (status === "DRAFT" || status === "ACTIVE") out.push("pause");
   if (status === "INACTIVE" || status === "COMPLETED") out.push("reactivate");
-  // MOMENTO is never completed; EXPIRATION ends by renewing or archiving.
-  if (status !== "COMPLETED" && row.activityType !== "MOMENTO" && row.activityType !== "EXPIRATION") {
+  // MOMENTO is never completed; EXPIRATION ends by renewing or archiving; GROCERY is bought (hidden), again and again.
+  if (status !== "COMPLETED" && canComplete({ ...row, description: "x" })) {
     out.push("complete");
   }
   out.push("archive");

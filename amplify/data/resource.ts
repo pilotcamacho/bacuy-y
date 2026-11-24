@@ -13,11 +13,12 @@ import { a, defineData, type ClientSchema } from "@aws-amplify/backend";
  * See docs/03-data-schema.md. Keep src/lib/db in step with this file.
  */
 const schema = a.schema({
-  // ─── Enumerations (identical to bacuy-x) ─────────────────────────────────────
+  // ─── Enumerations (identical to bacuy-x, plus GROCERY: docs/notes.md) ────────
 
   ActivityType: a.enum([
     "ACTION", "REPETITIVE_ACTION", "HABIT",
     "ATTITUDE", "SKILL", "MOMENTO", "GRATITUDE", "EXPIRATION",
+    "GROCERY", // bacuy-y only (2026-11-24): the shopping list (Mercado tab)
   ]),
 
   ActivityStatus: a.enum(["DRAFT", "ACTIVE", "INACTIVE", "COMPLETED", "ARCHIVED"]),

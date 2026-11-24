@@ -61,6 +61,20 @@
     "label": "Un momento de gratitud",
     "another": "Mostrar otro"
   },
+  "groceries": {
+    "title": "Mercado",
+    "placeholder": "¿Qué hay que comprar? Escribe y Enter…",
+    "bought": "Ya comprados",
+    "boughtEmpty": "Lo que marques como comprado queda aquí para volver a ponerlo en la lista.",
+    "search": "Buscar en ya comprados",
+    "searchPlaceholder": "Buscar…",
+    "again": "Volver a la lista",
+    "againLine": "Volver a la lista: {{title}}",
+    "addedBack": "{{title}} está otra vez en la lista.",
+    "boughtToast": "Comprado. Queda en «Ya comprados» para la próxima vez.",
+    "movedToast": "Es del mercado: desde ahora está en el tab Mercado, no en la página.",
+    "see": "Ver Mercado"
+  },
   "flags": {
     "title": "Banderas",
     "intro": "Las banderas ordenan tus renglones por importancia. Escribe #nombre en un renglón para asignarla. Los pesos de cada grupo de hermanas deben sumar 100.",
@@ -195,7 +209,8 @@
     "SKILL": "Habilidad",
     "MOMENTO": "Momento",
     "GRATITUDE": "Gratitud",
-    "EXPIRATION": "Vencimiento"
+    "EXPIRATION": "Vencimiento",
+    "GROCERY": "Mercado"
   },
   "status": {
     "DRAFT": "Borrador",
@@ -236,7 +251,8 @@
       "habit": "Sumar un día a la racha (renglón {{n}}): {{count}}",
       "gratitude": "Escribir la gratitud (renglón {{n}})",
       "expiration": "Renovar o archivar (renglón {{n}})",
-      "review": "Repasar: ¿cómo te fue? (renglón {{n}})"
+      "review": "Repasar: ¿cómo te fue? (renglón {{n}})",
+      "grocery": "Comprado (renglón {{n}})"
     },
     "streak": "Racha: {{count}}",
     "count": "Hecha {{count}} veces",
@@ -370,6 +386,7 @@
     "tabs": {
       "label": "Renglones",
       "page": "Pendientes",
+      "groceries": "Mercado",
       "completed": "Completadas",
       "hidden": "Ocultas",
       "expirations": "Vencimientos",
@@ -547,7 +564,15 @@
       "startLabel": "Empieza",
       "useLabel": "Día a día",
       "repeatLabel": "Se repite",
-      "endLabel": "Termina"
+      "endLabel": "Termina",
+      "GROCERY": {
+        "what": "Algo para comprar en el mercado o la tienda: la lista de compras, que se repite.",
+        "example": "leche deslactosada !mercado",
+        "start": "Al escribirlo con !mercado (o !compra), o escribiéndolo en el tab Mercado, que le pone la marca solo.",
+        "use": "Vive solo en el tab Mercado, no en la página ni en Prioridad. Marcarlo significa «comprado».",
+        "repeat": "Sí: al marcarlo pasa a «Ya comprados» (con cuándo lo compraste); un toque en + lo vuelve a poner en la lista.",
+        "end": "No se completa nunca. Si ya no lo compras, archívalo o bórralo desde el panel."
+      }
     },
     "statusItems": {
       "DRAFT": "Recién escrito, sin banderas. Ya se puede marcar.",
@@ -558,6 +583,7 @@
     },
     "views": {
       "page": "Pendientes: tu página. Se puede filtrar por bandera; un renglón nuevo con el filtro puesto recibe esa bandera. Arriba, un momento de gratitud: una de tus entradas pasadas, al azar; cambia cada vez que abres la app y al tocarlo.",
+      "groceries": "Mercado: la lista de compras (solo renglones !mercado). Arriba lo que hay que comprar, editable; un renglón nuevo escrito aquí ya es del mercado. Al marcarlo pasa abajo, a «Ya comprados», ordenado A→Z con buscador y con cuándo lo compraste; el + lo devuelve a la lista.",
       "hidden": "Ocultas: lo que ocultaste desde el panel (hasta una fecha y hora, o hasta que lo muestres), las repetitivas y hábitos hechos por ahora, y las actitudes y habilidades que esperan su próximo repaso. Muestra cuándo vuelve cada uno. Arriba hay un buscador: escribe cualquier parte del texto (sin importar mayúsculas ni tildes).",
       "expirations": "Vencimientos: todo lo que vence, lo más próximo primero, con los días que faltan y si ya está en la página o cuándo aparece. Desde aquí lo renuevas.",
       "completed": "Completadas: lo hecho, lo más reciente primero, agrupado por día.",
